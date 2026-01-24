@@ -181,7 +181,9 @@ export interface Tryout {
   id: string;
   title: string;
   'Date Open': string;
+  'Date Open_tz': SupportedTimezones;
   'Date Close': string;
+  'Date Close_tz': SupportedTimezones;
   description: string;
   tests: (string | Test)[];
   updatedAt: string;
@@ -308,7 +310,9 @@ export interface TestsSelect<T extends boolean = true> {
 export interface TryoutsSelect<T extends boolean = true> {
   title?: T;
   'Date Open'?: T;
+  'Date Open_tz'?: T;
   'Date Close'?: T;
+  'Date Close_tz'?: T;
   description?: T;
   tests?: T;
   updatedAt?: T;

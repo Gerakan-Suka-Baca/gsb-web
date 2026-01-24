@@ -16,6 +16,7 @@ export const Tryouts: CollectionConfig = {
       name: "Date Open",
       type: "date",
       required: true,
+      timezone: true,
       admin: {
         date: {
           pickerAppearance: "dayAndTime",
@@ -27,6 +28,7 @@ export const Tryouts: CollectionConfig = {
       name: "Date Close",
       type: "date",
       required: true,
+      timezone: true,
       admin: {
         date: {
           pickerAppearance: "dayAndTime",
