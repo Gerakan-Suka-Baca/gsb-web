@@ -105,7 +105,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
     alert("Tryout selesai, terima kasih!");
     setShowTests(false);
     setCurrentIndex(0);
-    redirect("/tryout/finish");
+    redirect("/profile");
   };
 
   return (
