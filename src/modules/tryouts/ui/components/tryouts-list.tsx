@@ -1,5 +1,4 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
@@ -11,9 +10,22 @@ import Link from "next/link";
 /* -------------------------------------------------
    Helper: is the try-out open right now?
 -------------------------------------------------- */
-const isOpenNow = (openDate: Date, closeDate: Date): boolean => {
+const isOpenNow = (
+  openDate: string | Date,
+  closeDate: string | Date,
+): boolean => {
   const now = new Date();
-  return now >= openDate && now <= closeDate;
+  const open = new Date(openDate);
+  const close = new Date(closeDate);
+  // console.log(
+  //   "Now:",
+  //   now.toISOString(),
+  //   "Open:",
+  //   open.toISOString(),
+  //   "Close:",
+  //   close.toISOString(),
+  // );
+  return now >= open && now <= close;
 };
 
 export const TryoutsList = () => {
@@ -21,15 +33,15 @@ export const TryoutsList = () => {
   const { data } = useSuspenseQuery(trpc.tryouts.getMany.queryOptions({}));
   const session = useQuery(trpc.auth.session.queryOptions());
 
-  /* Build Date objects once */
+  /* Filter active tryouts */
   const activeTryouts = data.docs.filter((t) =>
-    isOpenNow(new Date(t["Date Open"]), new Date(t["Date Close"])),
+    isOpenNow(t["Date Open"], t["Date Close"]),
   );
 
   if (activeTryouts.length === 0) {
     return (
       <div className="w-full h-full flex items-center justify-center py-10">
-        No try-out available at the moment
+        Belum ada tryout tersedia saat ini.
       </div>
     );
   }
@@ -47,7 +59,6 @@ export const TryoutsList = () => {
                 <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 mb-1">
                   {tryout.description}
                 </p>
-
                 <div className="flex gap-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
                     <span>{formatDate(tryout["Date Open"])}</span>
@@ -61,7 +72,6 @@ export const TryoutsList = () => {
                 </div>
               </div>
             </div>
-
             {session.data?.user ? (
               <Link
                 className="my-auto mr-6"
@@ -74,7 +84,7 @@ export const TryoutsList = () => {
                 </Button>
               </Link>
             ) : (
-              <Link className="my-auto mr-6" prefetch href={`/sign-in`}>
+              <Link className="my-auto mr-6" prefetch href="/sign-in">
                 <Button variant="ghost" className="group/btn">
                   <span>Lihat detail</span>
                   <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />

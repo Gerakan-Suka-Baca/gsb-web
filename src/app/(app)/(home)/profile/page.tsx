@@ -23,11 +23,11 @@ export default async function ProfilePage() {
         <p className="text-sm text-gray-500 mb-2">
           Member since {new Date(user.createdAt).toLocaleDateString()}
         </p>
-        <p className="text-gray-600 mb-2">Skor Try Out:</p>
+        <p className="text-gray-600 mb-2">Skor dan Pembahasan akan muncul H+7 setelah tryout selesai</p>
 
-        <Button className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        {/* <Button className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
           Lihat Pembahasan
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
