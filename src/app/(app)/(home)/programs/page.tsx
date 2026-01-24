@@ -1,7 +1,7 @@
 "use client";
 
 import { FadeIn } from "@/components/ui/fade-in";
-import { BookOpen, MapPin, Calendar, Star, Heart, Compass, PenTool, Database, Users } from "lucide-react";
+import { BookOpen, MapPin, Calendar, Star, Compass, Database, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 

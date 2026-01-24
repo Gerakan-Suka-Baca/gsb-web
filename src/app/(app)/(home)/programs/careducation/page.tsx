@@ -1,8 +1,7 @@
 "use client";
 
 import { FadeIn } from "@/components/ui/fade-in";
-import { HeartHandshake, Compass, Database, Star } from "lucide-react";
-import Image from "next/image";
+import { Compass, Database, Star } from "lucide-react";
 
 export default function CareducationPage() {
   const products = [

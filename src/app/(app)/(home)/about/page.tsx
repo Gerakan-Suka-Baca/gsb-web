@@ -81,12 +81,12 @@ export default function AboutPage() {
               </h2>
               <p className="text-muted-foreground leading-relaxed text-lg">
                 Berdiri sejak <strong>16 Oktober 2016</strong>, GSB bermula sebagai komunitas non-profit
-                sederhana. Didorong oleh tagline <em>"Bergerak Berdampak untuk Pendidikan"</em>, kami terus tumbuh
+                sederhana. Didorong oleh tagline <em>&quot;Bergerak Berdampak untuk Pendidikan&quot;</em>, kami terus tumbuh
                 untuk menjawab tantangan pendidikan yang seharusnya IMBANG, bukan TIMPANG.
               </p>
               <div className="bg-gsb-orange/5 p-6 rounded-2xl border-l-4 border-gsb-orange">
                 <p className="italic text-gsb-maroon dark:text-gsb-yellow font-medium">
-                  "From Access to Impact: Education for All"
+                  &quot;From Access to Impact: Education for All&quot;
                 </p>
               </div>
             </FadeIn>

@@ -2,7 +2,7 @@
 
 import { FadeIn } from "@/components/ui/fade-in";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, Camera, Shield, Coffee, Zap, Mic, BookOpen } from "lucide-react";
+import { Heart, Users, Coffee, Zap, Mic } from "lucide-react";
 import Link from "next/link";
 
 export default function VolunteerPage() {
@@ -76,7 +76,7 @@ export default function VolunteerPage() {
              <Zap className="w-12 h-12 mx-auto mb-6 text-gsb-yellow" />
              <h2 className="text-3xl md:text-5xl font-heading font-bold mb-6">Siap Berdampak?</h2>
              <p className="text-white/80 text-lg max-w-2xl mx-auto mb-8">
-               "Kebaikan yang dilakukan dengan bahagia akan bertahan lama."
+               &quot;Kebaikan yang dilakukan dengan bahagia akan bertahan lama.&quot;
              </p>
              <Button size="lg" className="rounded-full bg-gsb-yellow text-gsb-maroon hover:bg-white font-bold px-10 h-14 text-xl shadow-xl transition-all hover:scale-105" asChild>
                 <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank">Daftar Sekarang</Link>
