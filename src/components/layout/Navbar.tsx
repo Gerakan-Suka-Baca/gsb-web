@@ -59,6 +59,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import Image from "next/image";
+import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "@/trpc/client";
 
 interface MenuItem {
   title: string;
@@ -69,6 +71,8 @@ interface MenuItem {
 }
 
 export function Navbar() {
+  const trpc = useTRPC();
+  const session = useQuery(trpc.auth.session.queryOptions());
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
   const { theme, setTheme } = useTheme();
@@ -272,7 +276,7 @@ export function Navbar() {
           title: "Tryout UTBK",
           description: "Persiapan masuk kampus.",
           icon: <PenTool className="size-5 shrink-0" />,
-          url: "#",
+          url: "/tryout",
         },
       ],
     },
@@ -336,7 +340,7 @@ export function Navbar() {
             height={100}
           />
         </Link>
-        
+
         <div className="hidden lg:flex w-full justify-between items-center px-4">
           <div className="hidden lg:flex items-center px-4">
             <NavigationMenu>
@@ -345,7 +349,7 @@ export function Navbar() {
               </NavigationMenuList>
             </NavigationMenu>
           </div>
-  
+
           <div className="hidden lg:flex items-center gap-4">
             <Button
               asChild
@@ -359,14 +363,27 @@ export function Navbar() {
                 Jadi Relawan
               </Link>
             </Button>
-  
-            <Button
-              variant="outline"
-              className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105"
-            >
-              Masuk
-            </Button>
-  
+
+            {session.data?.user ? (
+              <Link href="/profile">
+                <Button
+                  variant="outline"
+                  className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105"
+                >
+                  Profile
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/sign-in">
+                <Button
+                  variant="outline"
+                  className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105"
+                >
+                  Masuk
+                </Button>
+              </Link>
+            )}
+
             {mounted && (
               <Button
                 variant="ghost"
@@ -454,12 +471,25 @@ export function Navbar() {
                       Jadi Relawan
                     </Link>
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-12 text-lg"
-                  >
-                    Masuk
-                  </Button>
+                  {session.data?.user ? (
+                    <Link href="/profile">
+                      <Button
+                        variant="outline"
+                        className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-12 text-lg"
+                      >
+                        Profile
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href="/sign-in">
+                      <Button
+                        variant="outline"
+                        className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-12 text-lg"
+                      >
+                        Masuk
+                      </Button>
+                    </Link>
+                  )}
                 </motion.div>
               </motion.div>
             </SheetContent>
