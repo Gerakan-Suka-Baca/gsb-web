@@ -13,17 +13,17 @@ import Image from "next/image";
 
 export function Footer() {
   const quickLinks = [
-    { href: "#beranda", label: "Beranda" },
-    { href: "#tentang", label: "Tentang Kami" },
-    { href: "#program", label: "Program" },
-    { href: "#penghargaan", label: "Penghargaan" },
+    { href: "/", label: "Beranda" },
+    { href: "/about", label: "Tentang Kami" },
+    { href: "/programs", label: "Program" },
+    { href: "/volunteer", label: "Relawan" },
   ];
 
   const programs = [
-    { href: "#", label: "Minggu Cerdas" },
-    { href: "#", label: "Lapak Baca" },
-    { href: "#", label: "Beasiswa" },
-    { href: "#", label: "Proyek Berdampak" },
+    { href: "/programs#minggu-cerdas", label: "Minggu Cerdas" },
+    { href: "/programs#lapak-baca", label: "Lapak Baca" },
+    { href: "/programs#beasiswa", label: "Beasiswa" },
+    { href: "/programs#careducation", label: "Careducation" },
   ];
 
   const socialMedia = [
@@ -46,7 +46,7 @@ export function Footer() {
                 width={40}
                 height={40}
               />
-              <span className="text-2xl font-heading font-bold text-white">GSB - Gerakan Suka Baca</span>
+              <span className="text-2xl font-heading font-bold text-white">GSB</span>
             </Link>
 
             <p className="text-gray-400 text-sm leading-relaxed">
@@ -57,15 +57,15 @@ export function Footer() {
             <div className="space-y-2">
               <div className="flex items-start gap-2 text-sm text-gray-400">
                 <MapPin className="h-4 w-4 mt-1 shrink-0" />
-                <span>Jakarta, Indonesia</span>
+                <span>Depok & Bogor, Indonesia</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <Mail className="h-4 w-4 shrink-0" />
-                <span>info@gsb.or.id</span>
+                <span>gerakansukabaca@gmail.com</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-400">
                 <Phone className="h-4 w-4 shrink-0" />
-                <span>+62 812-3456-7890</span>
+                <span>0851-5642-3290</span>
               </div>
             </div>
           </div>
@@ -133,7 +133,7 @@ export function Footer() {
 
         <div className="border-t border-white/10 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-400">
-            <p>© 2025 Gerakan Suka Baca. Hak Cipta Dilindungi.</p>
+            <p>© 2026 Gerakan Suka Baca. Hak Cipta Dilindungi.</p>
             <div className="flex gap-6">
               <Link href="#" className="hover:text-white transition-colors">
                 Kebijakan Privasi
