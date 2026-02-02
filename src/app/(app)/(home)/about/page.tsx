@@ -59,7 +59,7 @@ export default function AboutPage() {
       <section className="relative py-20 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
           <FadeIn direction="up">
-            <h1 className="text-4xl md:text-6xl font-heading font-bold text-gsb-maroon dark:text-gsb-yellow mb-6">
+            <h1 className="text-4xl md:text-6xl font-heading font-bold text-gsb-maroon dark:text-white mb-6">
               Tentang <span className="text-gsb-orange">Kami</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
@@ -76,7 +76,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 lg:px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <FadeIn direction="right" className="space-y-6">
-              <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-gsb-yellow">
+              <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white">
                 Perjalanan <span className="text-gsb-orange">9 Tahun</span> GSB
               </h2>
               <p className="text-muted-foreground leading-relaxed text-lg">
@@ -85,25 +85,25 @@ export default function AboutPage() {
                 untuk menjawab tantangan pendidikan yang seharusnya IMBANG, bukan TIMPANG.
               </p>
               <div className="bg-gsb-orange/5 p-6 rounded-2xl border-l-4 border-gsb-orange">
-                <p className="italic text-gsb-maroon dark:text-gsb-yellow font-medium">
+                <p className="italic text-gsb-maroon dark:text-white font-medium">
                   &quot;From Access to Impact: Education for All&quot;
                 </p>
               </div>
             </FadeIn>
             <FadeIn direction="left">
-               <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl bg-muted">
-                  <Image
-                    src="/home/about/kelasbogor.jpg"
-                    alt="Kegiatan GSB"
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <p className="font-heading font-bold text-xl">Komunitas Gerakan Suka Baca</p>
-                    <p className="text-sm opacity-90">Sejak 2016</p>
-                  </div>
-               </div>
+              <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl bg-muted">
+                <Image
+                  src="/home/about/kelasbogor.jpg"
+                  alt="Kegiatan GSB"
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-linear-to-t from-black/50 to-transparent" />
+                <div className="absolute bottom-6 left-6 text-white">
+                  <p className="font-heading font-bold text-xl">Komunitas Gerakan Suka Baca</p>
+                  <p className="text-sm opacity-90">Sejak 2016</p>
+                </div>
+              </div>
             </FadeIn>
           </div>
         </div>
@@ -112,7 +112,7 @@ export default function AboutPage() {
       <section id="makna" className="py-16 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-gsb-yellow mb-4">Filosofi Nama</h2>
+            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">Filosofi Nama</h2>
             <div className="h-1 w-20 bg-gsb-orange mx-auto rounded-full" />
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -121,7 +121,7 @@ export default function AboutPage() {
                 <div className="mb-6 bg-muted/50 w-16 h-16 rounded-2xl flex items-center justify-center">
                   {item.icon}
                 </div>
-                <h3 className="text-2xl font-heading font-bold text-gsb-maroon dark:text-gsb-yellow mb-3">{item.term}</h3>
+                <h3 className="text-2xl font-heading font-bold text-gsb-maroon dark:text-white mb-3">{item.term}</h3>
                 <p className="text-muted-foreground leading-relaxed">
                   {item.desc}
                 </p>
@@ -155,15 +155,15 @@ export default function AboutPage() {
             </FadeIn>
 
             <FadeIn direction="left" className="space-y-6">
-               <h2 className="text-3xl font-heading font-bold text-gsb-yellow mb-6">Nilai Utama</h2>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 {values.map((val, idx) => (
-                   <div key={idx} className="bg-white/10 backdrop-blur-sm p-4 rounded-xl flex items-center gap-3 hover:bg-white/20 transition-colors">
-                     <Heart className="w-5 h-5 text-gsb-pink fill-gsb-pink" />
-                     <span className="font-medium text-lg">{val}</span>
-                   </div>
-                 ))}
-               </div>
+              <h2 className="text-3xl font-heading font-bold text-gsb-yellow mb-6">Nilai Utama</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {values.map((val, idx) => (
+                  <div key={idx} className="bg-white/10 backdrop-blur-sm p-4 rounded-xl flex items-center gap-3 hover:bg-white/20 transition-colors">
+                    <Heart className="w-5 h-5 text-gsb-pink fill-gsb-pink" />
+                    <span className="font-medium text-lg">{val}</span>
+                  </div>
+                ))}
+              </div>
             </FadeIn>
           </div>
         </div>
@@ -171,32 +171,32 @@ export default function AboutPage() {
       </section>
 
       <section id="tim" className="py-16 md:py-24">
-         <div className="container mx-auto px-4 lg:px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-gsb-yellow mb-4">Struktur Organisasi</h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Orang-orang hebat yang mendedikasikan waktu dan tenaga untuk keberlangsungan Yayasan Gema Simpul Berdaya.
-              </p>
-            </div>
+        <div className="container mx-auto px-4 lg:px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">Struktur Organisasi</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Orang-orang hebat yang mendedikasikan waktu dan tenaga untuk keberlangsungan Yayasan Gema Simpul Berdaya.
+            </p>
+          </div>
 
-            <div className="grid md:grid-cols-3 gap-8">
-               {team.map((group, idx) => (
-                 <FadeIn key={group.role} delay={idx * 0.1} className="flex flex-col items-center">
-                    <div className="w-16 h-16 rounded-full bg-gsb-orange/10 flex items-center justify-center mb-6 text-gsb-orange">
-                       {group.icon}
-                    </div>
-                    <h3 className="text-xl font-bold text-gsb-maroon dark:text-gsb-yellow mb-4">{group.role}</h3>
-                    <ul className="space-y-2 text-center">
-                       {group.members.map((member) => (
-                         <li key={member} className="text-muted-foreground font-medium">
-                           {member}
-                         </li>
-                       ))}
-                    </ul>
-                 </FadeIn>
-               ))}
-            </div>
-         </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {team.map((group, idx) => (
+              <FadeIn key={group.role} delay={idx * 0.1} className="flex flex-col items-center">
+                <div className="w-16 h-16 rounded-full bg-gsb-orange/10 flex items-center justify-center mb-6 text-gsb-orange">
+                  {group.icon}
+                </div>
+                <h3 className="text-xl font-bold text-gsb-maroon dark:text-white mb-4">{group.role}</h3>
+                <ul className="space-y-2 text-center">
+                  {group.members.map((member) => (
+                    <li key={member} className="text-muted-foreground font-medium">
+                      {member}
+                    </li>
+                  ))}
+                </ul>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
       </section>
     </div>
   );

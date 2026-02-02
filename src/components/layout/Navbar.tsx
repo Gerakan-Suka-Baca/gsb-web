@@ -27,10 +27,6 @@ import {
   Building,
   Handshake,
   Gift,
-  Code,
-  Database,
-  User,
-  PenTool,
   Sun,
   Moon,
 } from "lucide-react";
@@ -75,6 +71,7 @@ export function Navbar() {
   const session = useQuery(trpc.auth.session.queryOptions());
   const [isScrolled, setIsScrolled] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(false);
   const { theme, setTheme } = useTheme();
 
   React.useEffect(() => {
@@ -251,34 +248,8 @@ export function Navbar() {
       ],
     },
     {
-      title: "Produk",
-      url: "#",
-      items: [
-        {
-          title: "Kelas FrontEnd",
-          description: "Belajar web development.",
-          icon: <Code className="size-5 shrink-0" />,
-          url: "/products/frontend-class",
-        },
-        {
-          title: "Kelas Data Science",
-          description: "Analisis data modern.",
-          icon: <Database className="size-5 shrink-0" />,
-          url: "/products/data-science",
-        },
-        {
-          title: "Kelas Self Development",
-          description: "Pengembangan diri.",
-          icon: <User className="size-5 shrink-0" />,
-          url: "/products/self-development",
-        },
-        {
-          title: "Tryout UTBK",
-          description: "Persiapan masuk kampus.",
-          icon: <PenTool className="size-5 shrink-0" />,
-          url: "/tryout",
-        },
-      ],
+      title: "Learning Path",
+      url: "/learning-path",
     },
   ];
 
@@ -416,7 +387,7 @@ export function Navbar() {
             </Button>
           )}
 
-          <Sheet>
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Menu className="h-6 w-6" />
@@ -450,7 +421,7 @@ export function Navbar() {
                   className="flex w-full flex-col gap-2"
                 >
                   {menuItems.map((item) =>
-                    renderMobileMenuItem(item, itemVariants),
+                    renderMobileMenuItem(item, itemVariants, () => setIsOpen(false)),
                   )}
                 </Accordion>
 
@@ -466,12 +437,13 @@ export function Navbar() {
                       href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a"
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => setIsOpen(false)}
                     >
                       Jadi Relawan
                     </Link>
                   </Button>
                   {session.data?.user ? (
-                    <Link href="/profile">
+                    <Link href="/profile" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="outline"
                         className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-12 text-lg"
@@ -480,7 +452,7 @@ export function Navbar() {
                       </Button>
                     </Link>
                   ) : (
-                    <Link href="/sign-in">
+                    <Link href="/sign-in" onClick={() => setIsOpen(false)}>
                       <Button
                         variant="outline"
                         className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-12 text-lg"
@@ -534,7 +506,7 @@ const renderMenuItem = (item: MenuItem) => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const renderMobileMenuItem = (item: MenuItem, variants: any) => {
+const renderMobileMenuItem = (item: MenuItem, variants: any, closeMenu: () => void) => {
   if (item.items) {
     return (
       <motion.div variants={variants} key={item.title}>
@@ -545,7 +517,7 @@ const renderMobileMenuItem = (item: MenuItem, variants: any) => {
           <AccordionContent className="pb-2">
             <div className="flex flex-col gap-2 pl-2">
               {item.items.map((subItem) => (
-                <SubMenuLink key={subItem.title} item={subItem} mobile />
+                <SubMenuLink key={subItem.title} item={subItem} mobile onClick={closeMenu} />
               ))}
             </div>
           </AccordionContent>
@@ -558,7 +530,8 @@ const renderMobileMenuItem = (item: MenuItem, variants: any) => {
     <motion.div variants={variants} key={item.title}>
       <Link
         href={item.url}
-        className="text-lg font-heading font-bold text-gsb-orange py-3 block"
+        className="text-lg font-heading font-bold text-gsb-orange py-3 px-4 block"
+        onClick={closeMenu}
       >
         {item.title}
       </Link>
@@ -569,9 +542,11 @@ const renderMobileMenuItem = (item: MenuItem, variants: any) => {
 const SubMenuLink = ({
   item,
   mobile = false,
+  onClick,
 }: {
   item: MenuItem;
   mobile?: boolean;
+  onClick?: () => void;
 }) => {
   return (
     <Link
@@ -580,6 +555,7 @@ const SubMenuLink = ({
         mobile ? "w-full" : "h-full",
       )}
       href={item.url}
+      onClick={onClick}
     >
       <div className="text-gsb-orange mt-1">{item.icon}</div>
       <div>
