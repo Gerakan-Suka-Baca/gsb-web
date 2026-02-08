@@ -8,6 +8,9 @@ import {
   Instagram,
   Linkedin,
   Youtube,
+  Twitter,
+  Music,
+  Video,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -27,9 +30,12 @@ export function Footer() {
   ];
 
   const socialMedia = [
-    { icon: Instagram, href: "https://www.instagram.com/komunitasgsb/", label: "Instagram" },
+    { icon: Instagram, href: "https://www.instagram.com/komunitasgsb", label: "Instagram" },
     { icon: Linkedin, href: "https://www.linkedin.com/in/komunitas-gerakan-suka-baca-403605248/", label: "LinkedIn" },
     { icon: Youtube, href: "https://www.youtube.com/c/GerakanSukaBaca", label: "YouTube" },
+    { icon: Twitter, href: "https://x.com/komunitasgsb", label: "Twitter" },
+    { icon: Music, href: "https://open.spotify.com/show/5uoOFClrYGurElVUN0MKZM", label: "Spotify" },
+    { icon: Video, href: "https://www.tiktok.com/@komunitasgsb", label: "TikTok" },
   ];
 
   return (
@@ -114,7 +120,7 @@ export function Footer() {
               Tetap terhubung dengan gerakan kami di media sosial
             </p>
 
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3 mb-6">
               {socialMedia.map((social) => (
                 <a
                   key={social.label}
@@ -128,6 +134,27 @@ export function Footer() {
                 </a>
               ))}
             </div>
+
+            <h3 className="font-heading font-semibold text-lg mb-4 text-white">
+              Kolaborasi
+            </h3>
+            <a
+              href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block hover:opacity-80 transition-opacity"
+            >
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/footer/indorelawan.png"
+                  alt="Indorelawan"
+                  width={180}
+                  height={54}
+                  className="h-12 w-auto object-contain rounded-xl"
+                  unoptimized
+                />
+              </div>
+            </a>
           </div>
         </div>
 

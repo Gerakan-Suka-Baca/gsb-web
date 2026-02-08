@@ -1,7 +1,7 @@
 "use client";
 
 import { FadeIn } from "@/components/ui/fade-in";
-import { Users, Target, Heart, Lightbulb, User, Shield, Briefcase } from "lucide-react";
+import { Users, Target, Heart, Lightbulb } from "lucide-react";
 import Image from "next/image";
 
 export default function AboutPage() {
@@ -29,29 +29,6 @@ export default function AboutPage() {
     "Kemandirian",
     "Kontekstual",
     "Kegembiraan (Fun)",
-  ];
-
-  const team = [
-    {
-      role: "Pengawas",
-      members: ["Nur Kholis Makki"],
-      icon: <Shield className="w-6 h-6 text-gsb-red" />,
-    },
-    {
-      role: "Pembina",
-      members: ["Fajri Alfalah", "Ari Ismi Hidayah", "Muhammad Rifai"],
-      icon: <User className="w-6 h-6 text-gsb-blue" />,
-    },
-    {
-      role: "Pengurus Harian",
-      members: [
-        "Renita Yulistiana (Ketua)",
-        "Annisa Dwinda Fatimah (Sekretaris)",
-        "Astri Septiani (Bendahara Umum)",
-        "Sinta Widyanisa (Bendahara)",
-      ],
-      icon: <Briefcase className="w-6 h-6 text-gsb-tosca" />,
-    },
   ];
 
   return (
@@ -170,29 +147,29 @@ export default function AboutPage() {
         <div className="absolute top-0 left-0 w-full h-full bg-[url('/home/texture.png')] opacity-10 mix-blend-overlay" />
       </section>
 
-      <section id="tim" className="py-16 md:py-24">
+      <section id="budaya" className="py-16 md:py-24 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">Struktur Organisasi</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Orang-orang hebat yang mendedikasikan waktu dan tenaga untuk keberlangsungan Yayasan Gema Simpul Berdaya.
-            </p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">Budaya Komunitas GSB</h2>
+            <div className="h-1 w-20 bg-gsb-orange mx-auto rounded-full" />
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {team.map((group, idx) => (
-              <FadeIn key={group.role} delay={idx * 0.1} className="flex flex-col items-center">
-                <div className="w-16 h-16 rounded-full bg-gsb-orange/10 flex items-center justify-center mb-6 text-gsb-orange">
-                  {group.icon}
-                </div>
-                <h3 className="text-xl font-bold text-gsb-maroon dark:text-white mb-4">{group.role}</h3>
-                <ul className="space-y-2 text-center">
-                  {group.members.map((member) => (
-                    <li key={member} className="text-muted-foreground font-medium">
-                      {member}
-                    </li>
-                  ))}
-                </ul>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { title: "Sama-sama Belajar, Sama-sama Tumbuh", desc: "Ruang saling menguatkan dan berbagi pengetahuan. Gak ada yang sok paling bisa." },
+              { title: "Berani Berkomunikasi", desc: "Punya ide atau kendala? Sampaikan. Tiap suara layak didengar." },
+              { title: "Saling Menghargai", desc: "Hormati waktu dan ruang pribadi rekan. Tanggung jawab dengan tugas masing-masing." },
+              { title: "Semua SAMA dan SETARA", desc: "Tidak ada diskriminasi. Semua layak dihargai tanpa memandang latar belakang." },
+              { title: "Kepala Dingin", desc: "Salah paham? Konflik? Yuk ngobrol baik-baik cari solusi." },
+              { title: "Hak Beristirahat", desc: "Senin–Rabu adalah 'Hari Haram Tugas'. Recharge energi itu penting!" },
+              { title: "Ruang Aman", desc: "Pelecehan, kekerasan, dan diskriminasi = BIG NO." },
+              { title: "Bersama, Bukan Sendiri", desc: "Saling dukung antar divisi demi satu tujuan akses pendidikan yang adil." },
+              { title: "Berbagi Buku & Cerita", desc: "Sesi sharing buku dan Budaya Baca 20 menit sebelum acara." },
+              { title: "Refleksi & Apresiasi", desc: "Setiap relawan berhak memberi dan menerima masukan serta apresiasi." },
+            ].map((item, idx) => (
+              <FadeIn key={item.title} delay={idx * 0.05} className="bg-background p-6 rounded-2xl border border-border hover:border-gsb-orange/50 transition-colors">
+                <h3 className="font-bold text-lg text-gsb-maroon mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </FadeIn>
             ))}
           </div>

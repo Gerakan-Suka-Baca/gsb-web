@@ -9,26 +9,25 @@ export default function PodcastPage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Hero Section */}
-      <section className="relative py-24 bg-gradient-to-br from-gsb-maroon via-gsb-red to-gsb-orange text-white overflow-hidden">
+      {/* Hero Section */}
+      <section className="relative py-20 md:py-28 overflow-hidden bg-background">
         {/* Background decorations */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-32 h-32 bg-gsb-yellow/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-10 right-20 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gsb-tosca/10 rounded-full blur-3xl" />
-        </div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gsb-yellow/10 rounded-full blur-3xl -z-10 translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gsb-blue/10 rounded-full blur-3xl -z-10 -translate-x-1/2 translate-y-1/2" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gsb-tosca/5 rounded-full blur-3xl -z-10" />
 
         <div className="container mx-auto px-4 lg:px-6 relative z-10">
           <FadeIn className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-gsb-yellow text-sm font-bold mb-6 border border-white/20 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gsb-orange/10 text-gsb-orange text-sm font-bold mb-6 border border-gsb-orange/20">
               <Mic className="w-4 h-4" />
               <span>Media Pembelajaran Audio</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 leading-tight">
-              MSG <span className="text-gsb-yellow">Podcast</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 leading-tight text-gsb-maroon">
+              MSG <span className="text-gsb-orange">Podcast</span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-white/90 leading-relaxed mb-8">
+            <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-8">
               Dongeng edukatif dalam format audio dari Gerakan Suka Baca. Belajar jadi lebih menyenangkan lewat cerita!
             </p>
 
@@ -49,7 +48,7 @@ export default function PodcastPage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-2 border-white text-white hover:bg-white hover:text-gsb-maroon font-bold rounded-full px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg bg-transparent gap-2"
+                className="border-2 border-gsb-maroon text-gsb-maroon hover:bg-gsb-maroon hover:text-white font-bold rounded-full px-6 sm:px-8 h-12 sm:h-14 text-base sm:text-lg bg-transparent gap-2"
                 asChild
               >
                 <Link href="#episode-terbaru">

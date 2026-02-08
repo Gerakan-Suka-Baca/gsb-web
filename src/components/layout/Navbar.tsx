@@ -34,10 +34,9 @@ const menuItems: MenuItem[] = [
   {
     title: "Kenali GSB", url: "#",
     items: [
-      { title: "Tentang kami", description: "Siapa kami dan apa visi kami.", icon: I("Info"), url: "/about" },
-      { title: "Makna dan Tujuan", description: "Filosofi di balik gerakan kami.", icon: I("Target"), url: "/about#makna" },
-      { title: "Portofolio Komunitas", description: "Jejak langkah dan dampak kami.", icon: I("Briefcase"), url: "/about#portfolio" },
-      { title: "Tim Inti dan Pengurus", description: "Orang-orang di balik layar.", icon: I("Users"), url: "/about#tim" },
+      { title: "Tentang GSB", description: "Visi, misi, dan budaya kami.", icon: I("Info"), url: "/about" },
+      { title: "Portofolio Komunitas", description: "Jejak langkah dan dampak kami.", icon: I("Briefcase"), url: "/about/portfolio" },
+      { title: "Tim GSB", description: "Orang-orang di balik layar.", icon: I("Users"), url: "/about/team" },
     ],
   },
   {
@@ -70,7 +69,7 @@ const menuItems: MenuItem[] = [
       { title: "Kolaborasi Sekolah", description: "Kerjasama dengan sekolah.", icon: I("School"), url: "/volunteer/kolaborasi" },
       { title: "Kolaborasi Kampus", description: "Sinergi dengan mahasiswa.", icon: I("Building"), url: "/volunteer/kolaborasi" },
       { title: "Kolaborasi CSR", description: "Partnership perusahaan.", icon: I("Handshake"), url: "/volunteer/kolaborasi" },
-      { title: "Kakak Donatur", description: "Menjadi orang tua asuh.", icon: I("Heart"), url: "/volunteer/donatur" },
+      { title: "Kakak Donatur", description: "Menjadi orang tua asuh.", icon: I("Heart"), url: "/volunteer/kakak-donatur" },
       { title: "Donasi Publik", description: "Dukungan untuk pendidikan.", icon: I("Gift"), url: "/volunteer/donasi" },
     ],
   },
@@ -183,7 +182,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Menu */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden xl:flex items-center gap-1">
             {menuItems.map((item) =>
               item.items ? (
                 <div key={item.title} className="relative" onMouseEnter={() => setActiveMenu(item.title)}>
@@ -238,7 +237,7 @@ export function Navbar() {
         <div className="flex-1" />
 
         {/* Desktop CTA */}
-        <div className="hidden lg:flex items-center gap-4">
+        <div className="hidden xl:flex items-center gap-4">
           <Button asChild className="bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full px-6 shadow-md transition-all hover:scale-105">
             <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer">Jadi Relawan</Link>
           </Button>
@@ -249,7 +248,7 @@ export function Navbar() {
         </div>
 
         {/* Mobile Menu */}
-        <div className="flex lg:hidden items-center gap-2">
+        <div className="flex xl:hidden items-center gap-2">
           <ThemeButton />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
