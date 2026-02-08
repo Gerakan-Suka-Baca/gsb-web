@@ -1,10 +1,14 @@
 'use client';
 
+
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { FadeIn } from '@/components/ui/fade-in';
+import { DonationModal } from '@/components/ui/donation-modal';
 
 export function CTASection() {
+    const [isDonationModalOpen, setIsDonationModalOpen] = React.useState(false);
+
     return (
         <section className="pb-20 md:pb-32 px-4 lg:px-6">
             <div className="container mx-auto">
@@ -25,7 +29,10 @@ export function CTASection() {
                                     Jadi Relawan
                                 </Button>
 
-                                <Button className="bg-transparent hover:bg-gsb-orange/5 text-gsb-orange border-2 border-gsb-orange font-bold rounded-full px-8 py-6 text-lg shadow-sm hover:scale-105 transition-transform dark:text-white dark:border-white dark:hover:bg-white/10">
+                                <Button
+                                    onClick={() => setIsDonationModalOpen(true)}
+                                    className="bg-transparent hover:bg-gsb-orange/5 text-gsb-orange border-2 border-gsb-orange font-bold rounded-full px-8 py-6 text-lg shadow-sm hover:scale-105 transition-transform dark:text-white dark:border-white dark:hover:bg-white/10"
+                                >
                                     Donasi Sekarang
                                 </Button>
                             </div>
@@ -36,6 +43,12 @@ export function CTASection() {
                     </div>
                 </FadeIn>
             </div>
+
+            <DonationModal
+                isOpen={isDonationModalOpen}
+                onClose={() => setIsDonationModalOpen(false)}
+            />
         </section>
     );
 }
+
