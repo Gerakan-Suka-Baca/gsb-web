@@ -11,7 +11,6 @@ import {
     Brain,
     Calculator,
     Languages,
-
     AlertCircle,
     ArrowRight,
     PenTool,
