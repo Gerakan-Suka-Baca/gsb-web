@@ -147,30 +147,30 @@ export default function TryoutSNBTPage() {
                                 Materi yang Diujikan
                             </h2>
                             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                                Kuasai 4 subtes utama untuk memaksimalkan skormu.
+                                Kuasai 7 subtes utama untuk memaksimalkan skormu.
                             </p>
                         </FadeIn>
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-6">
+                    <div className="flex flex-wrap justify-center gap-3 md:gap-6">
                         {subtests.map((item, idx) => (
                             <FadeIn
                                 key={item.title}
                                 delay={idx * 0.1}
-                                className="w-full md:w-[calc(50%-1.5rem)] lg:w-[calc(25%-1.5rem)] p-6 rounded-2xl bg-card border border-border hover:border-gsb-orange/50 transition-all hover:shadow-lg group"
+                                className="w-[calc(50%-0.5rem)] md:w-[calc(25%-1.5rem)] p-4 md:p-6 rounded-2xl bg-card border border-border hover:border-gsb-orange/50 transition-all hover:shadow-lg group flex flex-col"
                             >
                                 <div
-                                    className={`${item.bg} w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+                                    className={`${item.bg} w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center mb-3 md:mb-4 group-hover:scale-110 transition-transform`}
                                 >
                                     <span className={`${item.color}`}>{item.icon}</span>
                                 </div>
-                                <h3 className="text-xl font-bold text-foreground mb-2">
+                                <h3 className="text-sm md:text-xl font-bold text-foreground mb-2 leading-tight">
                                     {item.title}
                                 </h3>
-                                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                                <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4 leading-relaxed hidden md:block">
                                     {item.desc}
                                 </p>
-                                <Badge variant="secondary" className="text-xs font-medium">
+                                <Badge variant="secondary" className="text-[10px] md:text-xs font-medium mt-auto w-fit">
                                     {item.count}
                                 </Badge>
                             </FadeIn>

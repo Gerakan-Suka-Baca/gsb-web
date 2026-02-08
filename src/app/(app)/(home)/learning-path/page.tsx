@@ -102,7 +102,7 @@ export default function LearningPathPage() {
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Hero Section */}
-            <section className="relative py-20 lg:py-32 bg-muted/30 overflow-hidden">
+            <section className="relative py-12 lg:py-20 bg-muted/30 overflow-hidden">
                 <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
                     <FadeIn direction="up">
                         <Badge variant="outline" className="mb-4 text-gsb-orange border-gsb-orange">
@@ -122,19 +122,19 @@ export default function LearningPathPage() {
             </section>
 
             {/* How It Works */}
-            <section className="py-20 bg-muted/30">
+            <section className="py-12 bg-muted/30">
                 <div className="container mx-auto px-4">
-                    <div className="text-center mb-16">
+                    <div className="text-center mb-10">
                         <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-4">
                             Cara Memulai
                         </h2>
                     </div>
-                    <div className="grid md:grid-cols-4 gap-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
                         {steps.map((step, idx) => (
                             <FadeIn key={step.num} delay={idx * 0.1} className="relative">
-                                <div className="text-5xl font-bold text-gsb-orange/10 mb-4 font-heading">{step.num}</div>
-                                <h3 className="text-xl font-bold mb-2 absolute top-8 left-0">{step.title}</h3>
-                                <p className="text-muted-foreground mt-12">{step.desc}</p>
+                                <div className="text-4xl md:text-5xl font-bold text-gsb-orange/10 mb-2 md:mb-4 font-heading">{step.num}</div>
+                                <h3 className="text-lg md:text-xl font-bold mb-2 absolute top-6 md:top-8 left-0">{step.title}</h3>
+                                <p className="text-sm md:text-base text-muted-foreground mt-8 md:mt-12">{step.desc}</p>
                             </FadeIn>
                         ))}
                     </div>
@@ -142,40 +142,40 @@ export default function LearningPathPage() {
             </section>
 
             {/* Paths Grid */}
-            <section className="py-20">
+            <section className="py-12">
                 <div className="container mx-auto px-4 lg:px-6">
-                    <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                    <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-5xl mx-auto">
                         {paths.map((item, idx) => (
                             <FadeIn
                                 key={item.title}
                                 delay={idx * 0.1}
-                                className="p-8 rounded-3xl bg-card border border-border hover:border-gsb-orange/50 transition-all hover:shadow-xl group relative overflow-hidden"
+                                className="p-5 md:p-8 rounded-3xl bg-card border border-border hover:border-gsb-orange/50 transition-all hover:shadow-xl group relative overflow-hidden flex flex-col"
                             >
-                                <div className="flex items-start justify-between mb-6">
+                                <div className="flex items-start justify-between mb-4 md:mb-6">
                                     <div
-                                        className={`${item.bg} w-14 h-14 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}
+                                        className={`${item.bg} w-10 h-10 md:w-14 md:h-14 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}
                                     >
-                                        <span className={`${item.color}`}>{item.icon}</span>
+                                        <span className={`${item.color} scale-75 md:scale-100`}>{item.icon}</span>
                                     </div>
-                                    <Badge variant={item.status === "Available" ? "default" : "secondary"} className={item.status === "Available" ? "bg-gsb-green hover:bg-gsb-green/90" : ""}>
+                                    <Badge variant={item.status === "Available" ? "default" : "secondary"} className={`text-[10px] md:text-sm ${item.status === "Available" ? "bg-gsb-green hover:bg-gsb-green/90" : ""}`}>
                                         {item.status}
                                     </Badge>
                                 </div>
-                                <h3 className="text-2xl font-bold text-foreground mb-3">
+                                <h3 className="text-base md:text-2xl font-bold text-foreground mb-2 md:mb-3 leading-tight">
                                     {item.title}
                                 </h3>
-                                <p className="text-muted-foreground mb-8 leading-relaxed text-lg">
+                                <p className="text-muted-foreground mb-4 md:mb-8 leading-relaxed text-xs md:text-lg line-clamp-2 md:line-clamp-none">
                                     {item.desc}
                                 </p>
                                 <Button
                                     asChild
                                     variant={item.status === "Available" ? "default" : "outline"}
-                                    className={`w-full h-12 rounded-xl text-lg font-semibold ${item.status === "Available" ? "bg-gsb-orange hover:bg-gsb-orange/90 text-white shadow-lg" : ""}`}
+                                    className={`w-full h-10 md:h-12 rounded-xl text-sm md:text-lg font-semibold mt-auto ${item.status === "Available" ? "bg-gsb-orange hover:bg-gsb-orange/90 text-white shadow-lg" : ""}`}
                                     disabled={item.status !== "Available"}
                                 >
                                     <Link href={item.url}>
-                                        {item.status === "Available" ? "Mulai Belajar" : "Segera Hadir"}
-                                        {item.status === "Available" && <ArrowRight className="ml-2 w-5 h-5" />}
+                                        {item.status === "Available" ? "Mulai" : "Segera"}
+                                        {item.status === "Available" && <ArrowRight className="ml-1 md:ml-2 w-4 h-4 md:w-5 md:h-5" />}
                                     </Link>
                                 </Button>
                             </FadeIn>
@@ -185,7 +185,7 @@ export default function LearningPathPage() {
             </section>
 
             {/* FAQ */}
-            <section className="py-20 bg-background max-w-3xl mx-auto px-4">
+            <section className="py-12 bg-background max-w-3xl mx-auto px-4">
                 <div className="text-center mb-12">
                     <h2 className="text-3xl font-heading font-bold text-gsb-maroon mb-4">
                         Pertanyaan Umum
