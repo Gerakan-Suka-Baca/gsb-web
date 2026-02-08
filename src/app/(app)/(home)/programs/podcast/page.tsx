@@ -80,7 +80,7 @@ export default function PodcastPage() {
                     Sebuah hasil kerja kolektif bersama para relawan dari berbagai daerah di Indonesia. Kami berharap konten ini bisa menjadi media belajar bagi para peserta didik, pendidik, dan orangtua dari latar belakang apapun.
                   </p>
                   <p className="text-gsb-maroon font-semibold italic">
-                    "Selamat mendengarkan! Mari sama-sama bergerak, untuk sama-sama berdampak!"
+                    &ldquo;Selamat mendengarkan! Mari sama-sama bergerak, untuk sama-sama berdampak!&rdquo;
                   </p>
                 </div>
               </div>
