@@ -25,11 +25,9 @@ interface MenuItem {
   items?: MenuItem[]
 }
 
-// Icons mapping untuk compact code
 const icons = { Info, Target, Briefcase, Users, Smile, RefreshCw, BookOpen, Mic, Heart, Download, GraduationCap, Library, MessageCircle, Map, HeartHandshake, ShoppingBag, School, Building, Handshake, Gift }
 const I = (name: keyof typeof icons) => { const Icon = icons[name]; return <Icon className="size-5 shrink-0" /> }
 
-// Menu Data - compact format
 const menuItems: MenuItem[] = [
   {
     title: "Kenali GSB", url: "#",
