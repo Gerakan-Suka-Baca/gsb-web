@@ -161,7 +161,7 @@ export function Navbar() {
   const closeMenu = () => setIsOpen(false)
 
   const ThemeButton = () => mounted && (
-    <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full hover:bg-muted transition-colors">
+    <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full hover:bg-muted transition-colors" aria-label="Toggle theme">
       {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
     </Button>
   )
@@ -252,7 +252,7 @@ export function Navbar() {
           <ThemeButton />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon"><Menu className="h-6 w-6" /></Button>
+              <Button variant="ghost" size="icon" aria-label="Toggle menu"><Menu className="h-6 w-6" /></Button>
             </SheetTrigger>
             <SheetContent side="right" className="overflow-y-auto w-[320px] sm:w-[400px] p-6">
               <SheetHeader className="mb-8 text-left pt-2">
