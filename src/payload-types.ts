@@ -64,13 +64,14 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    tryouts: TryoutAuthOperations;
   };
   blocks: {};
   collections: {
     users: User;
     media: Media;
-    tests: Test;
     tryouts: Tryout;
+    questions: Question;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -79,8 +80,8 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
-    tests: TestsSelect<false> | TestsSelect<true>;
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
+    questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -91,15 +92,37 @@ export interface Config {
   globals: {};
   globalsSelect: {};
   locale: null;
-  user: User & {
-    collection: 'users';
-  };
+  user:
+    | (User & {
+        collection: 'users';
+      })
+    | (Tryout & {
+        collection: 'tryouts';
+      });
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface TryoutAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -160,21 +183,6 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tests".
- */
-export interface Test {
-  id: string;
-  title: string;
-  /**
-   * Microsoft Quiz URL
-   */
-  url: string;
-  active: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tryouts".
  */
 export interface Tryout {
@@ -185,7 +193,64 @@ export interface Tryout {
   'Date Close': string;
   'Date Close_tz': SupportedTimezones;
   description: string;
-  tests: (string | Test)[];
+  questions: (string | Question)[];
+  updatedAt: string;
+  createdAt: string;
+  enableAPIKey?: boolean | null;
+  apiKey?: string | null;
+  apiKeyIndex?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "questions".
+ */
+export interface Question {
+  id: string;
+  title: string;
+  tryoutQuestions?:
+    | {
+        question: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        tryoutAnswers: {
+          answer: {
+            root: {
+              type: string;
+              children: {
+                type: string;
+                version: number;
+                [k: string]: unknown;
+              }[];
+              direction: ('ltr' | 'rtl') | null;
+              format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+              indent: number;
+              version: number;
+            };
+            [k: string]: unknown;
+          };
+          isCorrect: boolean;
+          id?: string | null;
+          blockName?: string | null;
+          blockType: 'tryoutAnswer';
+        }[];
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'tryoutQuestion';
+      }[]
+    | null;
+  active: boolean;
   updatedAt: string;
   createdAt: string;
 }
@@ -205,18 +270,23 @@ export interface PayloadLockedDocument {
         value: string | Media;
       } | null)
     | ({
-        relationTo: 'tests';
-        value: string | Test;
-      } | null)
-    | ({
         relationTo: 'tryouts';
         value: string | Tryout;
+      } | null)
+    | ({
+        relationTo: 'questions';
+        value: string | Question;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: string | User;
+      }
+    | {
+        relationTo: 'tryouts';
+        value: string | Tryout;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -226,10 +296,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: string;
-  user: {
-    relationTo: 'users';
-    value: string | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: string | User;
+      }
+    | {
+        relationTo: 'tryouts';
+        value: string | Tryout;
+      };
   key?: string | null;
   value?:
     | {
@@ -294,17 +369,6 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tests_select".
- */
-export interface TestsSelect<T extends boolean = true> {
-  title?: T;
-  url?: T;
-  active?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tryouts_select".
  */
 export interface TryoutsSelect<T extends boolean = true> {
@@ -314,7 +378,43 @@ export interface TryoutsSelect<T extends boolean = true> {
   'Date Close'?: T;
   'Date Close_tz'?: T;
   description?: T;
-  tests?: T;
+  questions?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  enableAPIKey?: T;
+  apiKey?: T;
+  apiKeyIndex?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "questions_select".
+ */
+export interface QuestionsSelect<T extends boolean = true> {
+  title?: T;
+  tryoutQuestions?:
+    | T
+    | {
+        tryoutQuestion?:
+          | T
+          | {
+              question?: T;
+              tryoutAnswers?:
+                | T
+                | {
+                    tryoutAnswer?:
+                      | T
+                      | {
+                          answer?: T;
+                          isCorrect?: T;
+                          id?: T;
+                          blockName?: T;
+                        };
+                  };
+              id?: T;
+              blockName?: T;
+            };
+      };
+  active?: T;
   updatedAt?: T;
   createdAt?: T;
 }

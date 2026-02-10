@@ -2,6 +2,10 @@ import type { CollectionConfig } from "payload";
 
 export const Tryouts: CollectionConfig = {
   slug: "tryouts",
+  auth: {
+    useAPIKey: true,
+    disableLocalStrategy: true,
+  },
   admin: {
     listSearchableFields: ["title"],
     useAsTitle: "title",
@@ -42,9 +46,9 @@ export const Tryouts: CollectionConfig = {
       required: true,
     },
     {
-      name: "tests",
+      name: "questions",
       type: "relationship",
-      relationTo: "tests",
+      relationTo: "questions",
       hasMany: true,
       required: true,
       admin: {

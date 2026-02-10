@@ -1,10 +1,11 @@
 import type { CollectionConfig } from "payload";
+import { TryoutQuestion } from "../blocks/tryoutQuestion";
 
-export const Tests: CollectionConfig = {
+export const Questions: CollectionConfig = {
   admin: {
     useAsTitle: "title",
   },
-  slug: "tests",
+  slug: "questions",
   fields: [
     {
       name: "title",
@@ -12,12 +13,9 @@ export const Tests: CollectionConfig = {
       required: true,
     },
     {
-      name: "url",
-      type: "text",
-      required: true,
-      admin: {
-        description: "Microsoft Quiz URL",
-      },
+      type: "blocks",
+      name: "tryoutQuestions",
+      blocks: [TryoutQuestion],
     },
     {
       name: "active",
