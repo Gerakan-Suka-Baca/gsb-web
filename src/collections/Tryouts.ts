@@ -2,10 +2,6 @@ import type { CollectionConfig } from "payload";
 
 export const Tryouts: CollectionConfig = {
   slug: "tryouts",
-  auth: {
-    useAPIKey: true,
-    disableLocalStrategy: true,
-  },
   admin: {
     listSearchableFields: ["title"],
     useAsTitle: "title",
