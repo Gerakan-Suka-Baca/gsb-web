@@ -18,7 +18,7 @@ export const TryoutQuestion: Block = {
       name: "tryoutAnswers",
       blocks: [TryoutAnswer],
       minRows: 1,
-      maxRows: 4,
+      maxRows: 5,
       required: true,
     },
   ],
