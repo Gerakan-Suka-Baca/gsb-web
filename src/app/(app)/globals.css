@@ -109,6 +109,7 @@
 }
 
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -152,7 +153,7 @@
 
     /* Custom GSB Colors */
     --gsb-yellow: 48 98% 53%;
-    --gsb-orange: 18 100% 43%;
+    --gsb-orange: 18 100% 40%;
     --gsb-red: 359 60% 46%;
     --gsb-maroon: 18 100% 23%;
 
@@ -168,7 +169,7 @@
 
     /* GSB Brand Colors */
     --gsb-yellow: 48 96% 53%;
-    --gsb-orange: 18 100% 43%;
+    --gsb-orange: 18 100% 40%;
     --gsb-red: 359 60% 46%;
     --gsb-maroon: 18 100% 23%;
 
