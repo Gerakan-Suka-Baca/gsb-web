@@ -1,7 +1,7 @@
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+// import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 import { getQueryClient, trpc } from "@/trpc/server";
-import { TryoutView } from "@/modules/tryouts/ui/views/tryout-view";
+// import { TryoutView } from "@/modules/tryouts/ui/views/tryout-view";
 
 // import type { Metadata } from "next";
 
@@ -18,9 +18,12 @@ const Page = async ({ params }: Props) => {
   );
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <TryoutView tryoutId={tryoutId} />
-    </HydrationBoundary>
+    // <HydrationBoundary state={dehydrate(queryClient)}>
+    //   <TryoutView tryoutId={tryoutId} />
+    // </HydrationBoundary>
+    <div>
+      Tryout page is disabled for now.
+    </div>
   );
 };
 

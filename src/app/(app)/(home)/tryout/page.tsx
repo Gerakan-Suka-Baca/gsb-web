@@ -1,6 +1,6 @@
-import { TryoutListView } from "@/modules/tryouts/ui/views/tryout-list-view";
+// import { TryoutListView } from "@/modules/tryouts/ui/views/tryout-list-view";
 import { getQueryClient, trpc } from "@/trpc/server";
-import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+// import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 // export const metadata = {
 //   title: "About Sema FTD",
@@ -34,9 +34,12 @@ const Page = async () => {
   void queryClient.prefetchQuery(trpc.tryouts.getMany.queryOptions({}));
 
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
-      <TryoutListView />
-    </HydrationBoundary>
+    // <HydrationBoundary state={dehydrate(queryClient)}>
+    //   <TryoutListView />
+    // </HydrationBoundary>
+    <div>
+      Tryout page is disabled for now.
+    </div>
   );
 };
 
