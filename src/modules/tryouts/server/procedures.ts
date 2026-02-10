@@ -1,7 +1,7 @@
 import z from "zod";
 
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
-import { Test } from "@/payload-types";
+import { Question } from "@/payload-types";
 
 export const tryoutsRouter = createTRPCRouter({
   getOne: protectedProcedure
@@ -19,7 +19,7 @@ export const tryoutsRouter = createTRPCRouter({
 
       return {
         ...tryout,
-        tests: tryout.tests as Test[] | [],
+        tests: tryout.questions as Question[] | [],
       };
     }),
   getMany: baseProcedure
