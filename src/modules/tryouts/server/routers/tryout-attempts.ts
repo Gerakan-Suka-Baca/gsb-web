@@ -190,4 +190,73 @@ export const tryoutAttemptsRouter = createTRPCRouter({
 
       return updated;
     }),
+
+  getMyAttempts: protectedProcedure
+    .query(async ({ ctx }) => {
+      const { db: payload, session } = ctx;
+      const attempts = await payload.find({
+        collection: "tryout-attempts",
+        where: { user: { equals: session.user.id } },
+        depth: 1,
+        pagination: false,
+        sort: "-createdAt",
+      });
+      return attempts.docs;
+    }),
+
+  updatePlan: protectedProcedure
+    .input(
+      z.object({
+        attemptId: z.string(),
+        plan: z.enum(["free", "paid"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db: payload, session } = ctx;
+
+      const attempt = await payload.findByID({
+        collection: "tryout-attempts",
+        id: input.attemptId,
+      });
+
+      if (!attempt) throw new Error("Attempt not found");
+
+      const attemptUserId = typeof attempt.user === "object" ? attempt.user.id : attempt.user;
+      if (attemptUserId !== session.user.id) throw new Error("Unauthorized");
+
+      // Create payment record if plan is paid
+      if (input.plan === "paid") {
+        const existingPayment = await payload.find({
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          collection: "tryout-payments" as any,
+          where: { attempt: { equals: input.attemptId } },
+          limit: 1,
+        });
+
+        if (existingPayment.docs.length === 0) {
+          await payload.create({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            collection: "tryout-payments" as any,
+            data: {
+              user: session.user.id,
+              tryout: typeof attempt.tryout === "object" ? attempt.tryout.id : attempt.tryout,
+              attempt: input.attemptId,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              status: "pending" as any,
+              amount: 5020,
+              program: "Tryout SNBT Premium",
+              paymentDate: new Date().toISOString(),
+            },
+          });
+        }
+      }
+
+      const updated = await payload.update({
+        collection: "tryout-attempts",
+        id: input.attemptId,
+        data: { resultPlan: input.plan },
+      });
+
+      return updated;
+    }),
 });

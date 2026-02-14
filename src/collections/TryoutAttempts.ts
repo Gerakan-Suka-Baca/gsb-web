@@ -1,5 +1,5 @@
-
 import type { CollectionConfig } from "payload";
+import { CompactJSON } from "@/components/payload/CompactJSON";
 
 export const TryoutAttempts: CollectionConfig = {
   slug: "tryout-attempts",
@@ -23,7 +23,7 @@ export const TryoutAttempts: CollectionConfig = {
   },
   admin: {
     useAsTitle: "id",
-    defaultColumns: ["user", "tryout", "status", "score", "correctAnswersCount", "totalQuestionsCount", "createdAt"],
+    defaultColumns: ["user", "tryout", "status", "resultPlan", "score", "correctAnswersCount", "totalQuestionsCount", "createdAt"],
   },
   fields: [
     {
@@ -44,11 +44,23 @@ export const TryoutAttempts: CollectionConfig = {
       name: "answers",
       type: "json",
       defaultValue: {},
+      admin: {
+        components: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Field: CompactJSON as any,
+        },
+      },
     },
     {
       name: "flags",
       type: "json",
       defaultValue: {},
+      admin: {
+        components: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Field: CompactJSON as any,
+        },
+      },
     },
     {
       name: "questionResults",
@@ -56,6 +68,10 @@ export const TryoutAttempts: CollectionConfig = {
       label: "Hasil Per Soal",
       admin: {
         description: "Detail jawaban per soal: huruf jawaban, benar/salah, dll.",
+        components: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Field: CompactJSON as any,
+        },
       },
     },
     {
@@ -93,6 +109,18 @@ export const TryoutAttempts: CollectionConfig = {
       name: "totalQuestionsCount",
       type: "number",
       label: "Total Soal",
+    },
+    {
+      name: "resultPlan",
+      type: "select",
+      label: "Paket Hasil",
+      options: [
+        { label: "Belum Dipilih", value: "none" },
+        { label: "Gratis", value: "free" },
+        { label: "Berbayar", value: "paid" },
+      ],
+      defaultValue: "none",
+      admin: { description: "Paket hasil tryout yang dipilih peserta." },
     },
   ],
 };

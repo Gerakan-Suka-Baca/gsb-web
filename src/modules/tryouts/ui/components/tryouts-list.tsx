@@ -1,90 +1,228 @@
 "use client";
-import { Button } from "@/components/ui/button";
+
+
 import { Card } from "@/components/ui/card";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Clock,
+  FileText,
+  Play,
+  CheckCircle2,
+  Loader2,
+  BookOpen,
+} from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Tryout, TryoutAttempt } from "@/payload-types";
 
-/* -------------------------------------------------
-   Helper: is the try-out open right now?
--------------------------------------------------- */
-const isOpenNow = (
-  openDate: string | Date,
-  closeDate: string | Date,
-): boolean => {
+const TABS = [
+  { key: "current", label: "Current", icon: Play },
+  { key: "registered", label: "Registered", icon: CheckCircle2 },
+  { key: "others", label: "Others", icon: BookOpen },
+] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
+
+const isOpenNow = (openDate: string | Date, closeDate: string | Date): boolean => {
   const now = new Date();
-  const open = new Date(openDate);
-  const close = new Date(closeDate);
-  return now >= open && now <= close;
+  return now >= new Date(openDate) && now <= new Date(closeDate);
+};
+
+const fadeCard = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  exit: { opacity: 0, y: -10, transition: { duration: 0.15 } },
+} as const;
+
+const stagger = {
+  animate: { transition: { staggerChildren: 0.06 } },
+} as const;
+
+type StatusBadge = "available" | "in-progress" | "finished";
+
+const badgeStyles: Record<StatusBadge, string> = {
+  available: "bg-green-100 text-green-700 border-green-200",
+  "in-progress": "bg-yellow-100 text-yellow-700 border-yellow-200",
+  finished: "bg-blue-100 text-blue-700 border-blue-200",
+};
+
+const badgeLabels: Record<StatusBadge, string> = {
+  available: "Available",
+  "in-progress": "In Progress",
+  finished: "Finished",
 };
 
 export const TryoutsList = () => {
   const trpc = useTRPC();
   const { data } = useSuspenseQuery(trpc.tryouts.getMany.queryOptions({}));
-  const session = useQuery(trpc.auth.session.queryOptions());
-
-  /* Filter active tryouts */
-  const activeTryouts = data.docs.filter((t) =>
-    isOpenNow(t["Date Open"], t["Date Close"]),
+  const { data: myAttempts, isLoading: attemptsLoading } = useQuery(
+    trpc.tryoutAttempts.getMyAttempts.queryOptions()
   );
+  const session = useQuery(trpc.auth.session.queryOptions());
+  const [activeTab, setActiveTab] = useState<TabKey>("others");
 
-  if (activeTryouts.length === 0) {
-    return (
-      <div className="w-full h-full flex items-center justify-center py-10">
-        Belum ada tryout tersedia saat ini.
-      </div>
-    );
+  const allTryouts = data.docs as Tryout[];
+  const attempts = (myAttempts || []) as TryoutAttempt[];
+
+  const attemptMap = new Map<string, TryoutAttempt>();
+  for (const a of attempts) {
+    const tryoutId = typeof a.tryout === "object" ? a.tryout.id : a.tryout;
+    attemptMap.set(tryoutId, a);
   }
 
-  return (
-    <div className="flex flex-col gap-4 w-full justify-center items-center my-10">
-      {activeTryouts.map((tryout) => (
-        <div className="w-[90%]" key={tryout.id}>
-          <Card className="flex flex-row justify-between hover:shadow-md transition-shadow border-none bg-card/50 hover:bg-card overflow-hidden group">
-            <div className="w-full flex flex-row h-full">
-              <div className="p-4 px-6 flex flex-col justify-center">
-                <h4 className="text-base md:text-2xl font-heading font-bold text-foreground group-hover:text-gsb-orange transition-colors line-clamp-2 mb-2">
-                  {tryout.title}
-                </h4>
-                <p className="text-muted-foreground text-xs md:text-sm line-clamp-2 mb-1">
-                  {tryout.description}
-                </p>
-                <div className="flex gap-2">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                    <span>{formatDate(tryout["Date Open"])}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                    <span>-</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-                    <span>{formatDate(tryout["Date Close"])}</span>
-                  </div>
-                </div>
-              </div>
+  const currentTryouts: { tryout: Tryout; attempt: TryoutAttempt }[] = [];
+  const registeredTryouts: { tryout: Tryout; attempt: TryoutAttempt }[] = [];
+  const availableTryouts: Tryout[] = [];
+
+  for (const tryout of allTryouts) {
+    const attempt = attemptMap.get(tryout.id);
+    if (attempt?.status === "started") {
+      currentTryouts.push({ tryout, attempt });
+    } else if (attempt?.status === "completed") {
+      registeredTryouts.push({ tryout, attempt });
+    } else if (isOpenNow(tryout["Date Open"], tryout["Date Close"])) {
+      availableTryouts.push(tryout);
+    }
+  }
+
+  const renderCard = (tryout: Tryout, badge: StatusBadge, subtitle?: string) => (
+    <motion.div key={tryout.id} variants={fadeCard}>
+      <Link href={`/tryout/${tryout.id}`} className="block group">
+        <Card className="p-6 border-2 border-border/50 hover:border-gsb-orange/30 hover:shadow-lg transition-all duration-300 rounded-2xl bg-card/50 hover:bg-card">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-lg md:text-xl font-heading font-bold text-foreground group-hover:text-gsb-orange transition-colors line-clamp-2">
+                {tryout.title}
+              </h3>
+              <span className={cn("text-xs font-bold px-3 py-1 rounded-full border shrink-0", badgeStyles[badge])}>
+                {badgeLabels[badge]}
+              </span>
             </div>
-            {session.data?.user ? (
-              <Link
-                className="my-auto mr-6"
-                href={`/tryout/${tryout.id}`}
-              >
-                <Button variant="ghost" className="group/btn">
-                  <span>Lihat detail</span>
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-                </Button>
-              </Link>
-            ) : (
-              <Link className="my-auto mr-6" href="/sign-in">
-                <Button variant="ghost" className="group/btn">
-                  <span>Lihat detail</span>
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-                </Button>
-              </Link>
-            )}
-          </Card>
+
+            <p className="text-muted-foreground text-sm line-clamp-2">{tryout.description}</p>
+
+            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{formatDate(tryout["Date Open"])}</span>
+              </div>
+              {subtitle && (
+                <div className="flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{subtitle}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end mt-1">
+              <span className="text-sm font-medium text-gsb-orange flex items-center gap-1 group-hover:gap-2 transition-all">
+                {badge === "in-progress" ? "Lanjutkan" : badge === "finished" ? "Lihat Hasil" : "Mulai"}
+                <ArrowRight className="w-4 h-4" />
+              </span>
+            </div>
+          </div>
+        </Card>
+      </Link>
+    </motion.div>
+  );
+
+  const renderEmpty = (message: string) => (
+    <motion.div {...fadeCard} className="col-span-full flex flex-col items-center justify-center py-16 text-center">
+      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 text-2xl">📝</div>
+      <p className="text-muted-foreground text-lg">{message}</p>
+    </motion.div>
+  );
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <h1 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-2">
+          Dashboard Tryout
+        </h1>
+        <p className="text-muted-foreground">
+          {session.data?.user ? `Halo, ${session.data.user.username || "Peserta"}! ` : ""}
+          Kelola dan pantau tryout kamu di sini.
+        </p>
+      </motion.div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-8 bg-muted/50 p-1.5 rounded-xl w-fit border border-border/50">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const count =
+            tab.key === "current" ? currentTryouts.length :
+            tab.key === "registered" ? registeredTryouts.length :
+            availableTryouts.length;
+
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 select-none",
+                activeTab === tab.key
+                  ? "bg-gsb-orange text-white shadow-md"
+                  : "text-muted-foreground hover:text-foreground hover:bg-background"
+              )}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+              {count > 0 && (
+                <span className={cn(
+                  "text-xs px-1.5 py-0.5 rounded-full font-bold min-w-[20px] text-center",
+                  activeTab === tab.key ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                )}>
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {attemptsLoading ? (
+        <div className="flex justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-gsb-orange" />
         </div>
-      ))}
+      ) : (
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            variants={stagger}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
+            {activeTab === "current" && (
+              currentTryouts.length > 0
+                ? currentTryouts.map(({ tryout, attempt }) =>
+                    renderCard(tryout, "in-progress", `Dimulai ${attempt.startedAt ? formatDate(attempt.startedAt) : ""}`)
+                  )
+                : renderEmpty("Tidak ada tryout yang sedang dikerjakan.")
+            )}
+
+            {activeTab === "registered" && (
+              registeredTryouts.length > 0
+                ? registeredTryouts.map(({ tryout, attempt }) =>
+                    renderCard(tryout, "finished", `Selesai ${attempt.completedAt ? formatDate(attempt.completedAt) : ""}`)
+                  )
+                : renderEmpty("Belum ada tryout yang sudah diselesaikan.")
+            )}
+
+            {activeTab === "others" && (
+              availableTryouts.length > 0
+                ? availableTryouts.map((tryout) => renderCard(tryout, "available"))
+                : renderEmpty("Tidak ada tryout baru tersedia saat ini.")
+            )}
+          </motion.div>
+        </AnimatePresence>
+      )}
     </div>
   );
 };

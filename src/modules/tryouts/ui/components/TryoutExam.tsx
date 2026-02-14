@@ -87,6 +87,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [examState, setExamState] = useState<"loading" | "ready" | "running" | "bridging" | "finished">("loading");
   const [showConfirmFinish, setShowConfirmFinish] = useState(false);
+  const [showTimeUpDialog, setShowTimeUpDialog] = useState(false);
   const [attemptId, setAttemptId] = useState<string | null>(null);
 
   const debouncedAnswers = useDebounce(answers, 1000);
@@ -126,9 +127,8 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     trpc.tryoutAttempts.submitAttempt.mutationOptions({
       onSuccess: () => {
         setExamState("finished");
-        onFinish(answers);
         toast.success("Ujian selesai! Jawaban tersimpan.");
-        router.push("/tryout");
+        onFinish(answers);
       },
       onError: (err) => toast.error("Gagal submit: " + err.message),
     })
@@ -145,13 +145,9 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
       if (attempt.status === "completed") { setExamState("finished"); return; }
       if (attempt.status === "started") {
         setExamState("running");
-        if (attempt.startedAt) {
-          const elapsed = Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000);
-          const total = (tryout.duration ?? 0) * 60;
-          setTimeLeft(Math.max(total - elapsed, 0));
-        } else {
-          setTimeLeft((currentSubtest?.duration ?? tryout.duration ?? 0) * 60);
-        }
+        // For now, reset timer to subtest duration on load to avoid 00:00 bug.
+        // TODO: Implement server-side subtest timestamps for cheat-proof resumption.
+        setTimeLeft((currentSubtest?.duration ?? tryout.duration ?? 0) * 60);
       }
     } else {
       setExamState("ready");
@@ -203,12 +199,27 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     if (examState !== "running" || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) { clearInterval(timer); handleSubtestFinish(); return 0; }
+        if (prev <= 1) {
+          clearInterval(timer);
+          setShowTimeUpDialog(true);
+          return 0;
+        }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [examState, handleSubtestFinish, timeLeft]);
+  }, [examState, timeLeft]);
+
+  // Auto-redirect after time up modal shown
+  useEffect(() => {
+    if (showTimeUpDialog) {
+      const timeout = setTimeout(() => {
+        setShowTimeUpDialog(false);
+        handleSubtestFinish();
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [showTimeUpDialog, handleSubtestFinish]);
 
   const formatTime = (seconds: number) => {
     if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
@@ -608,6 +619,28 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
           </Card>
         </div>
       </div>
+
+      {/* Time Up Dialog */}
+      <AlertDialog open={showTimeUpDialog} onOpenChange={setShowTimeUpDialog}>
+        <AlertDialogContent className="select-none">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Timer className="h-5 w-5" />
+              Waktu Habis!
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-gray-600">
+              Waktu pengerjaan untuk subtes ini telah habis.
+              <br /><br />
+              Anda akan segera dialihkan ke subtes selanjutnya.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={handleSubtestFinish} className="bg-gsb-orange hover:bg-gsb-orange/90 w-full">
+              Lanjut ke Subtes Berikutnya
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Confirm Dialog */}
       <AlertDialog open={showConfirmFinish} onOpenChange={setShowConfirmFinish}>

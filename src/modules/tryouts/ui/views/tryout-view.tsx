@@ -1,12 +1,14 @@
 "use client";
 
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TryoutIntro } from "../components/TryoutIntro";
 import { TryoutExam } from "../components/TryoutExam";
 import { TryoutResultGate } from "../components/TryoutResultGate";
+import { TryoutThankYou } from "../components/TryoutThankYou";
 import { Tryout } from "@/payload-types";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   tryoutId: string;
@@ -15,13 +17,40 @@ interface Props {
 export const TryoutView = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const { data } = useSuspenseQuery(
-    trpc.tryouts.getOne.queryOptions({ tryoutId }),
+    trpc.tryouts.getOne.queryOptions({ tryoutId })
   );
 
-  const [view, setView] = useState<"intro" | "exam" | "result">("intro");
+  const { data: existingAttempt, isLoading: isAttemptLoading } = useQuery(
+    trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId })
+  );
 
-  // Cast data to Tryout type if needed, or rely on inference
+  const [view, setView] = useState<"loading" | "intro" | "exam" | "result" | "thankyou">("loading");
   const tryout = data as unknown as Tryout;
+
+  useEffect(() => {
+    if (isAttemptLoading) return;
+
+    if (existingAttempt?.status === "completed") {
+      const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
+      if (plan && plan !== "none") {
+        setView("thankyou");
+      } else {
+        setView("result");
+      }
+    } else if (existingAttempt?.status === "started") {
+      setView("exam");
+    } else {
+      setView("intro");
+    }
+  }, [existingAttempt, isAttemptLoading]);
+
+  if (view === "loading" || isAttemptLoading) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-gsb-orange" />
+      </div>
+    );
+  }
 
   if (view === "intro") {
     return <TryoutIntro tryout={tryout} onStart={() => setView("exam")} />;
@@ -32,7 +61,27 @@ export const TryoutView = ({ tryoutId }: Props) => {
   }
 
   if (view === "result") {
-    return <TryoutResultGate />;
+    return (
+      <TryoutResultGate
+        attemptId={existingAttempt?.id ?? ""}
+        username={(existingAttempt?.user as unknown as Record<string, string>)?.username ?? (existingAttempt?.user as unknown as Record<string, string>)?.name ?? ""}
+        onPlanSelected={(plan) => {
+          if (plan === "free" || plan === "paid") {
+            setView("thankyou");
+          }
+        }}
+      />
+    );
+  }
+
+  if (view === "thankyou") {
+    const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
+    return (
+      <TryoutThankYou
+        plan={(plan as "free" | "paid") ?? "free"}
+        onChangePlan={() => setView("result")}
+      />
+    );
   }
 
   return null;
