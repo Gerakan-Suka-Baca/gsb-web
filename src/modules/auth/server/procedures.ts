@@ -27,7 +27,7 @@ export const authRouter = createTRPCRouter({
       if (existingUser) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "Username already taken",
+          message: "Username sudah digunakan. Silakan pilih username lain.",
         });
       }
 
@@ -57,7 +57,7 @@ export const authRouter = createTRPCRouter({
       if (!data.token) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
-          message: "Failed to login",
+          message: "Gagal membuat akun. Silakan coba lagi.",
         });
       }
 
@@ -67,18 +67,26 @@ export const authRouter = createTRPCRouter({
       });
     }),
   login: baseProcedure.input(loginSchema).mutation(async ({ input, ctx }) => {
-    const data = await ctx.db.login({
-      collection: "users",
-      data: {
-        email: input.email,
-        password: input.password,
-      },
-    });
+    let data;
+    try {
+      data = await ctx.db.login({
+        collection: "users",
+        data: {
+          email: input.email,
+          password: input.password,
+        },
+      });
+    } catch {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Email atau password yang Anda masukkan salah.",
+      });
+    }
 
     if (!data.token) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "Failed to login",
+        message: "Gagal masuk. Silakan coba lagi.",
       });
     }
 
