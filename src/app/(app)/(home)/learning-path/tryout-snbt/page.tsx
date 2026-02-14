@@ -127,7 +127,7 @@ export default function TryoutSNBTPage() {
                                 size="lg"
                                 className="border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full px-8 h-12 text-lg hover:bg-gsb-blue hover:text-white transition-all"
                             >
-                                <Link href="#subtests">Pelajari Materi</Link>
+                                <Link href="#subtests">Cakupan Materi</Link>
                             </Button>
                         </div>
                     </FadeIn>
