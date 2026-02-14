@@ -293,6 +293,10 @@ export interface TryoutAttempt {
   score?: number | null;
   correctAnswersCount?: number | null;
   totalQuestionsCount?: number | null;
+  /**
+   * Paket hasil tryout yang dipilih peserta.
+   */
+  resultPlan?: ('none' | 'free' | 'paid') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -477,6 +481,7 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
   score?: T;
   correctAnswersCount?: T;
   totalQuestionsCount?: T;
+  resultPlan?: T;
   updatedAt?: T;
   createdAt?: T;
 }

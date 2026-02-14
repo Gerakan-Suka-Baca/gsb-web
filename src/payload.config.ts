@@ -17,6 +17,7 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 import { TryoutAttempts } from './collections/TryoutAttempts'
+import { TryoutPayments } from './collections/TryoutPayments'
 
 export default buildConfig({
   admin: {
@@ -25,7 +26,13 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Tryouts, Questions, TryoutAttempts],
+  collections: [Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments],
+  // @ts-ignore
+  rateLimit: {
+    trustProxy: true,
+    max: 500,
+    window: 15 * 60 * 1000,
+  },
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {
