@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { User, LogOut, Loader2, LayoutDashboard } from "lucide-react";
@@ -25,6 +25,7 @@ interface UserMenuProps {
 
 export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
   const router = useRouter();
+  const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
@@ -56,16 +57,17 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
   }
 
   if (!session?.user) {
+    const signInUrl = `/sign-in?callbackUrl=${encodeURIComponent(pathname)}`;
     if (mobile) {
         return (
             <Button variant="outline" className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-14 text-lg" asChild>
-                <Link href="/sign-in" onClick={onClose}>Masuk</Link>
+                <Link href={signInUrl} onClick={onClose}>Masuk</Link>
             </Button>
         );
     }
     return (
         <Button variant="outline" className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105" asChild>
-            <Link href="/sign-in">Masuk</Link>
+            <Link href={signInUrl}>Masuk</Link>
         </Button>
     );
   }
@@ -77,17 +79,29 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
   if (mobile) {
       return (
           <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl">
-                  <Avatar>
+              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                  <Avatar className="h-10 w-10 border border-gray-200">
                     <AvatarImage src={avatarUrl || ""} />
-                    <AvatarFallback>{initials}</AvatarFallback>
+                    <AvatarFallback className="bg-gsb-orange/10 text-gsb-orange font-bold">{initials}</AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-col">
-                      <span className="font-bold text-sm truncate">{user.username}</span>
+                  <div className="flex flex-col overflow-hidden">
+                      <span className="font-bold text-sm truncate text-gray-900">{user.username}</span>
                       <span className="text-xs text-muted-foreground truncate">{user.email}</span>
                   </div>
               </div>
-              <Button variant="destructive" onClick={handleLogout} disabled={logout.isPending} className="w-full rounded-full">
+              
+              <div className="grid grid-cols-2 gap-2">
+                  <Link href="/profile" onClick={onClose} className="flex items-center justify-center gap-2 p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700">
+                      <User className="w-4 h-4" />
+                      Profil
+                  </Link>
+                  <Link href="/tryout" onClick={onClose} className="flex items-center justify-center gap-2 p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700">
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                  </Link>
+              </div>
+
+              <Button variant="destructive" onClick={handleLogout} disabled={logout.isPending} className="w-full h-11 rounded-lg shadow-sm font-bold">
                   {logout.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin"/> : <LogOut className="w-4 h-4 mr-2" />}
                   Keluar
               </Button>

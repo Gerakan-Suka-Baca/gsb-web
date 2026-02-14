@@ -245,6 +245,7 @@ export function Navbar() {
         {/* Mobile Menu */}
         <div className="flex xl:hidden items-center gap-2">
           <ThemeButton />
+          <UserMenu />
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Toggle menu"><Menu className="h-6 w-6" /></Button>
@@ -263,7 +264,6 @@ export function Navbar() {
                   <Button asChild className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full h-14 text-lg shadow-md">
                     <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>Jadi Relawan</Link>
                   </Button>
-                  <UserMenu mobile onClose={closeMenu} />
                 </motion.div>
               </motion.div>
             </SheetContent>
