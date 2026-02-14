@@ -7,7 +7,8 @@ import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -34,18 +35,21 @@ import { registerSchema } from "../../schemas";
 
 export const SignUpView = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const register = useMutation(
     trpc.auth.register.mutationOptions({
       onError: (error) => {
-        toast.error(error.message);
+         toast.error(error.message);
       },
       onSuccess: async () => {
         await queryClient.invalidateQueries(trpc.auth.session.queryFilter());
         toast.success("Akun berhasil dibuat! Mengalihkan...");
-        router.push("/");
+        router.push(callbackUrl);
+        router.refresh();
       },
     })
   );
@@ -60,7 +64,7 @@ export const SignUpView = () => {
       fullName: "",
       whatsapp: "",
       schoolOrigin: "",
-      grade: "12", 
+      grade: "12",
       targetPTN: "",
       targetMajor: "",
       targetPTN2: "",
@@ -74,6 +78,7 @@ export const SignUpView = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* ... BRAND SECTION ... */}
       <div className="w-full max-w-7xl grid md:grid-cols-5 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         
         {/* Left Side: Brand & Info (Hidden on Mobile) */}
@@ -304,6 +309,7 @@ export const SignUpView = () => {
                 </div>
 
                 <div className="pt-4">
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button
                       disabled={register.isPending}
                       type="submit"
@@ -312,13 +318,14 @@ export const SignUpView = () => {
                     >
                       {register.isPending ? "Sedang Mendaftar..." : "Daftar Sekarang"}
                     </Button>
+                  </motion.div>
                 </div>
               </form>
             </Form>
 
             <div className="mt-8 text-center text-sm">
                 <span className="text-muted-foreground">Sudah punya akun? </span>
-                <Link href="/sign-in" className="font-bold text-gsb-maroon hover:text-gsb-orange transition-colors">
+                <Link href={`/sign-in${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-gsb-maroon hover:text-gsb-orange transition-colors">
                     Masuk di sini
                 </Link>
             </div>

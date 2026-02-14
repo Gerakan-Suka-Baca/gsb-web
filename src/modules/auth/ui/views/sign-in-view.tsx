@@ -7,7 +7,8 @@ import Link from "next/link";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ import { loginSchema } from "../../schemas";
 
 export const SignInView = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -36,7 +39,8 @@ export const SignInView = () => {
       onSuccess: async () => {
         await queryClient.invalidateQueries(trpc.auth.session.queryFilter());
         toast.success("Berhasil Masuk! Mengalihkan...");
-        router.push("/");
+        router.push(callbackUrl);
+        router.refresh();
       },
     })
   );
@@ -61,7 +65,6 @@ export const SignInView = () => {
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
             <div className="relative z-10">
                 <Link href="/" className="flex items-center gap-2 mb-8">
-                     {/* Replace with actual Logo if available */}
                      <span className="text-2xl font-bold tracking-tighter">Gema Simpul Berdaya</span>
                 </Link>
                 <div className="space-y-4 max-w-lg mt-20">
@@ -74,7 +77,7 @@ export const SignInView = () => {
                 </div>
             </div>
             <div className="relative z-10 text-sm text-white/50">
-                &copy; {new Date().getFullYear()} Gema Simpul Berdaya. All rights reserved.
+                &copy; {new Date().getFullYear()} Gema Simpul Berdaya. Hak Cipta Dilindungi.
             </div>
         </div>
 
@@ -118,19 +121,21 @@ export const SignInView = () => {
                       )}
                     />
                     
-                    <Button
-                      disabled={login.isPending}
-                      type="submit"
-                      className="w-full h-11 text-base font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white shadow-md hover:shadow-lg transition-all rounded-lg"
-                    >
-                      {login.isPending ? "Sedang Memasuk..." : "Masuk Sekarang"}
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                      <Button
+                        disabled={login.isPending}
+                        type="submit"
+                        className="w-full h-11 text-base font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white shadow-md hover:shadow-lg transition-all rounded-lg"
+                      >
+                        {login.isPending ? "Sedang Masuk..." : "Masuk Sekarang"}
+                      </Button>
+                    </motion.div>
                   </form>
                 </Form>
 
                 <div className="text-center text-sm">
                     <span className="text-muted-foreground">Belum punya akun? </span>
-                    <Link href="/sign-up" className="font-bold text-gsb-maroon hover:text-gsb-orange transition-colors">
+                    <Link href={`/sign-up${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-gsb-maroon hover:text-gsb-orange transition-colors">
                         Daftar Gratis
                     </Link>
                 </div>
