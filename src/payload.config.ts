@@ -27,7 +27,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments],
-  // @ts-ignore
+  // @ts-expect-error: rateLimit type definition missing
   rateLimit: {
     trustProxy: true,
     max: 500,
