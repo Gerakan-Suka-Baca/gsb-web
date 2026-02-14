@@ -224,6 +224,11 @@ export interface Question {
         blockType: 'tryoutQuestion';
       }[]
     | null;
+  /**
+   * Waktu pengerjaan untuk subtes ini dalam menit.
+   */
+  duration: number;
+  subtest: 'PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM';
   active: boolean;
   updatedAt: string;
   createdAt: string;
@@ -375,6 +380,8 @@ export interface QuestionsSelect<T extends boolean = true> {
               blockName?: T;
             };
       };
+  duration?: T;
+  subtest?: T;
   active?: T;
   updatedAt?: T;
   createdAt?: T;

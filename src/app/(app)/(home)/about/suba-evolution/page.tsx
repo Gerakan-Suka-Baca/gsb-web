@@ -1,5 +1,3 @@
-import ComingSoonPage from "@/components/ComingSoonPage";
-
 export default function TransformasiSubaPage() {
-  return <ComingSoonPage title="Transformasi Suba" />;
+  return <div>Transformasi Suba - Coming Soon</div>;
 }
