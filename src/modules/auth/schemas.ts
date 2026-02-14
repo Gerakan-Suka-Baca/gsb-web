@@ -24,6 +24,10 @@ export const registerSchema = z.object({
   targetMajor: z.string().min(3, "Minimal 3 karakter"),
   targetPTN2: z.string().optional(),
   targetMajor2: z.string().optional(),
+  confirmPassword: z.string().min(1, "Konfirmasi Password wajib diisi"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Password tidak cocok",
+  path: ["confirmPassword"],
 });
 
 export const loginSchema = z.object({

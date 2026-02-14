@@ -274,7 +274,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     }
   }, [attempt, isAttemptLoading, currentSubtest?.duration, tryout.duration]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     const hasProgress = Object.keys(debouncedAnswers).length > 0 || Object.keys(debouncedFlags).length > 0;
     if (hasProgress && attemptId) {
@@ -284,7 +284,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
         currentSubtest: currentSubtestIndex, examState: persistedExamState, secondsRemaining: timeLeft,
       });
     }
-  }, [debouncedAnswers, debouncedFlags, attemptId, currentSubtestIndex, examState]);
+  }, [debouncedAnswers, debouncedFlags, attemptId, currentSubtestIndex, examState, saveProgressMutation, timeLeft]);
 
   useEffect(() => {
     if (examState !== "running") return;
