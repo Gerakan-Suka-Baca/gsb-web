@@ -40,21 +40,23 @@ export const updateProfile = async (data: UpdateProfileInput) => {
         }
     }
 
+    const updateData: Record<string, unknown> = {
+      username: data.username,
+      fullName: data.fullName,
+      whatsapp: data.whatsapp,
+      schoolOrigin: data.schoolOrigin,
+      grade: data.grade,
+      targetPTN: data.targetPTN,
+      targetMajor: data.targetMajor,
+      targetPTN2: data.targetPTN2,
+      targetMajor2: data.targetMajor2,
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString() : null,
+    };
+
     await payload.update({
       collection: "users",
       id: session.user.id,
-      data: {
-        username: data.username,
-        fullName: data.fullName,
-        whatsapp: data.whatsapp,
-        schoolOrigin: data.schoolOrigin,
-        grade: data.grade,
-        targetPTN: data.targetPTN,
-        targetMajor: data.targetMajor,
-        targetPTN2: data.targetPTN2,
-        targetMajor2: data.targetMajor2,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString() : null,
-      } as any,
+      data: updateData,
     });
 
     revalidatePath("/profile");

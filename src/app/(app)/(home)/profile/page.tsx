@@ -3,9 +3,16 @@ import { redirect } from "next/navigation";
 import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, School, User, Phone, CalendarDays, Mail } from "lucide-react";
+import { GraduationCap, School, Phone, CalendarDays, Mail } from "lucide-react";
+import type { User } from "@/payload-types";
 
 export const dynamic = "force-dynamic";
+
+type ProfileUser = User & {
+  targetPTN2?: string | null;
+  targetMajor2?: string | null;
+  dateOfBirth?: string | null;
+};
 
 export default async function ProfilePage() {
   const session = await caller.auth.session();
@@ -14,7 +21,7 @@ export default async function ProfilePage() {
     redirect("/sign-in");
   }
 
-  const user = session.user;
+  const user = session.user as ProfileUser;
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 dark:text-white">
@@ -23,7 +30,7 @@ export default async function ProfilePage() {
             <h1 className="text-3xl font-bold font-heading text-gsb-maroon dark:text-gsb-orange">Profil Saya</h1>
             <p className="text-muted-foreground">Kelola informasi akun dan target akademik Anda.</p>
         </div>
-        <ProfileEditModal user={user as any} />
+        <ProfileEditModal user={user} />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -55,8 +62,8 @@ export default async function ProfilePage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
                      </svg>
                     <span>
-                        {(user as any).dateOfBirth 
-                            ? new Date((user as any).dateOfBirth).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
+                        {user.dateOfBirth 
+                            ? new Date(user.dateOfBirth).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) 
                             : "Tanggal lahir belum diisi"}
                     </span>
                 </div>
@@ -117,23 +124,23 @@ export default async function ProfilePage() {
                         </div>
                     </div>
 
-                    {((user as any).targetPTN2 || (user as any).targetMajor2) && (
+                    {(user.targetPTN2 || user.targetMajor2) && (
                         <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border">
                              <div className="mb-1">
                                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pilihan 2</span>
                             </div>
                             <div className="mt-2">
                                 <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
-                                    {(user as any).targetPTN2}
+                                    {user.targetPTN2}
                                 </p>
                                 <p className="text-muted-foreground font-medium">
-                                    {(user as any).targetMajor2}
+                                    {user.targetMajor2}
                                 </p>
                             </div>
                         </div>
                     )}
                     
-                    {!user.targetPTN && !(user as any).targetPTN2 && (
+                    {!user.targetPTN && !user.targetPTN2 && (
                          <div className="text-center py-4 bg-gray-50 border border-dashed rounded-lg text-muted-foreground text-sm">
                             Anda belum menentukan target kampus. <br/> Yuk edit profil untuk menambahkan target impianmu!
                         </div>

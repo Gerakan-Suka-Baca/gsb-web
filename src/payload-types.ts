@@ -287,6 +287,10 @@ export interface TryoutAttempt {
   status: 'started' | 'completed';
   startedAt?: string | null;
   completedAt?: string | null;
+  currentSubtest?: number | null;
+  examState?: ('running' | 'bridging') | null;
+  bridgingExpiry?: string | null;
+  secondsRemaining?: number | null;
   /**
    * Persentase jawaban benar.
    */
@@ -478,6 +482,10 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
   status?: T;
   startedAt?: T;
   completedAt?: T;
+  currentSubtest?: T;
+  examState?: T;
+  bridgingExpiry?: T;
+  secondsRemaining?: T;
   score?: T;
   correctAnswersCount?: T;
   totalQuestionsCount?: T;
