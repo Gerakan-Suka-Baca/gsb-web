@@ -42,6 +42,15 @@ export const Tryouts: CollectionConfig = {
       required: true,
     },
     {
+      name: "duration",
+      type: "number",
+      required: true,
+      label: "Duration (Minutes)",
+      admin: {
+        description: "Duration of the tryout in minutes",
+      },
+    },
+    {
       name: "questions",
       type: "relationship",
       relationTo: "questions",

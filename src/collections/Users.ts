@@ -8,8 +8,7 @@ export const Users: CollectionConfig = {
   access: {
     admin: ({ req: { user } }) => {
       return Boolean(
-        (user && "roles" in user && user.roles?.includes("admin")) ||
-        (user && "roles" in user && user.roles?.includes("super-admin")),
+        user && "roles" in user && user.roles?.includes("super-admin"),
       );
     },
   },

@@ -233,10 +233,8 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="flex-1" />
-
         {/* Desktop CTA */}
-        <div className="hidden xl:flex items-center gap-4">
+        <div className="hidden xl:flex items-center gap-4 ml-auto">
           <Button asChild className="bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full px-6 shadow-md transition-all hover:scale-105">
             <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer">Jadi Relawan</Link>
           </Button>
