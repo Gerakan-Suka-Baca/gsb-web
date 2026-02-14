@@ -27,7 +27,7 @@ export const authRouter = createTRPCRouter({
       if (existingUser) {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "Username sudah digunakan. Silakan pilih username lain.",
+          message: "Username tidak tersedia, silahkan pilih username lain.",
         });
       }
 
@@ -79,7 +79,7 @@ export const authRouter = createTRPCRouter({
     } catch {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "Email atau password yang Anda masukkan salah.",
+        message: "Username atau Password salah, mohon di cek lagi.",
       });
     }
 

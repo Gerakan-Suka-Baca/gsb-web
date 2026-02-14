@@ -36,7 +36,7 @@ export const updateProfile = async (data: UpdateProfileInput) => {
             },
         });
         if (existingUser.docs.length > 0) {
-            return { success: false, message: "Username sudah digunakan" };
+            return { success: false, message: "Username tidak tersedia" };
         }
     }
 

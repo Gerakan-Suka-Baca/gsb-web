@@ -117,7 +117,7 @@ export const SignUpView = () => {
                 {/* SECTION 1: Akun */}
                 <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Informasi Akun</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                          <FormField
                           control={form.control}
                           name="username"
@@ -195,7 +195,7 @@ export const SignUpView = () => {
                 {/* SECTION 3: Akademik */}
                 <div className="space-y-4 pt-2">
                     <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Data Akademik</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                         <FormField
                           control={form.control}
                           name="schoolOrigin"
@@ -235,7 +235,7 @@ export const SignUpView = () => {
                     </div>
                     
                     {/* Pilihan 1 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                          <FormField
                           control={form.control}
                           name="targetPTN"
@@ -269,7 +269,7 @@ export const SignUpView = () => {
                     </div>
 
                     {/* Pilihan 2 */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                          <FormField
                           control={form.control}
                           name="targetPTN2"
