@@ -16,6 +16,8 @@ import { Questions } from './collections/Questions'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+import { TryoutAttempts } from './collections/TryoutAttempts'
+
 export default buildConfig({
   admin: {
     user: Users.slug,
@@ -23,7 +25,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Tryouts, Questions],
+  collections: [Users, Media, Tryouts, Questions, TryoutAttempts],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {

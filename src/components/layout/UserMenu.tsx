@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { User, LogOut, Loader2, LayoutDashboard } from "lucide-react";
 
@@ -26,18 +26,21 @@ interface UserMenuProps {
 export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
   const router = useRouter();
   const trpc = useTRPC();
-  
-  // Fetch session data
+  const queryClient = useQueryClient();
+
   const { data: session, isLoading } = useQuery(
     trpc.auth.session.queryOptions()
   );
 
   const logout = useMutation(
     trpc.auth.logout.mutationOptions({
-      onSuccess: () => {
+      onSuccess: async () => {
+        queryClient.setQueryData(trpc.auth.session.queryFilter().queryKey, undefined);
+        await queryClient.invalidateQueries(trpc.auth.session.queryFilter());
         toast.success("Berhasil keluar");
-        router.refresh(); 
         onClose?.();
+        router.push("/");
+        router.refresh();
       },
       onError: (err) => {
         toast.error("Gagal keluar: " + err.message);
@@ -69,7 +72,6 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
 
   const { user } = session;
   const initials = user.username?.slice(0, 2).toUpperCase() || "US";
-  // Handle PayloadCMS relation/media type check
   const avatarUrl = user.payment && typeof user.payment !== 'string' ? user.payment.url : "";
 
   if (mobile) {

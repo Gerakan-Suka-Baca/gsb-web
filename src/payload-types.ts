@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     tryouts: Tryout;
     questions: Question;
+    'tryout-attempts': TryoutAttempt;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -81,6 +82,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
+    'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -176,6 +178,10 @@ export interface Tryout {
   'Date Close': string;
   'Date Close_tz': SupportedTimezones;
   description: string;
+  /**
+   * Duration of the tryout in minutes
+   */
+  duration: number;
   questions: (string | Question)[];
   updatedAt: string;
   createdAt: string;
@@ -242,6 +248,56 @@ export interface Question {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-attempts".
+ */
+export interface TryoutAttempt {
+  id: string;
+  user: string | User;
+  tryout: string | Tryout;
+  answers?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  flags?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Detail jawaban per soal: huruf jawaban, benar/salah, dll.
+   */
+  questionResults?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  status: 'started' | 'completed';
+  startedAt?: string | null;
+  completedAt?: string | null;
+  /**
+   * Persentase jawaban benar.
+   */
+  score?: number | null;
+  correctAnswersCount?: number | null;
+  totalQuestionsCount?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -262,6 +318,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'questions';
         value: string | Question;
+      } | null)
+    | ({
+        relationTo: 'tryout-attempts';
+        value: string | TryoutAttempt;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -360,6 +420,7 @@ export interface TryoutsSelect<T extends boolean = true> {
   'Date Close'?: T;
   'Date Close_tz'?: T;
   description?: T;
+  duration?: T;
   questions?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -397,6 +458,25 @@ export interface QuestionsSelect<T extends boolean = true> {
             };
       };
   active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-attempts_select".
+ */
+export interface TryoutAttemptsSelect<T extends boolean = true> {
+  user?: T;
+  tryout?: T;
+  answers?: T;
+  flags?: T;
+  questionResults?: T;
+  status?: T;
+  startedAt?: T;
+  completedAt?: T;
+  score?: T;
+  correctAnswersCount?: T;
+  totalQuestionsCount?: T;
   updatedAt?: T;
   createdAt?: T;
 }
