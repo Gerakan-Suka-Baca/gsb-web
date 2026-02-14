@@ -1,25 +1,25 @@
 import z from "zod";
 
 export const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(3),
+  email: z.string().email("Format email tidak valid"),
+  password: z.string().min(3, "Password minimal 3 karakter"),
   username: z
     .string()
-    .min(3, "Username must be at least 3 characters long")
-    .max(63, "Username must be at most 63 characters long")
+    .min(3, "Username minimal 3 karakter")
+    .max(63, "Username maksimal 63 karakter")
     .regex(
       /^[a-z0-9][a-z0-9-]*[a-z0-9]$/,
-      "Username can only contain lowercase letters, numbers, and hyphens. It must start and end with a letter or number."
+      "Username hanya boleh huruf kecil, angka, dan strip. Harus diawali dan diakhiri huruf atau angka."
     )
     .refine(
       (val) => !val.includes("--"),
-      "Username cannot contain double hyphens."
+      "Username tidak boleh mengandung strip ganda (--)"
     )
     .transform((val) => val.toLowerCase()),
   fullName: z.string().min(1, "Nama Lengkap wajib diisi"),
   whatsapp: z.string().min(10, "Nomor WhatsApp tidak valid"),
   schoolOrigin: z.string().min(1, "Asal Sekolah wajib diisi"),
-  grade: z.enum(["10", "11", "12", "gap_year"]),
+  grade: z.enum(["10", "11", "12", "gap_year"], "Pilih kelas yang valid"),
   targetPTN: z.string().min(3, "Minimal 3 karakter"),
   targetMajor: z.string().min(3, "Minimal 3 karakter"),
   targetPTN2: z.string().optional(),
@@ -27,6 +27,6 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
+  email: z.string().email("Format email tidak valid"),
+  password: z.string().min(1, "Password wajib diisi"),
 });
