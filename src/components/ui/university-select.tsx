@@ -12,6 +12,8 @@ interface UniversitySelectProps {
   onValueChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  "aria-controls"?: string;
+  "aria-expanded"?: boolean;
 }
 
 export function UniversitySelect({
@@ -73,6 +75,7 @@ export function UniversitySelect({
         type="button"
         role="combobox"
         aria-expanded={open}
+        aria-controls="university-listbox"
         disabled={disabled}
         onClick={() => setOpen(!open)}
         className={cn(
@@ -134,7 +137,7 @@ export function UniversitySelect({
             )}
 
             {!loading && items.length > 0 && (
-              <ul className="py-1">
+              <ul className="py-1" id="university-listbox" role="listbox">
                 {items.map((item) => (
                   <li
                     key={item.value}

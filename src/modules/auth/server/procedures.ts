@@ -67,6 +67,20 @@ export const authRouter = createTRPCRouter({
       });
     }),
   login: baseProcedure.input(loginSchema).mutation(async ({ input, ctx }) => {
+    // 1. Check if user exists first
+    const existingUser = await ctx.db.find({
+        collection: "users",
+        limit: 1,
+        where: { email: { equals: input.email } },
+    });
+
+    if (existingUser.docs.length === 0) {
+        throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Email tidak terdaftar. Silakan daftar terlebih dahulu.",
+        });
+    }
+
     let data;
     try {
       data = await ctx.db.login({
@@ -79,7 +93,7 @@ export const authRouter = createTRPCRouter({
     } catch {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "Username atau Password salah, mohon di cek lagi.",
+        message: "Password salah, mohon cek kembali.",
       });
     }
 

@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Form,
   FormControl,
@@ -114,7 +115,7 @@ export const SignInView = () => {
                                <Link href="#" className="text-xs text-gsb-orange font-semibold hover:underline">Lupa Password?</Link>
                           </div>
                           <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                            <PasswordInput placeholder="••••••••" {...field} className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-all" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

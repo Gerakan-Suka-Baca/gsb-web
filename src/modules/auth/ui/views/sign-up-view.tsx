@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Form,
   FormControl,
@@ -60,6 +61,7 @@ export const SignUpView = () => {
     defaultValues: {
       email: "",
       password: "",
+      confirmPassword: "",
       username: "",
       fullName: "",
       whatsapp: "",
@@ -157,7 +159,20 @@ export const SignUpView = () => {
                         <FormItem>
                           <FormLabel>Password</FormLabel>
                           <FormControl>
-                            <Input type="password" placeholder="••••••••" {...field} />
+                            <PasswordInput placeholder="••••••••" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Konfirmasi Password</FormLabel>
+                          <FormControl>
+                            <PasswordInput placeholder="Ulangi password..." {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
