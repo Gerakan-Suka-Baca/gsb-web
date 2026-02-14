@@ -16,6 +16,12 @@ export const registerSchema = z.object({
       "Username cannot contain double hyphens."
     )
     .transform((val) => val.toLowerCase()),
+  fullName: z.string().min(1, "Nama Lengkap wajib diisi"),
+  whatsapp: z.string().min(10, "Nomor WhatsApp tidak valid"),
+  schoolOrigin: z.string().min(1, "Asal Sekolah wajib diisi"),
+  grade: z.enum(["10", "11", "12", "gap_year"]),
+  targetPTN: z.string().min(1, "Target PTN wajib diisi"),
+  targetMajor: z.string().min(1, "Target Jurusan wajib diisi"),
 });
 
 export const loginSchema = z.object({

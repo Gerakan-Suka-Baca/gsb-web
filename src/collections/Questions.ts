@@ -8,16 +8,6 @@ export const Questions: CollectionConfig = {
   slug: "questions",
   fields: [
     {
-      name: "title",
-      type: "text",
-      required: true,
-    },
-    {
-      type: "blocks",
-      name: "tryoutQuestions",
-      blocks: [TryoutQuestion],
-    },
-    {
       name: "duration",
       label: "Duration (Minutes)",
       type: "number",
@@ -41,6 +31,26 @@ export const Questions: CollectionConfig = {
         { label: "Pengetahuan Pemahaman Umum", value: "PPU" },
         { label: "Kemampuan Memahami Bacaan dan Menulis", value: "KMBM" },
       ],
+    },
+    {
+      name: "tryout",
+      label: "Batch / Tryout",
+      type: "relationship",
+      relationTo: "tryouts",
+      required: true,
+      admin: {
+        position: "sidebar",
+      },
+    },
+    {
+      name: "title",
+      type: "text",
+      required: true,
+    },
+    {
+      type: "blocks",
+      name: "tryoutQuestions",
+      blocks: [TryoutQuestion],
     },
     {
       name: "active",

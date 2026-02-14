@@ -45,6 +45,12 @@ export function TRPCReactProvider(
         httpBatchLink({
           transformer: superjson,
           url: getUrl(),
+          headers() {
+            return {
+              cookie: typeof window !== "undefined" ? document.cookie : "",
+              "x-trpc-source": "react",
+            };
+          },
         }),
       ],
     })

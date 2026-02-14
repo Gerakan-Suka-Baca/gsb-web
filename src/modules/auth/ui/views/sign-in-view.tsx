@@ -4,7 +4,6 @@ import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -22,12 +21,6 @@ import {
 } from "@/components/ui/form";
 
 import { loginSchema } from "../../schemas";
-import { Poppins } from "next/font/google";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-});
 
 export const SignInView = () => {
   const router = useRouter();
@@ -42,6 +35,7 @@ export const SignInView = () => {
       },
       onSuccess: async () => {
         await queryClient.invalidateQueries(trpc.auth.session.queryFilter());
+        toast.success("Berhasil Masuk! Mengalihkan...");
         router.push("/");
       },
     })
@@ -61,78 +55,87 @@ export const SignInView = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-5">
-      <div className="bg-[#F4F4F0] h-screen w-full lg:col-span-3 overflow-y-auto">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col gap-8 p-4 lg:p-16"
-          >
-            <div className="flex items-center justify-between mb-8">
-              <Link href="/">
-                <span
-                  className={cn("text-2xl font-semibold", poppins.className)}
-                >
-                  Sign In
-                </span>
-              </Link>
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-base border-none underline"
-              >
-                <Link prefetch href="/sign-up">
-                  Sign Up
+    <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full">
+        {/* Left Side - Brand & Illustration */}
+        <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-gsb-maroon to-gsb-red p-12 text-white relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+            <div className="relative z-10">
+                <Link href="/" className="flex items-center gap-2 mb-8">
+                     {/* Replace with actual Logo if available */}
+                     <span className="text-2xl font-bold tracking-tighter">Gema Simpul Berdaya</span>
                 </Link>
-              </Button>
+                <div className="space-y-4 max-w-lg mt-20">
+                     <h1 className="text-4xl md:text-5xl font-heading font-bold leading-tight">
+                         Siapkan Diri Menuju PTN Impian
+                     </h1>
+                     <p className="text-lg text-white/80">
+                         Bergabunglah dengan ribuan siswa lainnya dan raih masa depan gemilang bersama platform tryout terdepan.
+                     </p>
+                </div>
             </div>
-            <h1 className="text-4xl font-medium">
-              Sign In untuk Melanjutkan
-            </h1>
-            <FormField
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Password</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="password" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button
-              disabled={login.isPending}
-              type="submit"
-              size="lg"
-              className="bg-black text-white hover:bg-blue-400 hover:text-primary"
-            >
-              Log In
-            </Button>
-          </form>
-        </Form>
-      </div>
-      <div
-        className="h-screen w-full lg:col-span-2 hidden lg:block"
-        style={{
-          backgroundImage: "url('/background.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
+            <div className="relative z-10 text-sm text-white/50">
+                &copy; {new Date().getFullYear()} Gema Simpul Berdaya. All rights reserved.
+            </div>
+        </div>
+
+        {/* Right Side - Form */}
+        <div className="flex flex-col justify-center items-center p-6 md:p-12 bg-gray-50/50">
+            <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gsb-maroon font-heading">Selamat Datang Kembali</h2>
+                    <p className="text-muted-foreground mt-2 text-sm">Masuk untuk melanjutkan progress belajar Anda</p>
+                </div>
+
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="nama@email.com" {...field} className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between items-center">
+                               <FormLabel>Password</FormLabel>
+                               <Link href="#" className="text-xs text-gsb-orange font-semibold hover:underline">Lupa Password?</Link>
+                          </div>
+                          <FormControl>
+                            <Input type="password" placeholder="••••••••" {...field} className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button
+                      disabled={login.isPending}
+                      type="submit"
+                      className="w-full h-11 text-base font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white shadow-md hover:shadow-lg transition-all rounded-lg"
+                    >
+                      {login.isPending ? "Sedang Memasuk..." : "Masuk Sekarang"}
+                    </Button>
+                  </form>
+                </Form>
+
+                <div className="text-center text-sm">
+                    <span className="text-muted-foreground">Belum punya akun? </span>
+                    <Link href="/sign-up" className="font-bold text-gsb-maroon hover:text-gsb-orange transition-colors">
+                        Daftar Gratis
+                    </Link>
+                </div>
+            </div>
+        </div>
     </div>
   );
 };
