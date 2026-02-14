@@ -3,6 +3,8 @@ import { caller, getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 // export const metadata = {
 //   title: "About Sema FTD",
 //   description: "About Sema FTD",

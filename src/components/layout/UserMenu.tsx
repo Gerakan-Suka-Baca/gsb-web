@@ -1,0 +1,143 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { User, LogOut, Loader2, LayoutDashboard } from "lucide-react";
+
+import { useTRPC } from "@/trpc/client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+interface UserMenuProps {
+  mobile?: boolean;
+  onClose?: () => void;
+}
+
+export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
+  const router = useRouter();
+  const trpc = useTRPC();
+  
+  // Fetch session data
+  const { data: session, isLoading } = useQuery(
+    trpc.auth.session.queryOptions()
+  );
+
+  const logout = useMutation(
+    trpc.auth.logout.mutationOptions({
+      onSuccess: () => {
+        toast.success("Berhasil keluar");
+        router.refresh(); 
+        onClose?.();
+      },
+      onError: (err) => {
+        toast.error("Gagal keluar: " + err.message);
+      },
+    })
+  );
+
+  const handleLogout = () => logout.mutate(undefined);
+
+  if (isLoading) {
+      if (mobile) return <div className="h-14 w-full bg-gray-100 rounded-full animate-pulse" />;
+      return <div className="h-10 w-24 bg-gray-100 rounded-full animate-pulse" />;
+  }
+
+  if (!session?.user) {
+    if (mobile) {
+        return (
+            <Button variant="outline" className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-14 text-lg" asChild>
+                <Link href="/sign-in" onClick={onClose}>Masuk</Link>
+            </Button>
+        );
+    }
+    return (
+        <Button variant="outline" className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105" asChild>
+            <Link href="/sign-in">Masuk</Link>
+        </Button>
+    );
+  }
+
+  const { user } = session;
+  const initials = user.username?.slice(0, 2).toUpperCase() || "US";
+  // Handle PayloadCMS relation/media type check
+  const avatarUrl = user.payment && typeof user.payment !== 'string' ? user.payment.url : "";
+
+  if (mobile) {
+      return (
+          <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-xl">
+                  <Avatar>
+                    <AvatarImage src={avatarUrl || ""} />
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                      <span className="font-bold text-sm truncate">{user.username}</span>
+                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                  </div>
+              </div>
+              <Button variant="destructive" onClick={handleLogout} disabled={logout.isPending} className="w-full rounded-full">
+                  {logout.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin"/> : <LogOut className="w-4 h-4 mr-2" />}
+                  Keluar
+              </Button>
+          </div>
+      );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-gsb-orange/20 hover:ring-gsb-orange transition-all p-0">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={avatarUrl || ""} alt={user.username || ""} />
+            <AvatarFallback className="bg-gsb-orange/10 text-gsb-orange font-bold">
+                {initials}
+            </AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{user.username}</p>
+            <p className="text-xs leading-none text-muted-foreground">
+              {user.email}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/profile">
+                <User className="mr-2 h-4 w-4" />
+                <span>Profil Saya</span>
+            </Link>
+        </DropdownMenuItem>
+        
+        <DropdownMenuItem asChild className="cursor-pointer">
+            <Link href="/tryout">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Dashboard Tryout</span>
+            </Link>
+        </DropdownMenuItem>
+        
+        <DropdownMenuSeparator />
+        
+        <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 cursor-pointer">
+            {logout.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
+            <span>Keluar</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};

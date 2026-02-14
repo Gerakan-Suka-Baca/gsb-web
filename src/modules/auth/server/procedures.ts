@@ -3,7 +3,7 @@ import { headers as getHeaders } from "next/headers";
 import { baseProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import { loginSchema, registerSchema } from "../schemas";
-import { generateAuthCookie } from "../utils";
+import { deleteAuthCookie, generateAuthCookie } from "../utils";
 
 export const authRouter = createTRPCRouter({
   session: baseProcedure.query(async ({ ctx }) => {
@@ -37,6 +37,12 @@ export const authRouter = createTRPCRouter({
           email: input.email,
           username: input.username,
           password: input.password,
+          fullName: input.fullName,
+          whatsapp: input.whatsapp,
+          schoolOrigin: input.schoolOrigin,
+          grade: input.grade,
+          targetPTN: input.targetPTN,
+          targetMajor: input.targetMajor,
         },
       });
 
@@ -82,5 +88,9 @@ export const authRouter = createTRPCRouter({
     });
 
     return data;
+  }),
+  logout: baseProcedure.mutation(async ({ ctx }) => {
+    await deleteAuthCookie(ctx.db.config.cookiePrefix);
+    return { success: true };
   }),
 });

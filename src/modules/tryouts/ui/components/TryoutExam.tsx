@@ -10,9 +10,27 @@ import {
   ChevronRight,
   Flag,
   Timer,
-  LayoutGrid, // Keep LayoutGrid for the navigation grid
+  LayoutGrid,
+  AlertTriangle,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface TryoutExamProps {
   tryout: Tryout;
@@ -23,7 +41,7 @@ type AnswerMap = Record<string, string>; // questionID -> answerID
 type FlagMap = Record<string, boolean>; // questionID -> boolean
 
 export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
-  // Data: Ensure questions are populated (handled by depth in getOne)
+  // Data: Ensure questions are populated
   const subtests = (tryout.questions as Question[]) || [];
 
   const [currentSubtestIndex, setCurrentSubtestIndex] = useState(0);
@@ -32,12 +50,14 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const [flags, setFlags] = useState<Record<string, FlagMap>>({});
   const [timeLeft, setTimeLeft] = useState(0); // in seconds
   const [examState, setExamState] = useState<"ready" | "running" | "finished">("ready");
+  
+  // Confirm Dialog State
+  const [showConfirmFinish, setShowConfirmFinish] = useState(false);
 
   const currentSubtest = subtests[currentSubtestIndex];
   const questions = currentSubtest?.tryoutQuestions || [];
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Initialize Timer when Subtest starts
   useEffect(() => {
     if (examState === "running" && currentSubtest) {
       setTimeLeft(currentSubtest.duration * 60); // Convert minutes to seconds
@@ -45,6 +65,9 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   }, [examState, currentSubtest]);
 
   const handleSubtestFinish = useCallback(() => {
+    // Reset dialog
+    setShowConfirmFinish(false);
+
     if (currentSubtestIndex < subtests.length - 1) {
       setCurrentSubtestIndex((prev) => prev + 1);
       setCurrentQuestionIndex(0);
@@ -55,7 +78,20 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     }
   }, [currentSubtestIndex, subtests.length, answers, onFinish]);
 
-  // Timer Countdown
+  const triggerFinishCheck = () => {
+    // check if there are unanswered questions
+    const answeredCount = Object.keys(answers[currentSubtest.id] || {}).length;
+    const totalQuestions = questions.length;
+    
+    // If user hasn't answered everything (or logic can be just always confirm if desired, 
+    // but user specifically mentioned "numbers not filled")
+    if (answeredCount < totalQuestions) {
+        setShowConfirmFinish(true);
+    } else {
+        handleSubtestFinish();
+    }
+  };
+
   useEffect(() => {
     if (examState !== "running" || timeLeft <= 0) return;
 
@@ -99,9 +135,38 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     }));
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                                 RENDER VIEW                                */
-  /* -------------------------------------------------------------------------- */
+  // Helper to render navigator buttons (reused for desktop & mobile)
+  const renderNavigator = () => (
+      <div className="flex flex-wrap gap-2 justify-center content-start">
+        {questions.map((_, idx) => {
+            const qID = questions[idx].id || `q-${idx}`;
+            const isAns = answers[currentSubtest.id]?.[qID];
+            const isFlg = flags[currentSubtest.id]?.[qID];
+            const isCurr = currentQuestionIndex === idx;
+
+            let variant = "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300";
+            if (isCurr) variant = "bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-100";
+            else if (isFlg) variant = "bg-yellow-400 text-yellow-900 border-yellow-400";
+            else if (isAns) variant = "bg-green-600 text-white border-green-600";
+
+            return (
+                <button
+                    key={idx}
+                    onClick={() => {
+                        setCurrentQuestionIndex(idx);
+                        // Also close sheet if on mobile? (Can't easily access sheet state from here without context, ignoring for now)
+                    }}
+                    className={cn(
+                        "w-9 h-9 text-xs rounded-md flex items-center justify-center font-bold border transition-all duration-200",
+                        variant
+                    )}
+                >
+                    {idx + 1}
+                </button>
+            )
+        })}
+      </div>
+  );
 
   if (examState === "ready") {
     return (
@@ -142,16 +207,62 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const currentAns = answers[currentSubtest.id]?.[currentQID];
   const isFlagged = flags[currentSubtest.id]?.[currentQID];
 
+  // Logic for Unanswered count
+  const answeredCount = Object.keys(answers[currentSubtest.id] || {}).length;
+  const unansweredCount = questions.length - answeredCount;
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[80vh]">
+    <>
+    <div 
+        className="grid grid-cols-1 lg:grid-cols-4 gap-6 min-h-[80vh] select-none" 
+        onContextMenu={(e) => e.preventDefault()}
+        onCopy={(e) => e.preventDefault()}
+        onCut={(e) => e.preventDefault()}
+        onPaste={(e) => e.preventDefault()}
+    >
       {/* LEFT/TOP PANEL: Question & Options */}
-      <div className="lg:col-span-3 flex flex-col gap-6">
-        {/* Header Mobile: Timer */}
-        <div className="flex lg:hidden justify-between items-center bg-card p-4 rounded-lg border shadow-sm sticky top-20 z-10">
-            <div className="font-semibold">{currentSubtest.subtest}</div>
-            <div className={`font-mono text-xl font-bold flex gap-2 items-center ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>
-                <Timer className="w-5 h-5" />
-                {formatTime(timeLeft)}
+      <div className="lg:col-span-3 flex flex-col">
+        
+        {/* Mobile Header (Timer & Nav) */}
+        <div className="flex lg:hidden justify-between items-center bg-card p-4 rounded-lg border shadow-sm sticky top-20 z-10 mb-6">
+            <div className="font-semibold text-sm line-clamp-1 flex-1 mr-2">{currentSubtest.subtest}</div>
+            
+            <div className="flex items-center gap-3">
+               <div className={`font-mono text-lg font-bold flex gap-1.5 items-center ${timeLeft < 60 ? 'text-red-500 animate-pulse' : ''}`}>
+                  <Timer className="w-4 h-4" />
+                  {formatTime(timeLeft)}
+               </div>
+
+               <Sheet>
+                 <SheetTrigger asChild>
+                   <Button variant="outline" size="sm" className="h-9 w-9 p-0">
+                     <LayoutGrid className="w-4 h-4" />
+                   </Button>
+                 </SheetTrigger>
+                 <SheetContent side="bottom" className="h-[80vh]">
+                   <SheetHeader className="mb-4">
+                     <SheetTitle>Navigasi Soal</SheetTitle>
+                   </SheetHeader>
+                   <div className="overflow-y-auto max-h-[60vh] p-1">
+                      {renderNavigator()}
+                   </div>
+                   
+                   <div className="mt-6 flex flex-wrap gap-4 text-xs text-muted-foreground justify-center">
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-blue-600 rounded"></div> Sekarang
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-green-600 rounded"></div> Dijawab
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-yellow-400 rounded"></div> Ragu
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-white border border-gray-200 rounded"></div> Kosong
+                        </div>
+                   </div>
+                 </SheetContent>
+               </Sheet>
             </div>
         </div>
 
@@ -165,19 +276,17 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
                     variant={isFlagged ? "secondary" : "outline"} 
                     size="sm"
                     onClick={() => toggleFlag(currentQID)}
-                    className={cn("gap-2", isFlagged && "bg-yellow-100 text-yellow-900 hover:bg-yellow-200")}
+                    className={cn("gap-2 select-none", isFlagged && "bg-yellow-100 text-yellow-900 hover:bg-yellow-200")}
                 >
                     <Flag className={`w-4 h-4 ${isFlagged ? "fill-current" : ""}`} />
                     {isFlagged ? "Ditandai" : "Tandai Ragu"}
                 </Button>
             </div>
 
-            {/* Question Content */}
-             <div className="bg-white p-4 rounded-lg border border-border/50">
+             <div className="bg-white p-4 rounded-lg border border-border/50 select-none pointer-events-none user-select-none">
                  <RichText content={currentQuestion.question} />
              </div>
 
-             {/* Options */}
              <div className="flex flex-col gap-3 mt-4">
                  {currentQuestion.tryoutAnswers?.map((opt, idx) => {
                      const optID = opt.id || `opt-${idx}`;
@@ -189,7 +298,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
                             key={optID}
                             onClick={() => handleAnswer(currentQID, optID)}
                             className={cn(
-                                "flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200",
+                                "flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 select-none",
                                 isSelected 
                                     ? "border-gsb-orange bg-orange-50/50 shadow-md transform scale-[1.01]" 
                                     : "border-border hover:border-gsb-orange/30 hover:bg-muted/30"
@@ -201,7 +310,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
                              )}>
                                  {char}
                              </div>
-                             <div className="pt-0.5 text-base w-full">
+                             <div className="pt-0.5 text-base w-full pointer-events-none">
                                  <RichText content={opt.answer} />
                              </div>
                          </div>
@@ -209,14 +318,15 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
                  })}
              </div>
         </Card>
-
+        
         {/* Navigation Buttons */}
-        <div className="flex justify-between mt-auto pt-4">
+        {/* Added mt-10 and pb-8 to fix 'mempet' issue */}
+        <div className="flex justify-between mt-10 pb-8">
             <Button
                 variant="outline"
                 onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                 disabled={currentQuestionIndex === 0}
-                className="h-11 px-6 rounded-full"
+                className="h-11 px-6 rounded-full border-2 hover:bg-gray-50 select-none"
             >
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Sebelumnya
@@ -225,7 +335,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
             {currentQuestionIndex < questions.length - 1 ? (
                 <Button
                      onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
-                     className="bg-gsb-orange hover:bg-gsb-orange/90 text-white h-11 px-8 rounded-full shadow-md"
+                     className="bg-gsb-orange hover:bg-gsb-orange/90 text-white h-11 px-8 rounded-full shadow-md transition-transform hover:scale-105 select-none active:scale-95"
                 >
                     Selanjutnya
                     <ChevronRight className="w-4 h-4 ml-2" />
@@ -233,8 +343,8 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
             ) : (
                 <Button 
                     variant="destructive"
-                    onClick={handleSubtestFinish}
-                    className="h-11 px-8 rounded-full shadow-md bg-gsb-red hover:bg-gsb-red/90"
+                    onClick={triggerFinishCheck}
+                    className="h-11 px-8 rounded-full shadow-md bg-gsb-red hover:bg-gsb-red/90 transition-transform hover:scale-105 select-none"
                 >
                     Selesai Subtes Ini
                 </Button>
@@ -242,51 +352,26 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
         </div>
       </div>
 
-      {/* RIGHT PANEL: Navigator & Info */}
       <div className="lg:col-span-1 flex flex-col gap-6">
            {/* Desktop Timer */}
-           <Card className="hidden lg:flex flex-col p-4 bg-slate-900 text-white sticky top-24">
+           <Card className="hidden lg:flex flex-col p-4 bg-slate-900 text-white sticky top-24 shadow-xl border-slate-800 select-none">
                 <span className="text-xs text-slate-400 uppercase tracking-wider mb-1">Sisa Waktu</span>
                 <div className={`text-4xl font-mono font-bold ${timeLeft < 60 ? 'text-red-400 animate-pulse' : ''}`}>
                     {formatTime(timeLeft)}
                 </div>
-                <div className="mt-2 text-sm text-slate-300">
+                <div className="mt-2 text-sm text-slate-300 border-t border-slate-700 pt-2">
                     {currentSubtest.subtest}
                 </div>
            </Card>
 
-           {/* Number Grid */}
-           <Card className="p-4">
-               <div className="flex items-center gap-2 mb-4">
-                   <LayoutGrid className="w-4 h-4" />
-                   <h3 className="font-semibold">Navigasi Soal</h3>
+           <Card className="p-5 hidden lg:block border shadow-sm sticky top-60 select-none">
+               <div className="flex items-center gap-2 mb-4 pb-2 border-b">
+                   <LayoutGrid className="w-4 h-4 text-gsb-blue" />
+                   <h3 className="font-semibold text-gsb-blue">Navigasi Soal</h3>
                </div>
-               <div className="grid grid-cols-5 gap-2">
-                   {questions.map((_, idx) => {
-                       const qID = questions[idx].id || `q-${idx}`;
-                       const isAns = answers[currentSubtest.id]?.[qID];
-                       const isFlg = flags[currentSubtest.id]?.[qID];
-                       const isCurr = currentQuestionIndex === idx;
-
-                       let variant = "bg-white border-gray-200 text-gray-700 hover:bg-gray-50";
-                       if (isCurr) variant = "bg-blue-600 text-white border-blue-600";
-                       else if (isFlg) variant = "bg-yellow-400 text-yellow-900 border-yellow-400";
-                       else if (isAns) variant = "bg-green-600 text-white border-green-600";
-
-                       return (
-                           <button
-                                key={idx}
-                                onClick={() => setCurrentQuestionIndex(idx)}
-                                className={cn(
-                                    "w-full aspect-square rounded flex items-center justify-center text-sm font-medium border transition-all",
-                                    variant
-                                )}
-                           >
-                               {idx + 1}
-                           </button>
-                       )
-                   })}
-               </div>
+               
+               {/* Compact Navigator for Desktop */}
+               {renderNavigator()}
                
                <div className="mt-6 flex flex-col gap-2 text-xs text-muted-foreground">
                    <div className="flex items-center gap-2">
@@ -305,5 +390,29 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
            </Card>
       </div>
     </div>
+
+    {/* Confirmation Dialog */}
+    <AlertDialog open={showConfirmFinish} onOpenChange={setShowConfirmFinish}>
+        <AlertDialogContent className="select-none">
+            <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
+                    <AlertTriangle className="h-5 w-5" />
+                    Peringatan: Soal Belum Lengkap
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-base text-gray-600">
+                    Kamu masih memiliki <span className="font-bold text-amber-600">{unansweredCount}</span> soal yang belum dijawab. 
+                    <br/><br/>
+                    Yakin ingin melanjutkan ke subtes berikutnya (atau selesai)? Kamu tidak bisa kembali ke subtes ini setelah melanjutkan.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Periksa Lagi</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSubtestFinish} className="bg-gsb-orange hover:bg-gsb-orange/90">
+                    Ya, Lanjutkan
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 };

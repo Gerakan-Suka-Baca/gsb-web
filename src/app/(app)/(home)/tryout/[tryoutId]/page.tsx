@@ -3,6 +3,8 @@ import { caller, getQueryClient, trpc } from "@/trpc/server";
 import { TryoutView } from "@/modules/tryouts/ui/views/tryout-view";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 // import type { Metadata } from "next";
 
 interface Props {

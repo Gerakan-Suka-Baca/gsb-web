@@ -124,6 +124,12 @@ export interface UserAuthOperations {
 export interface User {
   id: string;
   username: string;
+  fullName?: string | null;
+  whatsapp?: string | null;
+  schoolOrigin?: string | null;
+  grade?: ('10' | '11' | '12' | 'gap_year') | null;
+  targetPTN?: string | null;
+  targetMajor?: string | null;
   paid?: boolean | null;
   payment?: (string | null) | Media;
   roles?: ('super-admin' | 'admin' | 'user')[] | null;
@@ -180,6 +186,12 @@ export interface Tryout {
  */
 export interface Question {
   id: string;
+  /**
+   * Waktu pengerjaan untuk subtes ini dalam menit.
+   */
+  duration: number;
+  subtest: 'PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM';
+  tryout: string | Tryout;
   title: string;
   tryoutQuestions?:
     | {
@@ -224,11 +236,6 @@ export interface Question {
         blockType: 'tryoutQuestion';
       }[]
     | null;
-  /**
-   * Waktu pengerjaan untuk subtes ini dalam menit.
-   */
-  duration: number;
-  subtest: 'PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM';
   active: boolean;
   updatedAt: string;
   createdAt: string;
@@ -304,6 +311,12 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   username?: T;
+  fullName?: T;
+  whatsapp?: T;
+  schoolOrigin?: T;
+  grade?: T;
+  targetPTN?: T;
+  targetMajor?: T;
   paid?: T;
   payment?: T;
   roles?: T;
@@ -356,6 +369,9 @@ export interface TryoutsSelect<T extends boolean = true> {
  * via the `definition` "questions_select".
  */
 export interface QuestionsSelect<T extends boolean = true> {
+  duration?: T;
+  subtest?: T;
+  tryout?: T;
   title?: T;
   tryoutQuestions?:
     | T
@@ -380,8 +396,6 @@ export interface QuestionsSelect<T extends boolean = true> {
               blockName?: T;
             };
       };
-  duration?: T;
-  subtest?: T;
   active?: T;
   updatedAt?: T;
   createdAt?: T;

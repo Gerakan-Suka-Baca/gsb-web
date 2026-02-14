@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { UserMenu } from "./UserMenu"
 
 // Types
 interface MenuItem {
@@ -239,9 +240,7 @@ export function Navbar() {
           <Button asChild className="bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full px-6 shadow-md transition-all hover:scale-105">
             <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer">Jadi Relawan</Link>
           </Button>
-          <Button variant="outline" className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105" asChild>
-            <Link href="/sign-in">Masuk</Link>
-          </Button>
+          <UserMenu />
           <ThemeButton />
         </div>
 
@@ -266,9 +265,7 @@ export function Navbar() {
                   <Button asChild className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full h-14 text-lg shadow-md">
                     <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>Jadi Relawan</Link>
                   </Button>
-                  <Button variant="outline" className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-14 text-lg" asChild>
-                    <Link href="/sign-in" onClick={closeMenu}>Masuk</Link>
-                  </Button>
+                  <UserMenu mobile onClose={closeMenu} />
                 </motion.div>
               </motion.div>
             </SheetContent>

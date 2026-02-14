@@ -13,3 +13,8 @@ export const generateAuthCookie = async ({ prefix, value }: Props) => {
     path: "/",
   });
 };
+
+export const deleteAuthCookie = async (prefix: string) => {
+  const cookies = await getCookies();
+  cookies.delete(`${prefix}-token`);
+};
