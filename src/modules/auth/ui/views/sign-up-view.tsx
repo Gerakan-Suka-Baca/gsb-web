@@ -28,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { UniversitySelect } from "@/components/ui/university-select";
+
 import { registerSchema } from "../../schemas";
 
 export const SignUpView = () => {
@@ -61,6 +63,8 @@ export const SignUpView = () => {
       grade: "12", 
       targetPTN: "",
       targetMajor: "",
+      targetPTN2: "",
+      targetMajor2: "",
     },
   });
 
@@ -70,7 +74,7 @@ export const SignUpView = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-4xl grid md:grid-cols-5 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+      <div className="w-full max-w-7xl grid md:grid-cols-5 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
         
         {/* Left Side: Brand & Info (Hidden on Mobile) */}
         <div className="hidden md:flex md:col-span-2 bg-gradient-to-br from-gsb-maroon to-gsb-red text-white p-8 flex-col justify-between relative">
@@ -229,15 +233,21 @@ export const SignUpView = () => {
                           )}
                         />
                     </div>
+                    
+                    {/* Pilihan 1 */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          <FormField
                           control={form.control}
                           name="targetPTN"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Target PTN</FormLabel>
+                              <FormLabel>Target PTN (Pilihan 1)</FormLabel>
                               <FormControl>
-                                <Input placeholder="UI, ITB, UGM..." {...field} />
+                                <UniversitySelect 
+                                  value={field.value} 
+                                  onValueChange={field.onChange}
+                                  placeholder="Cari Universitas..."
+                                />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -248,9 +258,43 @@ export const SignUpView = () => {
                           name="targetMajor"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Target Jurusan</FormLabel>
+                              <FormLabel>Target Jurusan (Pilihan 1)</FormLabel>
                               <FormControl>
                                 <Input placeholder="Ilmu Komputer..." {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                    </div>
+
+                    {/* Pilihan 2 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <FormField
+                          control={form.control}
+                          name="targetPTN2"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target PTN (Pilihan 2 - Opsional)</FormLabel>
+                              <FormControl>
+                                <UniversitySelect 
+                                  value={field.value} 
+                                  onValueChange={field.onChange}
+                                  placeholder="Cari Universitas..."
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="targetMajor2"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Target Jurusan (Pilihan 2 - Opsional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Sistem Informasi..." {...field} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>

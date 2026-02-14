@@ -14,7 +14,7 @@ export const Users: CollectionConfig = {
   },
   auth: {
     maxLoginAttempts: 5,
-    lockTime: 600 * 1000, // 10 minutes
+    lockTime: 600 * 1000,
   },
   fields: [
     {
@@ -51,12 +51,22 @@ export const Users: CollectionConfig = {
     },
     {
       name: "targetPTN",
-      label: "Target PTN",
+      label: "Target PTN (Pilihan 1)",
       type: "text",
     },
     {
       name: "targetMajor",
-      label: "Target Jurusan",
+      label: "Target Jurusan (Pilihan 1)",
+      type: "text",
+    },
+    {
+      name: "targetPTN2",
+      label: "Target PTN (Pilihan 2)",
+      type: "text",
+    },
+    {
+      name: "targetMajor2",
+      label: "Target Jurusan (Pilihan 2)",
       type: "text",
     },
     { name: "paid", type: "checkbox", defaultValue: false },
@@ -77,6 +87,12 @@ export const Users: CollectionConfig = {
           );
         },
       },
+    },
+    {
+      name: "dateOfBirth",
+      label: "Tanggal Lahir",
+      type: "date",
+      required: false,
     },
   ],
 };
