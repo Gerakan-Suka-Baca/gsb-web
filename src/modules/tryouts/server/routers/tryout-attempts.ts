@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import type { Question } from "@/payload-types";
+import type { Question, TryoutAttempt } from "@/payload-types";
 
 export const tryoutAttemptsRouter = createTRPCRouter({
   getAttempt: protectedProcedure
@@ -50,6 +50,8 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           answers: {},
           flags: {},
           startedAt: new Date().toISOString(),
+          currentSubtest: 0,
+          examState: "running",
         },
       });
     }),
@@ -60,6 +62,10 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         attemptId: z.string(),
         answers: z.record(z.string(), z.record(z.string(), z.string())),
         flags: z.record(z.string(), z.record(z.string(), z.boolean())),
+        currentSubtest: z.number().optional(),
+        examState: z.enum(["running", "bridging"]).optional(),
+        bridgingExpiry: z.string().optional(),
+        secondsRemaining: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -73,10 +79,19 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Tryout already completed" });
       }
 
+      const updateData: Partial<TryoutAttempt> = { 
+        answers: input.answers, 
+        flags: input.flags,
+      };
+      if (input.currentSubtest !== undefined) updateData.currentSubtest = input.currentSubtest;
+      if (input.examState !== undefined) updateData.examState = input.examState;
+      if (input.bridgingExpiry !== undefined) updateData.bridgingExpiry = input.bridgingExpiry;
+      if (input.secondsRemaining !== undefined) updateData.secondsRemaining = input.secondsRemaining;
+
       await payload.update({
         collection: "tryout-attempts",
         id: input.attemptId,
-        data: { answers: input.answers, flags: input.flags },
+        data: updateData,
       });
       return { success: true };
     }),
@@ -97,7 +112,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       }
       if (attempt.status === "completed") return attempt;
 
-      // Fetch the tryout with questions populated (depth 2 to get answer blocks)
+      // Fetch the tryout with questions populated
       const tryoutId = typeof attempt.tryout === "object" ? attempt.tryout.id : attempt.tryout;
       const tryout = await payload.findByID({
         collection: "tryouts",
@@ -223,33 +238,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
 
       const attemptUserId = typeof attempt.user === "object" ? attempt.user.id : attempt.user;
       if (attemptUserId !== session.user.id) throw new Error("Unauthorized");
-
-      // Create payment record if plan is paid
-      if (input.plan === "paid") {
-        const existingPayment = await payload.find({
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          collection: "tryout-payments" as any,
-          where: { attempt: { equals: input.attemptId } },
-          limit: 1,
-        });
-
-        if (existingPayment.docs.length === 0) {
-          await payload.create({
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            collection: "tryout-payments" as any,
-            data: {
-              user: session.user.id,
-              tryout: typeof attempt.tryout === "object" ? attempt.tryout.id : attempt.tryout,
-              attempt: input.attemptId,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              status: "pending" as any,
-              amount: 5020,
-              program: "Tryout SNBT Premium",
-              paymentDate: new Date().toISOString(),
-            },
-          });
-        }
-      }
 
       const updated = await payload.update({
         collection: "tryout-attempts",

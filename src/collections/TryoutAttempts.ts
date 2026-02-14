@@ -95,6 +95,32 @@ export const TryoutAttempts: CollectionConfig = {
       type: "date",
     },
     {
+      name: "currentSubtest",
+      type: "number",
+      defaultValue: 0,
+      admin: { description: "Index subtes yang sedang dikerjakan (0-based)." },
+    },
+    {
+      name: "examState",
+      type: "select",
+      options: [
+        { label: "Running", value: "running" },
+        { label: "Bridging", value: "bridging" },
+      ],
+      defaultValue: "running",
+      admin: { description: "State internal ujian (pengerjaan vs istirahat antar subtes)." },
+    },
+    {
+      name: "bridgingExpiry",
+      type: "date",
+      admin: { description: "Waktu berakhirnya bridging (jika sedang bridging)." },
+    },
+    {
+      name: "secondsRemaining",
+      type: "number",
+      admin: { description: "Sisa waktu (detik) saat penyimpanan terakhir." },
+    },
+    {
       name: "score",
       type: "number",
       label: "Skor (%)",

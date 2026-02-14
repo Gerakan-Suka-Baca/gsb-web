@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Loader2, Search } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useDebounce } from "use-debounce";
 
 import { cn } from "@/lib/utils";
@@ -42,9 +42,8 @@ export function UniversitySelect({
 
   // Initialize with current value if exists
   React.useEffect(() => {
-    if (value && !items.find((i) => i.value === value)) {
-      setItems([{ value, label: value }]);
-    }
+    if (!value) return;
+    setItems((prev) => (prev.some((i) => i.value === value) ? prev : [{ value, label: value }]));
   }, [value]);
 
   React.useEffect(() => {

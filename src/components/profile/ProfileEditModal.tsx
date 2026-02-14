@@ -27,7 +27,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UniversitySelect } from "@/components/ui/university-select";
@@ -45,6 +44,7 @@ import {
 } from "@/components/ui/popover";
 
 import { updateProfile } from "@/actions/profile";
+import type { User as PayloadUser } from "@/payload-types";
 
 const profileSchema = z.object({
   username: z.string().min(3, "Minimal 3 karakter"),
@@ -59,22 +59,14 @@ const profileSchema = z.object({
   dateOfBirth: z.date().optional(),
 });
 
-interface User {
-  username: string;
-  fullName?: string | null;
-  whatsapp?: string | null;
-  schoolOrigin?: string | null;
-  grade?: "10" | "11" | "12" | "gap_year" | string | null;
-  targetPTN?: string | null;
-  targetMajor?: string | null;
+type ProfileUser = PayloadUser & {
   targetPTN2?: string | null;
   targetMajor2?: string | null;
   dateOfBirth?: string | Date | null;
-  [key: string]: any;
-}
+};
 
 interface ProfileEditModalProps {
-  user: User;
+  user: ProfileUser;
 }
 
 export function ProfileEditModal({ user }: ProfileEditModalProps) {
