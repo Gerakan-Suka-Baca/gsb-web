@@ -20,8 +20,10 @@ export const registerSchema = z.object({
   whatsapp: z.string().min(10, "Nomor WhatsApp tidak valid"),
   schoolOrigin: z.string().min(1, "Asal Sekolah wajib diisi"),
   grade: z.enum(["10", "11", "12", "gap_year"]),
-  targetPTN: z.string().min(1, "Target PTN wajib diisi"),
-  targetMajor: z.string().min(1, "Target Jurusan wajib diisi"),
+  targetPTN: z.string().min(3, "Minimal 3 karakter"),
+  targetMajor: z.string().min(3, "Minimal 3 karakter"),
+  targetPTN2: z.string().optional(),
+  targetMajor2: z.string().optional(),
 });
 
 export const loginSchema = z.object({

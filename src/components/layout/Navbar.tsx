@@ -173,7 +173,7 @@ export function Navbar() {
       )}
       onMouseLeave={() => setActiveMenu(null)}
     >
-      <div className="container flex h-20 items-center justify-between px-4 md:px-6">
+      <div className="w-full h-20 flex items-center justify-between px-4 md:px-8 lg:px-12">
         {/* Logo + Navigation */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center shrink-0 gap-2">
