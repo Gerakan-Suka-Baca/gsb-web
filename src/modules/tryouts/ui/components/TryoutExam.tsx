@@ -251,7 +251,11 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
 
   // Effects
   useEffect(() => {
-    if (isAttemptLoading || !attempt) return;
+    if (isAttemptLoading) return;
+    if (!attempt) {
+      setExamState("ready");
+      return;
+    }
     const data = attempt as AttemptData;
     if (data.currentSubtest !== undefined && data.currentSubtest !== null) setCurrentSubtestIndex(data.currentSubtest);
     if (data.examState) setExamState(data.examState);
