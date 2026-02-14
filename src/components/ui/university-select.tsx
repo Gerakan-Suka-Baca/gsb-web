@@ -1,24 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, Search } from "lucide-react";
 import { useDebounce } from "use-debounce";
 
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { searchUniversities } from "@/actions/university";
 
 interface UniversitySelectProps {
@@ -39,8 +25,8 @@ export function UniversitySelect({
   const [debouncedValue] = useDebounce(inputValue, 500);
   const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
-  // Initialize with current value if exists
   React.useEffect(() => {
     if (!value) return;
     setItems((prev) => (prev.some((i) => i.value === value) ? prev : [{ value, label: value }]));
@@ -49,7 +35,7 @@ export function UniversitySelect({
   React.useEffect(() => {
     const fetchUniversities = async () => {
       if (!debouncedValue || debouncedValue.length < 3) return;
-      
+
       setLoading(true);
       try {
         const results = await searchUniversities(debouncedValue);
@@ -57,8 +43,6 @@ export function UniversitySelect({
           value: uni.name,
           label: uni.name,
         }));
-        
-        // Merge with existing selected item if confusing
         setItems(options);
       } catch (error) {
         console.error("Failed to fetch universities", error);
@@ -70,68 +54,117 @@ export function UniversitySelect({
     fetchUniversities();
   }, [debouncedValue]);
 
+  // Close dropdown on outside click
+  React.useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between"
-          disabled={disabled}
-        >
+    <div ref={containerRef} className="relative w-full">
+      {/* Trigger Button */}
+      <button
+        type="button"
+        role="combobox"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => setOpen(!open)}
+        className={cn(
+          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs",
+          "ring-offset-background placeholder:text-muted-foreground",
+          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          !value && "text-muted-foreground"
+        )}
+      >
+        <span className="truncate">
           {value
             ? items.find((item) => item.value === value)?.label || value
             : placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder="Cari nama universitas (min. 3 huruf)..."
-            value={inputValue}
-            onValueChange={setInputValue}
-          />
-          <CommandList>
+        </span>
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          className={cn(
+            "absolute z-50 mt-1 w-full rounded-md border border-input bg-white shadow-lg",
+            "animate-in fade-in-0 zoom-in-95"
+          )}
+        >
+          {/* Search Input */}
+          <div className="flex items-center border-b border-input px-3 py-2">
+            <Search className="mr-2 h-4 w-4 shrink-0 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Ketik min. 3 huruf untuk mencari..."
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              autoFocus
+            />
+          </div>
+
+          {/* Results */}
+          <div className="max-h-[200px] overflow-y-auto overscroll-contain">
             {loading && (
-              <div className="py-6 text-center text-sm text-muted-foreground flex justify-center">
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
                 Mencari...
               </div>
             )}
+
             {!loading && items.length === 0 && debouncedValue.length >= 3 && (
-              <CommandEmpty>Universitas tidak ditemukan.</CommandEmpty>
+              <div className="py-4 text-center text-sm text-muted-foreground">
+                Universitas tidak ditemukan.
+              </div>
             )}
+
             {!loading && items.length === 0 && debouncedValue.length < 3 && (
-              <div className="py-6 text-center text-sm text-muted-foreground">
+              <div className="py-4 text-center text-sm text-muted-foreground">
                 Ketik minimal 3 huruf untuk mencari.
               </div>
             )}
-            
-            <CommandGroup>
-              {items.map((item) => (
-                <CommandItem
-                  key={item.value}
-                  value={item.value}
-                  onSelect={(currentValue) => {
-                    onValueChange(currentValue);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
+
+            {!loading && items.length > 0 && (
+              <ul className="py-1">
+                {items.map((item) => (
+                  <li
+                    key={item.value}
+                    role="option"
+                    aria-selected={value === item.value}
+                    onClick={() => {
+                      onValueChange(item.value);
+                      setOpen(false);
+                      setInputValue("");
+                    }}
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === item.value ? "opacity-100" : "opacity-0"
+                      "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors",
+                      "hover:bg-gray-100",
+                      value === item.value && "bg-gray-50 font-medium"
                     )}
-                  />
-                  {item.label}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+                  >
+                    <Check
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        value === item.value ? "opacity-100 text-gsb-orange" : "opacity-0"
+                      )}
+                    />
+                    <span className="truncate">{item.label}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
