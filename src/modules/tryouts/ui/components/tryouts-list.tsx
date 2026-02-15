@@ -139,7 +139,7 @@ export const TryoutsList = () => {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
-      {/* Header */}
+
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-2">
           Dashboard Tryout
@@ -150,8 +150,7 @@ export const TryoutsList = () => {
         </p>
       </motion.div>
 
-      {/* Tabs */}
-      {/* Tabs */}
+
       <div className="w-full overflow-x-auto pb-2 md:pb-0 mb-6 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0">
         <div className="flex gap-2 bg-muted/50 p-1.5 rounded-xl w-fit border border-border/50 min-w-max">
           {TABS.map((tab) => {

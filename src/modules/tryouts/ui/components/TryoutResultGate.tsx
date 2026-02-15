@@ -17,12 +17,13 @@ const fadeUp = {
 } as const;
 
 interface Props {
+  tryoutId: string;
   attemptId: string;
   username: string;
   onPlanSelected: (plan: "free" | "paid") => void;
 }
 
-export const TryoutResultGate = ({ attemptId, username, onPlanSelected }: Props) => {
+export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<"free" | "paid" | null>(null);
@@ -30,8 +31,12 @@ export const TryoutResultGate = ({ attemptId, username, onPlanSelected }: Props)
 
   const updatePlanMutation = useMutation(
     trpc.tryoutAttempts.updatePlan.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries();
+      onSuccess: async () => {
+        // Invalidate specific attempt query using tryoutId
+        await queryClient.invalidateQueries({ 
+            queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId }, type: "query" }] 
+        });
+        
         toast.success("Paket berhasil disimpan!");
         if (selectedPlan) onPlanSelected(selectedPlan);
       },
@@ -79,7 +84,7 @@ export const TryoutResultGate = ({ attemptId, username, onPlanSelected }: Props)
       </div>
 
       <div className="grid md:grid-cols-2 gap-8 mb-12 max-w-4xl mx-auto">
-        {/* FREE PLAN */}
+
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Card
             className={`p-8 border-2 cursor-pointer transition-all duration-300 rounded-2xl h-full ${
@@ -120,7 +125,7 @@ export const TryoutResultGate = ({ attemptId, username, onPlanSelected }: Props)
           </Card>
         </motion.div>
 
-        {/* PAID PLAN */}
+
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Card
             className={`relative p-8 border-2 cursor-pointer transition-all duration-300 rounded-2xl h-full ${
