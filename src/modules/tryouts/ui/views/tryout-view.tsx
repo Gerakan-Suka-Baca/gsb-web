@@ -63,6 +63,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
   if (view === "result") {
     return (
       <TryoutResultGate
+        tryoutId={tryoutId}
         attemptId={existingAttempt?.id ?? ""}
         username="" // Username not available in shallow fetch, default to empty
         onPlanSelected={(plan) => {
