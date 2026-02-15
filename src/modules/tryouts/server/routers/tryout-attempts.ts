@@ -66,6 +66,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         examState: z.enum(["running", "bridging"]).optional(),
         bridgingExpiry: z.string().optional(),
         secondsRemaining: z.number().optional(),
+        currentQuestionIndex: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -79,7 +80,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Tryout already completed" });
       }
 
-      const updateData: Partial<TryoutAttempt> = { 
+      const updateData: Partial<TryoutAttempt> & { currentQuestionIndex?: number } = { 
         answers: input.answers, 
         flags: input.flags,
       };
@@ -87,6 +88,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       if (input.examState !== undefined) updateData.examState = input.examState;
       if (input.bridgingExpiry !== undefined) updateData.bridgingExpiry = input.bridgingExpiry;
       if (input.secondsRemaining !== undefined) updateData.secondsRemaining = input.secondsRemaining;
+      if (input.currentQuestionIndex !== undefined) updateData.currentQuestionIndex = input.currentQuestionIndex;
 
       await payload.update({
         collection: "tryout-attempts",
@@ -121,6 +123,10 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       });
 
       const subtests = (tryout.questions as Question[]) || [];
+      if (!Array.isArray(subtests)) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Tryout data invalid: questions not populated" });
+      }
+
       let totalQuestions = 0;
       let correctCount = 0;
 
@@ -140,8 +146,13 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       const questionResults: QuestionResult[] = [];
 
       for (const subtest of subtests) {
+        // Ensure subtest is an object (populated)
+        if (typeof subtest !== 'object') continue;
+
         const subtestAnswers = input.answers[subtest.id] || {};
         const questions = subtest.tryoutQuestions || [];
+
+        if (!Array.isArray(questions)) continue;
 
         for (let qIdx = 0; qIdx < questions.length; qIdx++) {
           const q = questions[qIdx];
