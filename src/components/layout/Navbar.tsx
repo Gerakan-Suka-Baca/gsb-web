@@ -16,6 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { UserMenu } from "./UserMenu"
+import { useExamNavbar } from "./exam-navbar-context"
 
 // Types
 interface MenuItem {
@@ -142,6 +143,7 @@ export function Navbar() {
   const [activeMenu, setActiveMenu] = React.useState<string | null>(null)
   const [isOpen, setIsOpen] = React.useState(false)
   const { theme, setTheme } = useTheme()
+  const { examNavbarContent } = useExamNavbar()
 
   React.useEffect(() => {
     setMounted(true)
@@ -242,10 +244,17 @@ export function Navbar() {
           <ThemeButton />
         </div>
 
+        {/* Mobile Exam Slot — Timer & Navigator */}
+        {examNavbarContent && (
+          <div className="flex xl:hidden items-center flex-1 justify-center mx-2 min-w-0">
+            {examNavbarContent}
+          </div>
+        )}
+
         {/* Mobile Menu */}
         <div className="flex xl:hidden items-center gap-2">
-          <ThemeButton />
-          <UserMenu />
+          {!examNavbarContent && <ThemeButton />}
+          {!examNavbarContent && <UserMenu />}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Toggle menu"><Menu className="h-6 w-6" /></Button>

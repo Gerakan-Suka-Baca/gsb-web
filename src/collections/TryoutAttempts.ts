@@ -137,6 +137,24 @@ export const TryoutAttempts: CollectionConfig = {
       label: "Total Soal",
     },
     {
+      name: "currentQuestionIndex",
+      type: "number",
+      defaultValue: 0,
+      admin: { description: "Index soal yang sedang dikerjakan di subtes saat ini (0-based)." },
+    },
+    {
+      name: "subtestTimingData",
+      type: "json",
+      label: "Data Waktu Per Subtes",
+      admin: {
+        description: "Data timing per subtest: startedAt, endedAt, durationAllocated, timeSpent, timeRemaining.",
+        components: {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          Field: CompactJSON as any,
+        },
+      },
+    },
+    {
       name: "resultPlan",
       type: "select",
       label: "Paket Hasil",
