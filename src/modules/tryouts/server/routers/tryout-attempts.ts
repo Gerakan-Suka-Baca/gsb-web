@@ -67,6 +67,13 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         bridgingExpiry: z.string().optional(),
         secondsRemaining: z.number().optional(),
         currentQuestionIndex: z.number().optional(),
+        subtestTimingData: z.record(z.string(), z.object({
+          startedAt: z.string(),
+          endedAt: z.string().optional(),
+          durationAllocatedSeconds: z.number(),
+          timeSpentSeconds: z.number(),
+          timeRemainingSeconds: z.number(),
+        })).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -80,7 +87,8 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Tryout already completed" });
       }
 
-      const updateData: Partial<TryoutAttempt> & { currentQuestionIndex?: number } = { 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updateData: Record<string, any> = { 
         answers: input.answers, 
         flags: input.flags,
       };
@@ -89,6 +97,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       if (input.bridgingExpiry !== undefined) updateData.bridgingExpiry = input.bridgingExpiry;
       if (input.secondsRemaining !== undefined) updateData.secondsRemaining = input.secondsRemaining;
       if (input.currentQuestionIndex !== undefined) updateData.currentQuestionIndex = input.currentQuestionIndex;
+      if (input.subtestTimingData !== undefined) updateData.subtestTimingData = input.subtestTimingData;
 
       await payload.update({
         collection: "tryout-attempts",
@@ -103,6 +112,13 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       z.object({
         attemptId: z.string(),
         answers: z.record(z.string(), z.record(z.string(), z.string())),
+        subtestTimingData: z.record(z.string(), z.object({
+          startedAt: z.string(),
+          endedAt: z.string().optional(),
+          durationAllocatedSeconds: z.number(),
+          timeSpentSeconds: z.number(),
+          timeRemainingSeconds: z.number(),
+        })).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -203,6 +219,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       const updated = await payload.update({
         collection: "tryout-attempts",
         id: input.attemptId,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: {
           status: "completed",
           completedAt: new Date().toISOString(),
@@ -211,7 +228,8 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           correctAnswersCount: correctCount,
           totalQuestionsCount: totalQuestions,
           questionResults,
-        },
+          subtestTimingData: input.subtestTimingData ?? undefined,
+        } as any,
       });
 
       return updated;
