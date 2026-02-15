@@ -31,7 +31,7 @@ export const tryoutsRouter = createTRPCRouter({
     .query(async ({ ctx }) => {
       const data = await ctx.db.find({
         collection: "tryouts",
-        depth: 2,
+        depth: 0,
         pagination: false,
         limit: 100,
       });
