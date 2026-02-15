@@ -18,21 +18,10 @@ import { useTRPC } from "@/trpc/client";
 import { useExamNavbar } from "@/components/layout/exam-navbar-context";
 import type { Question, Tryout, TryoutAttempt } from "@/payload-types";
 
-// --- Types & Constants ---
-
 type AnswerMap = Record<string, string>;
 type FlagMap = Record<string, boolean>;
 type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
 type SubtestAnswer = NonNullable<SubtestQuestion["tryoutAnswers"]>[number];
-
-interface SubtestTiming {
-  startedAt: string;
-  endedAt?: string;
-  durationAllocatedSeconds: number;
-  timeSpentSeconds: number;
-  timeRemainingSeconds: number;
-}
-type SubtestTimingData = Record<string, SubtestTiming>;
 
 type AttemptData = Omit<TryoutAttempt, "answers" | "flags"> & {
   answers?: Record<string, AnswerMap> | null;
@@ -41,7 +30,6 @@ type AttemptData = Omit<TryoutAttempt, "answers" | "flags"> & {
   examState?: "running" | "bridging" | null;
   secondsRemaining?: number | null;
   currentQuestionIndex?: number | null;
-  subtestTimingData?: SubtestTimingData | null;
 };
 
 interface TryoutExamProps {
@@ -67,8 +55,6 @@ const ANIM = {
     animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   },
 } as const;
-
-// --- Sub-Components ---
 
 interface QuestionDisplayProps {
   question: SubtestQuestion;
@@ -198,8 +184,6 @@ const Navigator = memo(({ questions, currentSubtestId, answers, flags, currentIn
 ));
 Navigator.displayName = "Navigator";
 
-// --- Main Component ---
-
 export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const router = useRouter();
   const trpc = useTRPC();
@@ -209,7 +193,6 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     return q || [];
   }, [tryout.questions]);
 
-  // State
   const [currentSubtestIndex, setCurrentSubtestIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerMap>>({});
@@ -218,29 +201,25 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const [examState, setExamState] = useState<"loading" | "ready" | "running" | "bridging" | "finished">("loading");
   const [attemptId, setAttemptId] = useState<string | null>(null);
   const [bridgingSeconds, setBridgingSeconds] = useState(60);
-  const [subtestTimingData, setSubtestTimingData] = useState<SubtestTimingData>({});
-  
-  // Timer refs for drift-proof countdown
+
   const timerActiveRef = useRef(false);
   const timerStartRef = useRef(0);
   const timeLeftAtStartRef = useRef(0);
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  
-  // Dialog States
+
   const [showConfirmFinish, setShowConfirmFinish] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const [showTimeUpDialog, setShowTimeUpDialog] = useState(false);
   const [isNavigatorOpen, setIsNavigatorOpen] = useState(false);
 
-  // Derived
-  const debouncedAnswers = useDebounce(answers, 5000);
-  const debouncedFlags = useDebounce(flags, 5000);
+  const debouncedAnswers = useDebounce(answers, 10000);
+  const debouncedFlags = useDebounce(flags, 10000);
   const currentSubtest = subtests[currentSubtestIndex];
+  const currentSubtestId = currentSubtest?.id ?? "";
   const questions = (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[];
   const currentQuestion = questions[currentQuestionIndex];
   const subtestLabel = currentSubtest ? (SUBTEST_LABELS[currentSubtest.subtest] ?? currentSubtest.subtest) : "";
 
-  // TRPC Hooks
   const { data: attempt, isLoading: isAttemptLoading } = useQuery(
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId: tryout.id })
   );
@@ -256,9 +235,8 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   }));
 
   const saveProgressMutation = useMutation(trpc.tryoutAttempts.saveProgress.mutationOptions({
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
-    onError: (err) => console.error("Auto-save failed:", err),
+    retry: false,
+    onError: () => {},
   }));
 
   const submitAttemptMutation = useMutation(trpc.tryoutAttempts.submitAttempt.mutationOptions({
@@ -273,7 +251,66 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     onError: (err) => toast.error("Gagal submit: " + err.message),
   }));
 
-  // Effects
+  const timeLeftRef = useRef(timeLeft);
+  const currentSubtestIndexRef = useRef(currentSubtestIndex);
+  const currentQuestionIndexRef = useRef(currentQuestionIndex);
+  const examStateRef = useRef(examState);
+  const answersRef = useRef(answers);
+  const flagsRef = useRef(flags);
+  const isSavingRef = useRef(false);
+  const failCountRef = useRef(0);
+  const pausedUntilRef = useRef(0);
+  const lastSavedHashRef = useRef("");
+
+  useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
+  useEffect(() => { currentSubtestIndexRef.current = currentSubtestIndex; }, [currentSubtestIndex]);
+  useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
+  useEffect(() => { examStateRef.current = examState; }, [examState]);
+  useEffect(() => { answersRef.current = answers; }, [answers]);
+  useEffect(() => { flagsRef.current = flags; }, [flags]);
+
+  const doSave = useCallback((force?: boolean) => {
+    const aid = attemptId;
+    if (!aid) return;
+    if (isSavingRef.current) return;
+    if (failCountRef.current >= 3 && Date.now() < pausedUntilRef.current) return;
+    if (failCountRef.current >= 3) failCountRef.current = 0;
+
+    const currentAnswers = answersRef.current;
+    const currentFlags = flagsRef.current;
+
+    const hash = JSON.stringify({ a: currentAnswers, f: currentFlags });
+    if (!force && hash === lastSavedHashRef.current) return;
+
+    const es = examStateRef.current;
+    const persistedExamState = es === "running" || es === "bridging" ? es : undefined;
+
+    isSavingRef.current = true;
+    saveProgressMutation.mutate({
+      attemptId: aid, answers: currentAnswers, flags: currentFlags,
+      currentSubtest: currentSubtestIndexRef.current,
+      examState: persistedExamState,
+      secondsRemaining: timeLeftRef.current,
+      currentQuestionIndex: currentQuestionIndexRef.current,
+    }, {
+      onSuccess: () => {
+        isSavingRef.current = false;
+        failCountRef.current = 0;
+        lastSavedHashRef.current = hash;
+      },
+      onError: () => {
+        isSavingRef.current = false;
+        failCountRef.current += 1;
+        if (failCountRef.current >= 3) {
+          pausedUntilRef.current = Date.now() + 60_000;
+        }
+      },
+    });
+  }, [attemptId, saveProgressMutation]);
+
+  const doSaveRef = useRef(doSave);
+  useEffect(() => { doSaveRef.current = doSave; }, [doSave]);
+
   useEffect(() => {
     if (isAttemptLoading) return;
     if (!attempt) {
@@ -286,43 +323,32 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     if (data.examState) setExamState(data.examState);
 
     setAttemptId(data.id);
-    
-    // Load from DB first
-    const initialAnswers = data.answers || {};
-    const initialFlags = data.flags || {};
-    let initialTimingData = data.subtestTimingData || {};
 
-    // Check local storage for unsaved progress
-    if (typeof window !== 'undefined') {
-        const backupKey = `gsb-tryout-backup-${data.id}`;
-        const raw = localStorage.getItem(backupKey);
-        if (raw) {
-            try {
-                const parsed = JSON.parse(raw);
-                // Prioritize local storage data as it might have unsaved changes
-                if (parsed.answers) {
-                    Object.keys(parsed.answers).forEach(subtestId => {
-                        initialAnswers[subtestId] = { ...(initialAnswers[subtestId] || {}), ...parsed.answers[subtestId] };
-                    });
-                }
-                if (parsed.flags) {
-                    Object.keys(parsed.flags).forEach(subtestId => {
-                        initialFlags[subtestId] = { ...(initialFlags[subtestId] || {}), ...parsed.flags[subtestId] };
-                    });
-                }
-                if (parsed.subtestTimingData) {
-                    initialTimingData = { ...initialTimingData, ...parsed.subtestTimingData };
-                }
-                console.log("Restored unsaved progress");
-            } catch (e) {
-                console.error("Failed to parse local backup", e);
-            }
-        }
+    const initialAnswers: Record<string, AnswerMap> = data.answers || {};
+    const initialFlags: Record<string, FlagMap> = data.flags || {};
+
+    if (typeof window !== "undefined") {
+      const backupKey = `gsb-tryout-backup-${data.id}`;
+      const raw = localStorage.getItem(backupKey);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed.answers) {
+            Object.keys(parsed.answers).forEach(subtestId => {
+              initialAnswers[subtestId] = { ...(initialAnswers[subtestId] || {}), ...parsed.answers[subtestId] };
+            });
+          }
+          if (parsed.flags) {
+            Object.keys(parsed.flags).forEach(subtestId => {
+              initialFlags[subtestId] = { ...(initialFlags[subtestId] || {}), ...parsed.flags[subtestId] };
+            });
+          }
+        } catch { /* corrupt backup */ }
+      }
     }
 
     setAnswers(initialAnswers);
     setFlags(initialFlags);
-    setSubtestTimingData(initialTimingData);
 
     if (data.status === "completed") {
       setExamState("finished");
@@ -334,33 +360,21 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     }
   }, [attempt, isAttemptLoading, currentSubtest?.duration, tryout.duration]);
 
-  // Backup to local storage on change
   useEffect(() => {
     if (!attemptId) return;
     const backupKey = `gsb-tryout-backup-${attemptId}`;
     localStorage.setItem(backupKey, JSON.stringify({
-        answers,
-        flags,
-        subtestTimingData,
-        updatedAt: Date.now()
+      answers, flags, updatedAt: Date.now(),
     }));
-  }, [answers, flags, attemptId, subtestTimingData]);
-
+  }, [answers, flags, attemptId]);
 
   useEffect(() => {
     const hasProgress = Object.keys(debouncedAnswers).length > 0 || Object.keys(debouncedFlags).length > 0;
     if (hasProgress && attemptId) {
-      const persistedExamState = examState === "running" || examState === "bridging" ? examState : undefined;
-      saveProgressMutation.mutate({
-        attemptId, answers: debouncedAnswers, flags: debouncedFlags,
-        currentSubtest: currentSubtestIndex, examState: persistedExamState, secondsRemaining: timeLeft,
-        currentQuestionIndex: currentQuestionIndex,
-        subtestTimingData,
-      });
+      doSaveRef.current();
     }
-  }, [debouncedAnswers, debouncedFlags, attemptId, currentSubtestIndex, examState, saveProgressMutation, timeLeft, currentQuestionIndex, subtestTimingData]);
+  }, [debouncedAnswers, debouncedFlags, attemptId]);
 
-  // Drift-proof timer using Date.now()
   const startTimer = useCallback((seconds: number) => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     timerActiveRef.current = true;
@@ -389,7 +403,6 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     }
   }, []);
 
-  // Start/stop timer based on examState
   useEffect(() => {
     if (examState === "running" && timeLeft > 0 && !timerActiveRef.current) {
       startTimer(timeLeft);
@@ -399,52 +412,20 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     return () => stopTimer();
   }, [examState, startTimer, stopTimer]);
 
-  // Record subtest start timing
-  const recordSubtestStart = useCallback((subtestId: string, durationMinutes: number) => {
-    setSubtestTimingData(prev => ({
-      ...prev,
-      [subtestId]: {
-        startedAt: new Date().toISOString(),
-        durationAllocatedSeconds: durationMinutes * 60,
-        timeSpentSeconds: 0,
-        timeRemainingSeconds: durationMinutes * 60,
-      }
-    }));
-  }, []);
-
-  // Record subtest end timing
-  const recordSubtestEnd = useCallback((subtestId: string, remainingSeconds: number) => {
-    setSubtestTimingData(prev => {
-      const existing = prev[subtestId];
-      if (!existing) return prev;
-      const allocated = existing.durationAllocatedSeconds;
-      return {
-        ...prev,
-        [subtestId]: {
-          ...existing,
-          endedAt: new Date().toISOString(),
-          timeSpentSeconds: allocated - remainingSeconds,
-          timeRemainingSeconds: remainingSeconds,
-        }
-      };
-    });
-  }, []);
-
   const handleSubtestFinish = useCallback(() => {
     setShowConfirmFinish(false);
     stopTimer();
-    if (currentSubtest) recordSubtestEnd(currentSubtest.id, timeLeft);
     if (currentSubtestIndex < subtests.length - 1) {
       setExamState("bridging");
     } else {
       if (attemptId) {
-        submitAttemptMutation.mutate({ attemptId, answers, subtestTimingData });
+        submitAttemptMutation.mutate({ attemptId, answers });
       } else {
         setExamState("finished");
         onFinish(answers);
       }
     }
-  }, [currentSubtestIndex, subtests.length, attemptId, answers, onFinish, submitAttemptMutation, stopTimer, currentSubtest, timeLeft, recordSubtestEnd, subtestTimingData]);
+  }, [currentSubtestIndex, subtests.length, attemptId, answers, onFinish, submitAttemptMutation, stopTimer]);
 
   useEffect(() => {
     if (showTimeUpDialog) {
@@ -458,36 +439,29 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
 
   useEffect(() => {
     if (examState !== "running") return;
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
     const handlePopState = () => {
       window.history.pushState(null, "", window.location.href);
       setShowExitDialog(true);
     };
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden" && attemptId) {
-        saveProgressMutation.mutate({
-          attemptId, answers, flags,
-          currentSubtest: currentSubtestIndex, examState: "running",
-          secondsRemaining: timeLeft, currentQuestionIndex,
-        });
+        doSaveRef.current(true);
       }
     };
     window.history.pushState(null, "", window.location.href);
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [examState, attemptId, answers, flags, currentSubtestIndex, timeLeft, currentQuestionIndex, saveProgressMutation]);
+  }, [examState, attemptId]);
 
   const handleStart = () => {
     startAttemptMutation.mutate({ tryoutId: tryout.id });
-    if (currentSubtest) {
-      recordSubtestStart(currentSubtest.id, currentSubtest.duration ?? 0);
-    }
   };
 
   const handleNextSubtest = useCallback(() => {
@@ -499,43 +473,44 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     setTimeLeft(nextDuration * 60);
     setExamState("running");
 
-    if (nextSubtest) recordSubtestStart(nextSubtest.id, nextDuration);
+    currentSubtestIndexRef.current = nextIdx;
+    currentQuestionIndexRef.current = 0;
+    timeLeftRef.current = nextDuration * 60;
+    examStateRef.current = "running";
 
     if (attemptId) {
-      saveProgressMutation.mutate({
-        attemptId, answers, flags, currentSubtest: nextIdx,
-        examState: "running", secondsRemaining: nextDuration * 60,
-        subtestTimingData,
-      });
+      doSaveRef.current(true);
     }
-  }, [currentSubtestIndex, subtests, attemptId, answers, flags, saveProgressMutation, recordSubtestStart, subtestTimingData]);
+  }, [currentSubtestIndex, subtests, attemptId]);
 
   const triggerFinishCheck = useCallback(() => {
-    const answeredCount = Object.keys(answers[currentSubtest.id] || {}).length;
+    if (!currentSubtestId) return;
+    const answeredCount = Object.keys(answers[currentSubtestId] || {}).length;
     if (answeredCount < questions.length) {
       setShowConfirmFinish(true);
     } else {
       handleSubtestFinish();
     }
-  }, [answers, currentSubtest?.id, questions.length, handleSubtestFinish]);
+  }, [answers, currentSubtestId, questions.length, handleSubtestFinish]);
 
   const handleNextQuestion = useCallback(() => setCurrentQuestionIndex(prev => prev + 1), []);
   const handlePrevQuestion = useCallback(() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1)), []);
-  
+
   const handleAnswer = useCallback((qId: string, aId: string) => {
-    setAnswers(prev => ({ ...prev, [currentSubtest.id]: { ...(prev[currentSubtest.id] || {}), [qId]: aId } }));
-  }, [currentSubtest?.id]);
+    if (!currentSubtestId) return;
+    setAnswers(prev => ({ ...prev, [currentSubtestId]: { ...(prev[currentSubtestId] || {}), [qId]: aId } }));
+  }, [currentSubtestId]);
 
   const toggleFlag = useCallback((qId: string) => {
-    setFlags(prev => ({ ...prev, [currentSubtest.id]: { ...(prev[currentSubtest.id] || {}), [qId]: !prev[currentSubtest.id]?.[qId] } }));
-  }, [currentSubtest?.id]);
+    if (!currentSubtestId) return;
+    setFlags(prev => ({ ...prev, [currentSubtestId]: { ...(prev[currentSubtestId] || {}), [qId]: !prev[currentSubtestId]?.[qId] } }));
+  }, [currentSubtestId]);
 
   const handleMobileNavigate = useCallback((idx: number) => {
     setCurrentQuestionIndex(idx);
     setIsNavigatorOpen(false);
   }, []);
 
-  // Bridging Timer
   useEffect(() => {
     if (examState !== "bridging") {
       setBridgingSeconds(60);
@@ -555,7 +530,29 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     return `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
   };
 
-  // --- Render Views ---
+  useEffect(() => {
+    if (examState !== "running") {
+      setExamNavbarContent(null);
+      return;
+    }
+    setExamNavbarContent(
+      <div className="flex items-center gap-2 w-full justify-center">
+        <div className={cn("font-mono text-base font-bold flex gap-1 items-center", timeLeft < 60 && "text-red-500 animate-pulse")}>
+          <Timer className="w-3.5 h-3.5" />{formatTime(timeLeft)}
+        </div>
+        <Sheet open={isNavigatorOpen} onOpenChange={setIsNavigatorOpen}>
+          <SheetTrigger asChild><Button variant="outline" size="sm" className="h-8 w-8 p-0"><LayoutGrid className="w-3.5 h-3.5" /></Button></SheetTrigger>
+          <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-xl">
+            <SheetHeader className="mb-4"><SheetTitle>Navigasi Soal</SheetTitle></SheetHeader>
+            <div className="overflow-y-auto max-h-[70vh] p-1 pb-8">
+              <Navigator questions={questions} currentSubtestId={currentSubtestId} answers={answers} flags={flags} currentIndex={currentQuestionIndex} onSelect={handleMobileNavigate} />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    );
+    return () => setExamNavbarContent(null);
+  }, [examState, timeLeft, isNavigatorOpen, questions, currentSubtestId, answers, flags, currentQuestionIndex, handleMobileNavigate, setExamNavbarContent]);
 
   if (isAttemptLoading || examState === "loading") {
     return (
@@ -668,31 +665,6 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
 
   if (!currentQuestion) return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
 
-  // Inject timer + navigator into Navbar on mobile
-  useEffect(() => {
-    if (examState !== "running") {
-      setExamNavbarContent(null);
-      return;
-    }
-    setExamNavbarContent(
-      <div className="flex items-center gap-2 w-full justify-center">
-        <div className={cn("font-mono text-base font-bold flex gap-1 items-center", timeLeft < 60 && "text-red-500 animate-pulse")}>
-          <Timer className="w-3.5 h-3.5" />{formatTime(timeLeft)}
-        </div>
-        <Sheet open={isNavigatorOpen} onOpenChange={setIsNavigatorOpen}>
-          <SheetTrigger asChild><Button variant="outline" size="sm" className="h-8 w-8 p-0"><LayoutGrid className="w-3.5 h-3.5" /></Button></SheetTrigger>
-          <SheetContent side="bottom" className="h-auto max-h-[85vh] rounded-t-xl">
-            <SheetHeader className="mb-4"><SheetTitle>Navigasi Soal</SheetTitle></SheetHeader>
-            <div className="overflow-y-auto max-h-[70vh] p-1 pb-8">
-              <Navigator questions={questions} currentSubtestId={currentSubtest.id} answers={answers} flags={flags} currentIndex={currentQuestionIndex} onSelect={handleMobileNavigate} />
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-    );
-    return () => setExamNavbarContent(null);
-  }, [examState, timeLeft, isNavigatorOpen, questions, currentSubtest?.id, answers, flags, currentQuestionIndex, handleMobileNavigate, setExamNavbarContent]);
-
   return (
     <div className="container mx-auto py-4 md:py-12 px-4 md:px-6 min-h-screen">
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-3 md:mb-8 rounded-xl bg-gradient-to-r from-gsb-maroon to-gsb-red px-4 md:px-6 py-3 md:py-4 flex items-center justify-between text-white shadow-xl">
@@ -709,13 +681,12 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 min-h-[80vh] select-none" onContextMenu={(e) => e.preventDefault()}>
         <div className="lg:col-span-3 flex flex-col">
-
           <QuestionDisplay
-            key={currentSubtest.id}
+            key={currentSubtestId}
             question={currentQuestion}
             index={currentQuestionIndex}
-            userAnswer={answers[currentSubtest.id]?.[currentQuestion.id || `q-${currentQuestionIndex}`]}
-            isFlagged={flags[currentSubtest.id]?.[currentQuestion.id || `q-${currentQuestionIndex}`]}
+            userAnswer={answers[currentSubtestId]?.[currentQuestion.id || `q-${currentQuestionIndex}`]}
+            isFlagged={!!flags[currentSubtestId]?.[currentQuestion.id || `q-${currentQuestionIndex}`]}
             onAnswer={handleAnswer}
             onFlag={toggleFlag}
             onNext={handleNextQuestion}
@@ -730,13 +701,12 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
           <Card className="hidden lg:flex flex-col p-6 bg-slate-900 text-white sticky top-20 shadow-2xl border-slate-800 select-none rounded-xl">
             <span className="text-xs text-slate-400 uppercase tracking-wider mb-1">Sisa Waktu</span>
             <div className={cn("text-4xl font-mono font-bold", timeLeft < 60 && "text-red-400 animate-pulse")}>{formatTime(timeLeft)}</div>
-
             <div className="mt-2 text-sm text-slate-300 border-t border-slate-700 pt-2">{subtestLabel}</div>
           </Card>
 
           <Card className="p-5 hidden lg:block border shadow-sm sticky top-64 select-none rounded-xl">
             <div className="flex items-center gap-2 mb-4 pb-2 border-b"><LayoutGrid className="w-4 h-4 text-gsb-blue" /><h3 className="font-semibold text-gsb-blue">Navigasi Soal</h3></div>
-            <Navigator questions={questions} currentSubtestId={currentSubtest.id} answers={answers} flags={flags} currentIndex={currentQuestionIndex} onSelect={setCurrentQuestionIndex} />
+            <Navigator questions={questions} currentSubtestId={currentSubtestId} answers={answers} flags={flags} currentIndex={currentQuestionIndex} onSelect={setCurrentQuestionIndex} />
             <div className="mt-6 flex flex-col gap-2 text-xs text-muted-foreground">
               <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded" /> Sedang Dikerjakan</div>
               <div className="flex items-center gap-2"><div className="w-3 h-3 bg-green-600 rounded" /> Sudah Dijawab</div>
@@ -758,7 +728,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
         <AlertDialogContent className="select-none">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-amber-600"><AlertTriangle className="h-5 w-5" />Soal Belum Lengkap</AlertDialogTitle>
-            <AlertDialogDescription>Kamu masih memiliki <span className="font-bold text-amber-600">{questions.length - Object.keys(answers[currentSubtest.id] || {}).length}</span> soal yang belum dijawab. Yakin?</AlertDialogDescription>
+            <AlertDialogDescription>Kamu masih memiliki <span className="font-bold text-amber-600">{questions.length - Object.keys(answers[currentSubtestId] || {}).length}</span> soal yang belum dijawab. Yakin?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Periksa Lagi</AlertDialogCancel>
@@ -777,7 +747,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => router.push('/tryout')} className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200">Keluar (Batalkan)</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => router.push("/tryout")} className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200">Keluar (Batalkan)</AlertDialogCancel>
             <AlertDialogAction onClick={() => setShowExitDialog(false)} className="bg-gsb-orange hover:bg-gsb-orange/90">Lanjutkan Ujian</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

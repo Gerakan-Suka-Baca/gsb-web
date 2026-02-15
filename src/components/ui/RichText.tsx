@@ -1,6 +1,8 @@
-import React, { Fragment } from "react";
+"use client";
+
+import React, { Fragment, useState } from "react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import { ImageOff } from "lucide-react";
 
 // Lexical Format Constants
 const IS_BOLD = 1;
@@ -29,6 +31,31 @@ type Node = {
   version?: number;
 };
 
+// Graceful image component — shows placeholder on error instead of crashing
+const SafeImage = ({ src, alt, className }: { src: string; alt: string; className?: string }) => {
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 py-6 px-4 bg-muted/50 rounded-lg border border-dashed border-muted-foreground/30 text-muted-foreground">
+        <ImageOff className="w-8 h-8 opacity-50" />
+        <span className="text-xs">Gambar tidak tersedia</span>
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      onError={() => setError(true)}
+    />
+  );
+};
+
 export const RichText = React.memo(({
   content,
   className,
@@ -48,14 +75,10 @@ export const RichText = React.memo(({
 RichText.displayName = "RichText";
 
 function getAlignmentClass(node: Node): string {
-  // Handle string alignment (Payload adapter sometimes sends strings)
   if (node.format === 'left' || node.textAlign === 'left') return 'text-left';
   if (node.format === 'center' || node.textAlign === 'center') return 'text-center';
   if (node.format === 'right' || node.textAlign === 'right') return 'text-right';
   if (node.format === 'justify' || node.textAlign === 'justify') return 'text-justify';
-  
-  // Handle numeric alignment if present (less common in default adapter but good ensuring)
-  // Usually format is formatting bits for TextNode, but can be alignment for ElementNode
   return '';
 }
 
@@ -101,18 +124,15 @@ function serialize(children: Node[]): React.ReactNode {
       return <Fragment key={i}>{text}</Fragment>;
     }
 
-    // Upload/Image Nodes
+    // Upload/Image Nodes — graceful fallback on error
     if (node.type === 'upload' && node.value?.url) {
       return (
         <div key={i} className={cn("my-4 relative", getAlignmentClass(node))}>
-            <Image 
-                src={node.value.url} 
-                alt={node.value.alt || "Image"}
-                width={node.value.width || 800} // Fallback width
-                height={node.value.height || 600} // Fallback height
-                className="rounded-lg max-w-full h-auto object-contain mx-auto"
-                loading="lazy"
-            />
+          <SafeImage
+            src={node.value.url}
+            alt={node.value.alt || "Image"}
+            className="rounded-lg max-w-full h-auto object-contain mx-auto"
+          />
         </div>
       );
     }
