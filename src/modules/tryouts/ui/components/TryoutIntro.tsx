@@ -42,7 +42,7 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
                 <div className="w-full">
                     <span>Waktu pengerjaan setiap subtes adalah sebagai berikut:</span>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                         {((tryout as any).tests as Question[] || []).map((q, idx) => (
+                         {((tryout as Tryout & { tests: Question[] }).tests || []).map((q, idx) => (
                              <div key={idx} className="flex justify-between items-center bg-muted/30 px-3 py-2 rounded-md border border-border/50 text-sm">
                                  <span className="font-medium">{q.title || q.subtest}</span>
                                  <span className="font-mono text-gsb-blue font-bold">{q.duration} Menit</span>
