@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Loader2, CheckCircle2, ArrowRight } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,6 +11,9 @@ import { QuestionDisplay } from "./exam/QuestionDisplay";
 import { ExamHeader } from "./exam/ExamHeader";
 import { ExamSidebar } from "./exam/ExamSidebar";
 import { ExamDialogs } from "./exam/ExamDialogs";
+import { MobileExamControls } from "./exam/MobileExamControls";
+import { ExamBridging } from "./exam/ExamBridging";
+import { ExamFinished } from "./exam/ExamFinished";
 import { useTryoutExam } from "../hooks/useTryoutExam";
 import type { Tryout, Question } from "@/payload-types";
 
@@ -42,7 +44,6 @@ interface TryoutExamProps {
 }
 
 export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
-  const router = useRouter();
   
   const {
       currentSubtestIndex,
@@ -178,73 +179,22 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
 
 
   if (examState === "finished") {
-    return (
-      <motion.div {...ANIM.fadeSlide} className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <Card className="max-w-md w-full p-8 border-none shadow-xl bg-green-50">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">🎉</div>
-          </motion.div>
-          <h2 className="text-2xl font-bold text-green-800 mb-2">Ujian Selesai!</h2>
-          <p className="text-green-700 mb-6">Jawaban Anda telah tersimpan dan dinilai.</p>
-          <Button onClick={() => router.push("/tryout")} className="w-full bg-green-600 hover:bg-green-700 text-white">Kembali ke Dashboard</Button>
-        </Card>
-      </motion.div>
-    );
+    return <ExamFinished />;
   }
 
 
   if (examState === "bridging") {
     const questionsArr = (tryout.questions as Question[]) || [];
-    const completedSubtest = questionsArr[currentSubtestIndex];
-    const nextSubtest = questionsArr[currentSubtestIndex + 1];
     
     return (
-      <motion.div {...ANIM.fadeSlide} className="container mx-auto py-12 flex flex-col items-center justify-center min-h-[70vh] px-4 space-y-8">
-        <motion.div variants={ANIM.staggerContainer} initial="initial" animate="animate" className="max-w-2xl w-full space-y-8">
-          <motion.div variants={ANIM.staggerChild}>
-            <Card className="p-8 bg-green-50 border-green-200 shadow-lg">
-              <div className="flex items-center gap-3 mb-3">
-                <CheckCircle2 className="w-8 h-8 text-green-600" />
-                <div>
-                  <h3 className="text-lg font-bold text-green-800">Subtes {currentSubtestIndex + 1} Selesai!</h3>
-                  <p className="text-green-700 text-sm">{completedSubtest?.title} — {SUBTEST_LABELS[completedSubtest?.subtest] || completedSubtest?.subtest}</p>
-                </div>
-              </div>
-              <div className="text-sm text-green-700 bg-green-100 rounded-lg p-3">
-                Kamu menjawab <span className="font-bold">{Object.keys(answers[completedSubtest?.id] || {}).length}</span> dari <span className="font-bold">{completedSubtest?.tryoutQuestions?.length || 0}</span> soal.
-              </div>
-            </Card>
-          </motion.div>
-          {nextSubtest && (
-            <motion.div variants={ANIM.staggerChild}>
-              <Card className="p-8 border-none shadow-xl bg-gradient-to-br from-white to-orange-50/50">
-                <div className="text-center mb-6">
-                  <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Subtes Selanjutnya</p>
-                  <h2 className="text-2xl md:text-3xl font-heading font-bold text-gsb-maroon">{nextSubtest.title}</h2>
-                  <p className="text-gsb-blue font-medium mt-1">{SUBTEST_LABELS[nextSubtest.subtest] || nextSubtest.subtest}</p>
-                  <div className="w-16 h-1 bg-gsb-orange rounded-full mx-auto mt-3" />
-                </div>
-                <div className="flex justify-center mb-6">
-                  <div className="text-sm font-semibold text-orange-600 bg-orange-100 px-4 py-1.5 rounded-full animate-pulse">Otomatis lanjut dalam {bridgingSeconds} detik</div>
-                </div>
-                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-1 text-center">
-                    <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Durasi</span>
-                    <span className="text-xl font-bold text-gsb-blue">{nextSubtest.duration} Menit</span>
-                  </div>
-                  <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-1 text-center">
-                    <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Soal</span>
-                    <span className="text-xl font-bold text-gsb-blue">{nextSubtest.tryoutQuestions?.length || 0} Butir</span>
-                  </div>
-                </div>
-                <Button size="lg" onClick={handleNextSubtest} className="w-full h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg">
-                    Mulai Subtes Berikutnya <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Card>
-            </motion.div>
-          )}
-        </motion.div>
-      </motion.div>
+      <ExamBridging
+        currentSubtestIndex={currentSubtestIndex}
+        questions={questionsArr}
+        answers={answers}
+        subtestLabels={SUBTEST_LABELS}
+        bridgingSeconds={bridgingSeconds}
+        onNextSubtest={handleNextSubtest}
+      />
     );
   }
 
@@ -320,6 +270,17 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
           setShowExitDialog={setShowExitDialog}
           unansweredCount={questions.length - Object.keys(answers[currentSubtestId] || {}).length}
           onConfirmFinish={handleSubtestFinish}
+      />
+
+      <MobileExamControls
+        timeLeft={timeLeft}
+        formatTime={formatTime}
+        questions={questions}
+        currentSubtestId={currentSubtestId}
+        answers={answers}
+        flags={flags}
+        currentQuestionIndex={currentQuestionIndex}
+        setCurrentQuestionIndex={setCurrentQuestionIndex}
       />
     </div>
   );

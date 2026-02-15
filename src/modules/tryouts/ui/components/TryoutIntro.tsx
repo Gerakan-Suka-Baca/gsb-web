@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { FadeIn } from "@/components/ui/fade-in";
 import { formatDate } from "@/lib/utils";
 import { Tryout } from "@/payload-types";
 import { Calendar, Info } from "lucide-react";
@@ -12,7 +11,7 @@ interface TryoutIntroProps {
 export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
   return (
     <div className="max-w-5xl mx-auto px-6 lg:px-8 py-16 flex flex-col gap-10">
-      <FadeIn direction="up" delay={0.1} className="space-y-4 border-b border-border/50 pb-8">
+      <div className="space-y-4 border-b border-border/50 pb-8">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-gsb-maroon leading-tight">
           {tryout.title}
         </h1>
@@ -20,9 +19,9 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
           <Calendar className="w-5 h-5 text-gsb-orange" />
           <p className="font-medium">{formatDate(tryout["Date Open"])}</p>
         </div>
-      </FadeIn>
+      </div>
 
-      <FadeIn direction="up" delay={0.3} className="space-y-6">
+      <div className="space-y-6">
         <div className="flex items-center gap-3 mb-4">
              <div className="p-2 bg-gsb-blue/10 rounded-lg">
                 <Info className="w-6 h-6 text-gsb-blue" />
@@ -70,9 +69,9 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
             </li>
             </ul>
         </div>
-      </FadeIn>
+      </div>
 
-      <FadeIn direction="up" delay={0.5}>
+      <div>
         <Button 
             size="lg" 
             onClick={onStart} 
@@ -80,7 +79,7 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
         >
             Saya Siap Mengerjakan
         </Button>
-      </FadeIn>
+      </div>
     </div>
   );
 };

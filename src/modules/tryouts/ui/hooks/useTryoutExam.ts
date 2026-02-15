@@ -72,8 +72,8 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
     }
   }, [currentSubtestIndex, tryout.id]);
 
-  const debouncedAnswers = useDebounce(answers, 10000);
-  const debouncedFlags = useDebounce(flags, 10000);
+  const debouncedAnswers = useDebounce(answers, 3000);
+  const debouncedFlags = useDebounce(flags, 3000);
 
   const currentSubtest = subtests[currentSubtestIndex];
   const currentSubtestId = currentSubtest?.id ?? "";
@@ -252,13 +252,17 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
 
   useEffect(() => {
     if (!attemptId) return;
-    saveBackup(attemptId, {
-      answers, flags,
-      currentSubtest: currentSubtestIndexRef.current,
-      currentQuestionIndex: currentQuestionIndexRef.current,
-      examState: examStateRef.current,
-      secondsRemaining: timeLeftRef.current,
-    });
+    const handler = setTimeout(() => {
+      saveBackup(attemptId, {
+        answers, flags,
+        currentSubtest: currentSubtestIndexRef.current,
+        currentQuestionIndex: currentQuestionIndexRef.current,
+        examState: examStateRef.current,
+        secondsRemaining: timeLeftRef.current,
+      });
+    }, 1000); // Debounce local backup by 1s
+
+    return () => clearTimeout(handler);
   }, [answers, flags, currentSubtestIndex, currentQuestionIndex, attemptId]);
 
 
