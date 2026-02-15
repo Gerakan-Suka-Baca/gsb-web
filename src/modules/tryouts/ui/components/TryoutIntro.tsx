@@ -44,8 +44,8 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                          {((tryout as Tryout & { tests: Question[] }).tests || []).map((q, idx) => (
                              <div key={idx} className="flex justify-between items-center bg-muted/30 px-3 py-2 rounded-md border border-border/50 text-sm">
-                                 <span className="font-medium">{q.title || q.subtest}</span>
-                                 <span className="font-mono text-gsb-blue font-bold">{q.duration} Menit</span>
+                                 <span className="font-medium">{q.title || q.subtest || "Soal Tanpa Kategori"}</span>
+                                 <span className="font-mono text-gsb-blue font-bold">{q.duration ? `${q.duration} Menit` : "-"}</span>
                              </div>
                          ))}
                     </div>
