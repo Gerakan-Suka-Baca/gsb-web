@@ -41,10 +41,5 @@ export const Tryouts: CollectionConfig = {
       type: "text",
       required: true,
     },
-    {
-      name: "description",
-      type: "text",
-      required: true,
-    },
   ],
 };
