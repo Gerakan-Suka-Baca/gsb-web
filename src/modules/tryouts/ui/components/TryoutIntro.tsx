@@ -50,7 +50,7 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
                             ['Literasi Bahasa Inggris', '20 Menit'],
                             ['Literasi Bahasa Indonesia', '43 Menit'],
                             ['Pengetahuan Pemahaman Umum', '15 Menit'],
-                            ['KMBM', '25 Menit'],
+                            ['Pengetahuan & Pemahaman Umum', '25 Menit'],
                          ].map(([name, time], idx) => (
                              <div key={idx} className="flex justify-between items-center bg-muted/30 px-3 py-2 rounded-md border border-border/50 text-sm">
                                  <span className="font-medium">{name}</span>
