@@ -179,7 +179,7 @@ export function Navbar() {
         {/* Logo + Navigation */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center shrink-0 gap-2">
-            <Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-auto object-contain" />
+            <Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-[120px] object-contain" />
           </Link>
 
           {/* Desktop Menu */}
@@ -261,7 +261,7 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="right" className="overflow-y-auto w-[320px] sm:w-[400px] p-6">
               <SheetHeader className="mb-8 text-left pt-2">
-                <SheetTitle><Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-auto object-contain" /></SheetTitle>
+                <SheetTitle><Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-[120px] object-contain" /></SheetTitle>
               </SheetHeader>
 
               <motion.div className="flex flex-col gap-8" variants={containerVariants} initial="hidden" animate="show">

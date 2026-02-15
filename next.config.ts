@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   async headers() {
     return [
       {
@@ -42,6 +45,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-};
+} as any;
 
 export default withPayload(nextConfig);

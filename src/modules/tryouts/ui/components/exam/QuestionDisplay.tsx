@@ -68,7 +68,7 @@ export const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, o
                   onClick={() => onAnswer(qID, optID)}
                   className={cn(
                     "flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200 select-none",
-                    isSelected ? "border-gsb-orange bg-orange-50/80 shadow-sm" : "border-border hover:border-gsb-orange/30"
+                    isSelected ? "border-gsb-orange bg-[rgba(255,247,237,0.8)] shadow-sm" : "border-border hover:border-gsb-orange/30"
                   )}
                 >
                   <div className={cn(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { useState, useEffect } from "react";
 import { TryoutIntro } from "../components/TryoutIntro";
@@ -16,6 +16,7 @@ interface Props {
 
 export const TryoutView = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
   const { data } = useSuspenseQuery(
     trpc.tryouts.getOne.queryOptions({ tryoutId })
   );
@@ -25,24 +26,36 @@ export const TryoutView = ({ tryoutId }: Props) => {
   );
 
   const [view, setView] = useState<"loading" | "intro" | "exam" | "result" | "thankyou">("loading");
+  const [holdResult, setHoldResult] = useState(false);
   const tryout = data as unknown as Tryout;
 
   useEffect(() => {
     if (isAttemptLoading) return;
 
-    if (existingAttempt?.status === "completed") {
-      const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
-      if (plan && plan !== "none") {
-        setView("thankyou");
-      } else {
+    if (holdResult) {
+      if (existingAttempt?.status === "completed") {
+        setHoldResult(false);
+        const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
+        const target = (plan && plan !== "none") ? "thankyou" : "result";
+        if (view !== target) setView(target);
+      } else if (view !== "result") {
         setView("result");
       }
-    } else if (existingAttempt?.status === "started") {
-      setView("exam");
-    } else {
-      setView("intro");
+      return;
     }
-  }, [existingAttempt, isAttemptLoading]);
+
+    if (existingAttempt?.status === "completed") {
+      const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
+      const target = (plan && plan !== "none") ? "thankyou" : "result";
+      if (view !== target) setView(target);
+    } else if (existingAttempt?.status === "started") {
+      if (view !== "exam") setView("exam");
+    } else {
+      // Only default to intro if we are currently loading.
+      // If we are already in 'exam' (optimistic update), don't revert to 'intro' just because data is stale.
+      if (view === "loading") setView("intro");
+    }
+  }, [existingAttempt, isAttemptLoading, view, holdResult]);
 
   if (view === "loading" || isAttemptLoading) {
     return (
@@ -57,7 +70,18 @@ export const TryoutView = ({ tryoutId }: Props) => {
   }
 
   if (view === "exam") {
-    return <TryoutExam tryout={tryout} onFinish={() => setView("result")} />;
+    return (
+      <TryoutExam
+        tryout={tryout}
+        onFinish={async () => {
+          setHoldResult(true);
+          setView("result");
+          await queryClient.invalidateQueries({
+            queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId }, type: "query" }],
+          });
+        }}
+      />
+    );
   }
 
   if (view === "result") {

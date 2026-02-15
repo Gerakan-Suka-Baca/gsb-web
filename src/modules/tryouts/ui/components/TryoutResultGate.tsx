@@ -170,7 +170,13 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="flex justify-center bg-gray-50 p-4 rounded-lg">
                 <div className="relative w-64 aspect-[3/4]">
-                  <Image src="/home/qris.jpeg" alt="QRIS GSB" fill className="object-contain" />
+                  <Image
+                    src="/home/qris.jpeg"
+                    alt="QRIS GSB"
+                    fill
+                    sizes="(max-width: 768px) 80vw, 256px"
+                    className="object-contain"
+                  />
                 </div>
               </div>
               <div className="space-y-6">

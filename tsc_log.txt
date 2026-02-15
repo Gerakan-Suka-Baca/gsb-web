@@ -1,0 +1,6 @@
+src/modules/tryouts/server/routers/tryout-attempts.ts(123,32): error TS2339: Property 'questions' does not exist on type 'Tryout'.
+src/modules/tryouts/ui/components/exam/ExamBridging.tsx(52,100): error TS2538: Type 'null' cannot be used as an index type.
+src/modules/tryouts/ui/components/exam/ExamBridging.tsx(52,100): error TS2538: Type 'undefined' cannot be used as an index type.
+src/modules/tryouts/ui/components/exam/ExamBridging.tsx(66,80): error TS2538: Type 'null' cannot be used as an index type.
+src/modules/tryouts/ui/components/exam/ExamBridging.tsx(66,80): error TS2538: Type 'undefined' cannot be used as an index type.
+src/modules/tryouts/ui/components/tryouts-list.tsx(106,79): error TS2339: Property 'description' does not exist on type 'Tryout'.

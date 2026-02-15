@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/payload-types";
 
@@ -29,9 +30,16 @@ export const Navigator = memo(({ questions, currentSubtestId, answers, flags, cu
       else if (isAns) variant = "bg-green-600 text-white border-green-600";
 
       return (
-        <button key={idx} onClick={() => onSelect(idx)} className={cn("w-9 h-9 text-xs rounded-md flex items-center justify-center font-bold border transition-colors", variant)}>
+        <motion.button
+          key={idx}
+          onClick={() => onSelect(idx)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.92 }}
+          transition={{ type: "spring", stiffness: 400, damping: 24 }}
+          className={cn("w-9 h-9 text-xs rounded-md flex items-center justify-center font-bold border transition-colors", variant)}
+        >
           {idx + 1}
-        </button>
+        </motion.button>
       );
     })}
   </div>

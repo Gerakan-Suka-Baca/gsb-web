@@ -15,7 +15,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Tryout, TryoutAttempt } from "@/payload-types";
 
@@ -64,6 +64,11 @@ export const TryoutsList = () => {
   );
   const session = useQuery(trpc.auth.session.queryOptions());
   const [activeTab, setActiveTab] = useState<TabKey>("others");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const allTryouts = data.docs as Tryout[];
   const attempts = (myAttempts || []) as TryoutAttempt[];
@@ -89,7 +94,10 @@ export const TryoutsList = () => {
     }
   }
 
-  const renderCard = (tryout: Tryout, badge: StatusBadge, subtitle?: string) => (
+  const renderCard = (tryout: Tryout, badge: StatusBadge, subtitle?: string) => {
+    const descriptionValue = (tryout as unknown as Record<string, unknown>).description;
+    const descriptionText = typeof descriptionValue === "string" ? descriptionValue : "";
+    return (
     <motion.div key={tryout.id} variants={fadeCard}>
       <Link href={`/tryout/${tryout.id}`} className="block group">
         <Card className="p-6 border-2 border-border/50 hover:border-gsb-orange/30 hover:shadow-lg transition-all duration-300 rounded-2xl bg-card/50 hover:bg-card">
@@ -103,7 +111,7 @@ export const TryoutsList = () => {
               </span>
             </div>
 
-            <p className="text-muted-foreground text-sm line-clamp-2">{tryout.description}</p>
+            <p className="text-muted-foreground text-sm line-clamp-2">{descriptionText}</p>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
@@ -128,7 +136,8 @@ export const TryoutsList = () => {
         </Card>
       </Link>
     </motion.div>
-  );
+    );
+  };
 
   const renderEmpty = (message: string) => (
     <motion.div {...fadeCard} className="col-span-full flex flex-col items-center justify-center py-16 text-center">
@@ -145,7 +154,9 @@ export const TryoutsList = () => {
           Dashboard Tryout
         </h1>
         <p className="text-muted-foreground">
-          {session.data?.user ? `Halo, ${session.data.user.username || "Peserta"}! ` : ""}
+          <span suppressHydrationWarning>
+            {mounted && session.data?.user ? `Halo, ${session.data.user.username || "Peserta"}! ` : ""}
+          </span>
           Kelola dan pantau tryout kamu di sini.
         </p>
       </motion.div>

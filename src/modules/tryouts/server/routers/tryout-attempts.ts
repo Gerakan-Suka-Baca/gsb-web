@@ -4,6 +4,17 @@ import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import type { Question } from "@/payload-types";
 
+const eventSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["answer", "flag"]),
+  subtestId: z.string(),
+  questionId: z.string(),
+  answerId: z.string().optional(),
+  flag: z.boolean().optional(),
+  revision: z.number(),
+  clientTs: z.number(),
+});
+
 export const tryoutAttemptsRouter = createTRPCRouter({
   getAttempt: protectedProcedure
     .input(z.object({ tryoutId: z.string() }))
@@ -96,6 +107,76 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       return { success: true };
     }),
 
+  saveProgressBatch: protectedProcedure
+    .input(
+      z.object({
+        attemptId: z.string(),
+        batchId: z.string(),
+        clientTime: z.number(),
+        events: z.array(eventSchema),
+        currentSubtest: z.number().optional(),
+        examState: z.enum(["running", "bridging"]).optional(),
+        secondsRemaining: z.number().optional(),
+        currentQuestionIndex: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { db: payload, session } = ctx;
+      const attempt = await payload.findByID({ collection: "tryout-attempts", id: input.attemptId });
+
+      if (!attempt || (typeof attempt.user === "object" ? attempt.user.id : attempt.user) !== session.user.id) {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      if (attempt.status === "completed") {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Tryout already completed" });
+      }
+
+      const attemptRecord = attempt as unknown as Record<string, unknown>;
+      const processed = Array.isArray(attemptRecord.processedBatchIds)
+        ? (attemptRecord.processedBatchIds as string[])
+        : [];
+
+      if (processed.includes(input.batchId)) {
+        return { success: true, duplicate: true };
+      }
+
+      const nextAnswers = (typeof attempt.answers === "object" && attempt.answers ? { ...(attempt.answers as Record<string, Record<string, string>>) } : {}) as Record<string, Record<string, string>>;
+      const nextFlags = (typeof attempt.flags === "object" && attempt.flags ? { ...(attempt.flags as Record<string, Record<string, boolean>>) } : {}) as Record<string, Record<string, boolean>>;
+
+      const ordered = [...input.events].sort((a, b) => a.clientTs - b.clientTs || a.revision - b.revision);
+      for (const event of ordered) {
+        if (event.kind === "answer") {
+          const sub = nextAnswers[event.subtestId] ? { ...nextAnswers[event.subtestId] } : {};
+          if (event.answerId !== undefined) {
+            sub[event.questionId] = event.answerId;
+          }
+          nextAnswers[event.subtestId] = sub;
+        } else {
+          const sub = nextFlags[event.subtestId] ? { ...nextFlags[event.subtestId] } : {};
+          sub[event.questionId] = Boolean(event.flag);
+          nextFlags[event.subtestId] = sub;
+        }
+      }
+
+      const nextProcessed = [...processed.filter((id) => id !== input.batchId), input.batchId].slice(-100);
+
+      await payload.update({
+        collection: "tryout-attempts",
+        id: input.attemptId,
+        data: {
+          answers: nextAnswers,
+          flags: nextFlags,
+          processedBatchIds: nextProcessed,
+          ...(input.currentSubtest !== undefined && { currentSubtest: input.currentSubtest }),
+          ...(input.examState !== undefined && { examState: input.examState }),
+          ...(input.secondsRemaining !== undefined && { secondsRemaining: input.secondsRemaining }),
+          ...(input.currentQuestionIndex !== undefined && { currentQuestionIndex: input.currentQuestionIndex }),
+        } as Record<string, unknown>,
+      });
+
+      return { success: true, applied: ordered.length };
+    }),
+
   submitAttempt: protectedProcedure
     .input(
       z.object({
@@ -120,7 +201,8 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         depth: 2,
       });
 
-      const subtests = (tryout.questions as Question[]) || [];
+      const tryoutRecord = tryout as unknown as Record<string, unknown>;
+      const subtests = Array.isArray(tryoutRecord.questions) ? (tryoutRecord.questions as Question[]) : [];
       if (!Array.isArray(subtests)) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Tryout data invalid: questions not populated" });
       }
