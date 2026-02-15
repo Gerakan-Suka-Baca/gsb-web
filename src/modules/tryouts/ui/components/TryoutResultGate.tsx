@@ -145,17 +145,9 @@ export const TryoutResultGate = ({ attemptId, username, onPlanSelected }: Props)
                 <Check className="w-5 h-5 text-green-500 shrink-0" />
                 <span className="font-medium">Skor Langsung Keluar</span>
               </li>
-              <li className="flex gap-3 items-center text-base">
-                <Check className="w-5 h-5 text-green-500 shrink-0" />
-                <span className="font-medium">Ranking Nasional</span>
-              </li>
               <li className="flex gap-3 items-center text-base bg-orange-50 p-2 -ml-2 rounded-lg border border-orange-100">
                 <ShieldCheck className="w-5 h-5 text-gsb-orange shrink-0" />
-                <b className="text-gsb-orange">Pembahasan Lengkap (PDF/Video)</b>
-              </li>
-              <li className="flex gap-3 items-center text-base">
-                <Check className="w-5 h-5 text-green-500 shrink-0" />
-                <span className="font-medium">Analisis Kelemahan</span>
+                <b className="text-gsb-orange">Pembahasan Lengkap (Dalam bentuk PDF)</b>
               </li>
             </ul>
             <Button
