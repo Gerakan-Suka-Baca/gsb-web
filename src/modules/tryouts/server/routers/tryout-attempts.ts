@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import type { Question, TryoutAttempt } from "@/payload-types";
+import type { Question } from "@/payload-types";
 
 export const tryoutAttemptsRouter = createTRPCRouter({
   getAttempt: protectedProcedure
@@ -67,13 +67,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         bridgingExpiry: z.string().optional(),
         secondsRemaining: z.number().optional(),
         currentQuestionIndex: z.number().optional(),
-        subtestTimingData: z.record(z.string(), z.object({
-          startedAt: z.string(),
-          endedAt: z.string().optional(),
-          durationAllocatedSeconds: z.number(),
-          timeSpentSeconds: z.number(),
-          timeRemainingSeconds: z.number(),
-        })).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -87,22 +80,18 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         throw new TRPCError({ code: "BAD_REQUEST", message: "Tryout already completed" });
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const updateData: Record<string, any> = { 
-        answers: input.answers, 
-        flags: input.flags,
-      };
-      if (input.currentSubtest !== undefined) updateData.currentSubtest = input.currentSubtest;
-      if (input.examState !== undefined) updateData.examState = input.examState;
-      if (input.bridgingExpiry !== undefined) updateData.bridgingExpiry = input.bridgingExpiry;
-      if (input.secondsRemaining !== undefined) updateData.secondsRemaining = input.secondsRemaining;
-      if (input.currentQuestionIndex !== undefined) updateData.currentQuestionIndex = input.currentQuestionIndex;
-      if (input.subtestTimingData !== undefined) updateData.subtestTimingData = input.subtestTimingData;
-
       await payload.update({
         collection: "tryout-attempts",
         id: input.attemptId,
-        data: updateData,
+        data: {
+          answers: input.answers,
+          flags: input.flags,
+          ...(input.currentSubtest !== undefined && { currentSubtest: input.currentSubtest }),
+          ...(input.examState !== undefined && { examState: input.examState }),
+          ...(input.bridgingExpiry !== undefined && { bridgingExpiry: input.bridgingExpiry }),
+          ...(input.secondsRemaining !== undefined && { secondsRemaining: input.secondsRemaining }),
+          ...(input.currentQuestionIndex !== undefined && { currentQuestionIndex: input.currentQuestionIndex }),
+        },
       });
       return { success: true };
     }),
@@ -112,13 +101,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       z.object({
         attemptId: z.string(),
         answers: z.record(z.string(), z.record(z.string(), z.string())),
-        subtestTimingData: z.record(z.string(), z.object({
-          startedAt: z.string(),
-          endedAt: z.string().optional(),
-          durationAllocatedSeconds: z.number(),
-          timeSpentSeconds: z.number(),
-          timeRemainingSeconds: z.number(),
-        })).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -146,23 +128,17 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       let totalQuestions = 0;
       let correctCount = 0;
 
-      interface QuestionResult {
+      // Lean result structure — only essential data per question
+      const questionResults: {
         subtestId: string;
-        subtestTitle: string;
-        subtestType: string;
         questionId: string;
         questionNumber: number;
-        selectedAnswerId: string | null;
         selectedLetter: string | null;
-        correctAnswerId: string | null;
         correctLetter: string | null;
         isCorrect: boolean;
-      }
-
-      const questionResults: QuestionResult[] = [];
+      }[] = [];
 
       for (const subtest of subtests) {
-        // Ensure subtest is an object (populated)
         if (typeof subtest !== 'object') continue;
 
         const subtestAnswers = input.answers[subtest.id] || {};
@@ -178,7 +154,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           const selectedAnswerId = subtestAnswers[qID] || null;
           const answers = q.tryoutAnswers || [];
 
-          // Find correct answer
+          // Find correct answer letter
           let correctAnswerId: string | null = null;
           let correctLetter: string | null = null;
           for (let aIdx = 0; aIdx < answers.length; aIdx++) {
@@ -201,13 +177,9 @@ export const tryoutAttemptsRouter = createTRPCRouter({
 
           questionResults.push({
             subtestId: subtest.id,
-            subtestTitle: subtest.title,
-            subtestType: subtest.subtest,
             questionId: qID,
             questionNumber: qIdx + 1,
-            selectedAnswerId,
             selectedLetter,
-            correctAnswerId,
             correctLetter,
             isCorrect,
           });
@@ -219,7 +191,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       const updated = await payload.update({
         collection: "tryout-attempts",
         id: input.attemptId,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: {
           status: "completed",
           completedAt: new Date().toISOString(),
@@ -228,8 +199,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           correctAnswersCount: correctCount,
           totalQuestionsCount: totalQuestions,
           questionResults,
-          subtestTimingData: input.subtestTimingData ?? undefined,
-        } as any,
+        },
       });
 
       return updated;

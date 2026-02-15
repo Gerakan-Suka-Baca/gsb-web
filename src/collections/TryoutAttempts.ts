@@ -1,5 +1,4 @@
 import type { CollectionConfig } from "payload";
-import { CompactJSON } from "@/components/payload/CompactJSON";
 
 export const TryoutAttempts: CollectionConfig = {
   slug: "tryout-attempts",
@@ -44,35 +43,25 @@ export const TryoutAttempts: CollectionConfig = {
       name: "answers",
       type: "json",
       defaultValue: {},
-      admin: {
-        components: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          Field: CompactJSON as any,
-        },
-      },
     },
     {
       name: "flags",
       type: "json",
       defaultValue: {},
-      admin: {
-        components: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          Field: CompactJSON as any,
-        },
-      },
     },
     {
       name: "questionResults",
-      type: "json",
+      type: "array",
       label: "Hasil Per Soal",
-      admin: {
-        description: "Detail jawaban per soal: huruf jawaban, benar/salah, dll.",
-        components: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          Field: CompactJSON as any,
-        },
-      },
+      admin: { initCollapsed: true },
+      fields: [
+        { name: "subtestId", type: "text", required: true },
+        { name: "questionId", type: "text", required: true },
+        { name: "questionNumber", type: "number", required: true },
+        { name: "selectedLetter", type: "text" },
+        { name: "correctLetter", type: "text" },
+        { name: "isCorrect", type: "checkbox", defaultValue: false },
+      ],
     },
     {
       name: "status",
@@ -141,18 +130,6 @@ export const TryoutAttempts: CollectionConfig = {
       type: "number",
       defaultValue: 0,
       admin: { description: "Index soal yang sedang dikerjakan di subtes saat ini (0-based)." },
-    },
-    {
-      name: "subtestTimingData",
-      type: "json",
-      label: "Data Waktu Per Subtes",
-      admin: {
-        description: "Data timing per subtest: startedAt, endedAt, durationAllocated, timeSpent, timeRemaining.",
-        components: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          Field: CompactJSON as any,
-        },
-      },
     },
     {
       name: "resultPlan",

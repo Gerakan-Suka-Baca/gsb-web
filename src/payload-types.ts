@@ -72,6 +72,8 @@ export interface Config {
     tryouts: Tryout;
     questions: Question;
     'tryout-attempts': TryoutAttempt;
+    'tryout-payments': TryoutPayment;
+    'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -83,6 +85,8 @@ export interface Config {
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
+    'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -90,12 +94,11 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
+  fallbackLocale: null;
   globals: {};
   globalsSelect: {};
   locale: null;
-  user: User & {
-    collection: 'users';
-  };
+  user: User;
   jobs: {
     tasks: unknown;
     workflows: unknown;
@@ -132,9 +135,12 @@ export interface User {
   grade?: ('10' | '11' | '12' | 'gap_year') | null;
   targetPTN?: string | null;
   targetMajor?: string | null;
+  targetPTN2?: string | null;
+  targetMajor2?: string | null;
   paid?: boolean | null;
   payment?: (string | null) | Media;
   roles?: ('super-admin' | 'admin' | 'user')[] | null;
+  dateOfBirth?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -144,7 +150,15 @@ export interface User {
   hash?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
   password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -193,6 +207,7 @@ export interface Tryout {
 export interface Question {
   id: string;
   /**
+   * Waktu pengerjaan untuk subtes ini dalam menit.
    */
   duration: number;
   subtest: 'PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM';
@@ -204,7 +219,7 @@ export interface Question {
           root: {
             type: string;
             children: {
-              type: string;
+              type: any;
               version: number;
               [k: string]: unknown;
             }[];
@@ -220,7 +235,7 @@ export interface Question {
             root: {
               type: string;
               children: {
-                type: string;
+                type: any;
                 version: number;
                 [k: string]: unknown;
               }[];
@@ -271,24 +286,35 @@ export interface TryoutAttempt {
     | number
     | boolean
     | null;
-  /**
-   * Detail jawaban per soal: huruf jawaban, benar/salah, dll.
-   */
   questionResults?:
     | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
+        subtestId: string;
+        questionId: string;
+        questionNumber: number;
+        selectedLetter?: string | null;
+        correctLetter?: string | null;
+        isCorrect?: boolean | null;
+        id?: string | null;
+      }[]
     | null;
   status: 'started' | 'completed';
   startedAt?: string | null;
   completedAt?: string | null;
+  /**
+   * Index subtes yang sedang dikerjakan (0-based).
+   */
   currentSubtest?: number | null;
+  /**
+   * State internal ujian (pengerjaan vs istirahat antar subtes).
+   */
   examState?: ('running' | 'bridging') | null;
+  /**
+   * Waktu berakhirnya bridging (jika sedang bridging).
+   */
   bridgingExpiry?: string | null;
+  /**
+   * Sisa waktu (detik) saat penyimpanan terakhir.
+   */
   secondsRemaining?: number | null;
   /**
    * Persentase jawaban benar.
@@ -297,11 +323,57 @@ export interface TryoutAttempt {
   correctAnswersCount?: number | null;
   totalQuestionsCount?: number | null;
   /**
+   * Index soal yang sedang dikerjakan di subtes saat ini (0-based).
+   */
+  currentQuestionIndex?: number | null;
+  /**
    * Paket hasil tryout yang dipilih peserta.
    */
   resultPlan?: ('none' | 'free' | 'paid') | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * List user yang sudah melakukan pembayaran manual (untuk verifikasi).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-payments".
+ */
+export interface TryoutPayment {
+  id: string;
+  /**
+   * User yang melakukan pembayaran
+   */
+  user: string | User;
+  tryout: string | Tryout;
+  attempt: string | TryoutAttempt;
+  status: 'pending' | 'verified' | 'rejected';
+  program?: string | null;
+  /**
+   * Nominal pembayaran
+   */
+  amount?: number | null;
+  paymentDate?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-kv".
+ */
+export interface PayloadKv {
+  id: string;
+  key: string;
+  data:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -329,6 +401,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tryout-attempts';
         value: string | TryoutAttempt;
+      } | null)
+    | ({
+        relationTo: 'tryout-payments';
+        value: string | TryoutPayment;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -384,9 +460,12 @@ export interface UsersSelect<T extends boolean = true> {
   grade?: T;
   targetPTN?: T;
   targetMajor?: T;
+  targetPTN2?: T;
+  targetMajor2?: T;
   paid?: T;
   payment?: T;
   roles?: T;
+  dateOfBirth?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -396,6 +475,13 @@ export interface UsersSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -477,7 +563,17 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
   tryout?: T;
   answers?: T;
   flags?: T;
-  questionResults?: T;
+  questionResults?:
+    | T
+    | {
+        subtestId?: T;
+        questionId?: T;
+        questionNumber?: T;
+        selectedLetter?: T;
+        correctLetter?: T;
+        isCorrect?: T;
+        id?: T;
+      };
   status?: T;
   startedAt?: T;
   completedAt?: T;
@@ -488,9 +584,34 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
   score?: T;
   correctAnswersCount?: T;
   totalQuestionsCount?: T;
+  currentQuestionIndex?: T;
   resultPlan?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-payments_select".
+ */
+export interface TryoutPaymentsSelect<T extends boolean = true> {
+  user?: T;
+  tryout?: T;
+  attempt?: T;
+  status?: T;
+  program?: T;
+  amount?: T;
+  paymentDate?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-kv_select".
+ */
+export interface PayloadKvSelect<T extends boolean = true> {
+  key?: T;
+  data?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
