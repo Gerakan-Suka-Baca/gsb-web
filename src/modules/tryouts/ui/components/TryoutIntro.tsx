@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
-import { Tryout } from "@/payload-types";
+import { Tryout, Question } from "@/payload-types";
 import { Calendar, Info } from "lucide-react";
 
 interface TryoutIntroProps {
@@ -42,18 +42,10 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
                 <div className="w-full">
                     <span>Waktu pengerjaan setiap subtes adalah sebagai berikut:</span>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                         {[
-                            ['Penalaran Umum', '30 Menit'],
-                            ['Pengetahuan Kuantitatif', '20 Menit'],
-                            ['Penalaran Matematika', '43 Menit'],
-                            ['Literasi Bahasa Inggris', '20 Menit'],
-                            ['Literasi Bahasa Indonesia', '43 Menit'],
-                            ['Pengetahuan Pemahaman Umum', '15 Menit'],
-                            ['Pengetahuan & Pemahaman Umum', '25 Menit'],
-                         ].map(([name, time], idx) => (
+                         {((tryout as any).tests as Question[] || []).map((q, idx) => (
                              <div key={idx} className="flex justify-between items-center bg-muted/30 px-3 py-2 rounded-md border border-border/50 text-sm">
-                                 <span className="font-medium">{name}</span>
-                                 <span className="font-mono text-gsb-blue font-bold">{time}</span>
+                                 <span className="font-medium">{q.title || q.subtest}</span>
+                                 <span className="font-mono text-gsb-blue font-bold">{q.duration} Menit</span>
                              </div>
                          ))}
                     </div>
