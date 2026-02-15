@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Check, ShieldCheck, MessageCircle, ArrowLeft } from "lucide-react";
+import { Check, ShieldCheck, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,7 +27,6 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<"free" | "paid" | null>(null);
-  const [waClicked, setWaClicked] = useState(false);
 
   const updatePlanMutation = useMutation(
     trpc.tryoutAttempts.updatePlan.mutationOptions({
@@ -56,12 +55,12 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
       `Halo Admin GSB, saya (${username}) sudah melakukan pembayaran untuk Tryout SNBT Premium sebesar Rp 5.020. Mohon verifikasi. (Mohon sertakan bukti transfer)`
     );
     window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
-    setWaClicked(true);
-  };
-
-  const handlePaidConfirm = () => {
+    
+    // Optimistic / Auto-confirm
     updatePlanMutation.mutate({ attemptId, plan: "paid" });
   };
+
+
 
   return (
     <motion.div {...fadeUp} className="max-w-5xl mx-auto py-16 px-4">
@@ -196,26 +195,11 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
                 <Button
                   onClick={handleWAConfirm}
                   className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12 gap-2"
+                  disabled={updatePlanMutation.isPending}
                 >
                   <MessageCircle className="w-5 h-5" />
-                  Konfirmasi via WhatsApp
+                  {updatePlanMutation.isPending ? "Memproses..." : "Konfirmasi via WhatsApp"}
                 </Button>
-
-                <AnimatePresence>
-                  {waClicked && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                      <Button
-                        onClick={handlePaidConfirm}
-                        className="w-full bg-gsb-blue hover:bg-gsb-blue/90 text-white font-bold h-12 gap-2"
-                        size="lg"
-                        disabled={updatePlanMutation.isPending}
-                      >
-                        <ArrowLeft className="w-5 h-5" />
-                        {updatePlanMutation.isPending ? "Menyimpan..." : "Klik Disini Jika Sudah Konfirmasi"}
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             </div>
           </motion.div>
