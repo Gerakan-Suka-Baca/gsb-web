@@ -141,7 +141,7 @@ const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, onAnswer
           </div>
         </Card>
 
-        <div className="flex justify-between mt-6 pb-10">
+        <div className="flex justify-between mt-4 pb-4">
           <Button variant="outline" onClick={onPrev} disabled={isFirst} className="h-11 px-6 rounded-full border-2 select-none">
             <ChevronLeft className="w-4 h-4 mr-2" /> Sebelumnya
           </Button>
@@ -547,10 +547,12 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
 
   const handleNextQuestion = useCallback(() => {
     setCurrentQuestionIndex((prev) => prev + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     flushEvents(false);
   }, [flushEvents]);
   const handlePrevQuestion = useCallback(() => {
     setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
     flushEvents(false);
   }, [flushEvents]);
   const setCurrentQuestionIndexWithFlush = useCallback((idx: number) => {
@@ -729,7 +731,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   if (!currentQuestion || !currentSubtestId) return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <div className="container mx-auto py-16 px-4 md:px-6 min-h-screen">
+    <div className="container mx-auto pt-4 pb-6 md:pt-8 md:pb-10 px-4 md:px-6 min-h-screen">
       <MobileExamControls
         timeLeft={timeLeft}
         formatTime={formatTime}
@@ -740,7 +742,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
         currentQuestionIndex={currentQuestionIndex}
         setCurrentQuestionIndex={setCurrentQuestionIndexWithFlush}
       />
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8 rounded-xl bg-gradient-to-r from-gsb-maroon to-gsb-red px-6 py-4 flex items-center justify-between text-white shadow-xl">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4 md:mb-6 rounded-xl bg-gradient-to-r from-gsb-maroon to-gsb-red px-6 py-3 md:py-4 flex items-center justify-between text-white shadow-xl">
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="bg-white/20 rounded-full px-3 py-0.5 text-xs font-bold shrink-0">Subtes {currentSubtestIndex + 1}/{subtests.length}</span>
           <span className="font-semibold text-sm line-clamp-1">{currentSubtest?.title}</span>

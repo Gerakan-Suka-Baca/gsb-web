@@ -17,7 +17,7 @@ interface NavigatorProps {
 }
 
 export const Navigator = memo(({ questions, currentSubtestId, answers, flags, currentIndex, onSelect }: NavigatorProps) => (
-  <div className="flex flex-wrap gap-2 justify-center content-start">
+  <div className="grid grid-cols-5 sm:grid-cols-7 lg:flex lg:flex-wrap gap-2 justify-center content-start">
     {questions.map((q: SubtestQuestion, idx: number) => {
       const qID = q.id || `q-${idx}`;
       const isAns = answers[currentSubtestId]?.[qID];
@@ -36,7 +36,7 @@ export const Navigator = memo(({ questions, currentSubtestId, answers, flags, cu
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.92 }}
           transition={{ type: "spring", stiffness: 400, damping: 24 }}
-          className={cn("w-9 h-9 text-xs rounded-md flex items-center justify-center font-bold border transition-colors", variant)}
+          className={cn("w-full aspect-square max-w-11 text-sm rounded-lg flex items-center justify-center font-bold border transition-colors lg:w-9 lg:h-9 lg:text-xs lg:rounded-md", variant)}
         >
           {idx + 1}
         </motion.button>
