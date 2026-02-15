@@ -86,7 +86,7 @@ export const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, o
           </div>
         </Card>
 
-        <div className="flex justify-between mt-2 md:mt-4 pb-4 md:pb-8">
+        <div className="flex justify-between mt-2 md:mt-4 pb-2 md:pb-4">
           <Button variant="outline" onClick={onPrev} disabled={isFirst} className="h-9 md:h-11 px-4 md:px-6 rounded-full border-2 select-none text-sm">
             <ChevronLeft className="w-4 h-4 mr-1 md:mr-2" /> Sebelumnya
           </Button>

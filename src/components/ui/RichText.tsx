@@ -84,11 +84,16 @@ function getAlignmentClass(node: Node): string {
 
 const inlineTypes = new Set(["text", "link", "linebreak", "br"]);
 
-function hasBlockChildren(children: Node[] = []) {
+function hasBlockChildren(children: Node[] = []): boolean {
   return children.some((child) => {
     if (!child || typeof child !== "object") return false;
     const type = String(child.type || "");
-    return type !== "" && !inlineTypes.has(type);
+    if (type !== "" && !inlineTypes.has(type)) return true;
+    // Recursively check nested children (e.g. inside <strong>)
+    if (child.children && child.children.length > 0) {
+      return hasBlockChildren(child.children);
+    }
+    return false;
   });
 }
 
