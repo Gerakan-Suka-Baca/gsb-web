@@ -4,10 +4,38 @@ import * as React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { FadeIn } from '@/components/ui/fade-in';
 import { Button } from '@/components/ui/button';
-import { Play, Calendar, ArrowRight } from 'lucide-react';
+import { Play, Calendar, ArrowRight, Clock, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useTRPC } from '@/trpc/client';
+import { useQuery } from '@tanstack/react-query';
+
+function formatDuration(ms: number): string {
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) return `${hours}j ${minutes}m`;
+    return `${minutes} menit`;
+}
+
+function formatDate(dateStr: string): string {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });
+}
 
 export function ActivitySlider() {
+    const trpc = useTRPC();
+    const { data: podcastData } = useQuery(
+        trpc.podcast.getLatestEpisode.queryOptions(undefined, {
+            staleTime: 5 * 60 * 1000,
+            retry: 1,
+        })
+    );
+
     const news = [
         {
             title: 'GSB Mengadakan Pelatihan Relawan Batch 12',
@@ -29,13 +57,12 @@ export function ActivitySlider() {
         },
     ];
 
-    const podcast = {
-        title: 'Episode 4: Menjadi Relawan Itu Seru!',
-        guest: 'Kak Budi (Relawan Senior)',
-        duration: '45 Menit',
-        description: 'Berbagi pengalaman seru dan inspiratif selama menjadi relawan di Gerakan Suka Baca.',
-        image: '/uploads/thumb-podcast.png',
-    };
+    const podcastImage = podcastData?.images?.[0]?.url ?? '/uploads/thumb-podcast.png';
+    const podcastTitle = podcastData?.name ?? 'MSG Podcast';
+    const podcastDescription = podcastData?.description ?? 'Dongeng edukatif dari Gerakan Suka Baca.';
+    const podcastDuration = podcastData ? formatDuration(podcastData.durationMs) : '';
+    const podcastDate = podcastData ? formatDate(podcastData.releaseDate) : '';
+    const podcastSpotifyUrl = podcastData?.spotifyUrl ?? 'https://open.spotify.com/show/5uoOFClrYGurElVUN0MKZM';
 
     return (
         <section className="py-16 md:py-24 bg-muted/50 overflow-hidden">
@@ -103,14 +130,24 @@ export function ActivitySlider() {
                                 </h3>
                             </div>
                             <Card className="flex-1 bg-linear-to-br from-gsb-maroon to-gsb-red text-white border-none overflow-hidden relative group min-h-100">
-                                {/* Background Image with Overlay */}
                                 <div className="absolute inset-0 z-0">
-                                    <Image
-                                        src={podcast.image}
-                                        alt={podcast.title}
-                                        className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-500 scale-105 group-hover:scale-100"
-                                        fill
-                                    />
+                                    {podcastData?.images?.[0] ? (
+                                        <Image
+                                            src={podcastImage}
+                                            alt={podcastTitle}
+                                            className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-500 scale-105 group-hover:scale-100"
+                                            fill
+                                            sizes="(max-width: 1024px) 100vw, 50vw"
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <Image
+                                            src="/uploads/thumb-podcast.png"
+                                            alt={podcastTitle}
+                                            className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-500 scale-105 group-hover:scale-100"
+                                            fill
+                                        />
+                                    )}
                                     <div className="absolute inset-0 bg-linear-to-t from-gsb-maroon via-gsb-maroon/80 to-transparent" />
                                 </div>
 
@@ -118,9 +155,15 @@ export function ActivitySlider() {
 
                                 <CardContent className="h-full flex flex-col justify-end items-center text-center p-8 relative z-10">
                                     <div className="mb-auto mt-8">
-                                        <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 cursor-pointer mx-auto shadow-xl ring-4 ring-white/10">
-                                            <Play className="h-10 w-10 text-white fill-current ml-1" />
-                                        </div>
+                                        <Link
+                                            href={podcastSpotifyUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 cursor-pointer mx-auto shadow-xl ring-4 ring-white/10">
+                                                <Play className="h-10 w-10 text-white fill-current ml-1" />
+                                            </div>
+                                        </Link>
                                     </div>
 
                                     <div className="space-y-3 mb-8 w-full">
@@ -128,19 +171,38 @@ export function ActivitySlider() {
                                             Episode Terbaru
                                         </span>
                                         <h4 className="text-2xl md:text-4xl font-heading font-bold leading-tight drop-shadow-md">
-                                            {podcast.title}
+                                            {podcastTitle}
                                         </h4>
-                                        <p className="text-white/90 font-medium text-lg">
-                                            Bersama {podcast.guest}
-                                        </p>
+                                        {podcastData && (
+                                            <div className="flex items-center justify-center gap-4 text-white/80 text-sm">
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <Calendar className="w-3.5 h-3.5" />
+                                                    {podcastDate}
+                                                </span>
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <Clock className="w-3.5 h-3.5" />
+                                                    {podcastDuration}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <p className="text-white/80 text-sm max-w-md mx-auto mb-8 line-clamp-2">
-                                        {podcast.description}
+                                        {podcastDescription}
                                     </p>
 
-                                    <Button className="bg-white text-gsb-maroon hover:bg-gsb-yellow hover:text-gsb-maroon font-bold rounded-full px-10 py-6 text-lg shadow-lg transition-all hover:scale-105 w-full md:w-auto">
-                                        Dengarkan Sekarang
+                                    <Button
+                                        className="bg-white text-gsb-maroon hover:bg-gsb-yellow hover:text-gsb-maroon font-bold rounded-full px-10 py-6 text-lg shadow-lg transition-all hover:scale-105 w-full md:w-auto gap-2"
+                                        asChild
+                                    >
+                                        <Link
+                                            href={podcastSpotifyUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            Dengarkan Sekarang
+                                            <ExternalLink className="w-4 h-4" />
+                                        </Link>
                                     </Button>
                                 </CardContent>
                             </Card>
