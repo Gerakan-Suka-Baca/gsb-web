@@ -216,7 +216,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const debouncedFlags = useDebounce(flags, 10000);
   const currentSubtest = subtests[currentSubtestIndex];
   const currentSubtestId = currentSubtest?.id ?? "";
-  const questions = (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[];
+  const questions = useMemo(() => (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[], [currentSubtest?.tryoutQuestions]);
   const currentQuestion = questions[currentQuestionIndex];
   const subtestLabel = currentSubtest ? (SUBTEST_LABELS[currentSubtest.subtest] ?? currentSubtest.subtest) : "";
 
@@ -410,7 +410,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
       stopTimer();
     }
     return () => stopTimer();
-  }, [examState, startTimer, stopTimer]);
+  }, [examState, timeLeft, startTimer, stopTimer]);
 
   const handleSubtestFinish = useCallback(() => {
     setShowConfirmFinish(false);
