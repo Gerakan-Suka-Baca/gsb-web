@@ -377,6 +377,6 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
       },
       finishExam,
       triggerFinishCheck: () => {}, // Handled in UI layer or exposes logic
-      doSave: doSaveRef.current
+      doSave: useCallback((force?: boolean) => doSaveRef.current(force), [])
   };
 };

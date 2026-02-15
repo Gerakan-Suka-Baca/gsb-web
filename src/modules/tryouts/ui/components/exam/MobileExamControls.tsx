@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, Clock } from "lucide-react";
 import { Navigator } from "./Navigator";
@@ -55,6 +55,9 @@ export const MobileExamControls = ({
         <SheetContent side="bottom" className="h-[80vh] rounded-t-2xl">
             <SheetHeader className="mb-6 text-left">
                 <SheetTitle>Navigasi Soal</SheetTitle>
+                <SheetDescription className="sr-only">
+                    Gunakan navigasi ini untuk berpindah ke nomor soal yang diinginkan.
+                </SheetDescription>
                 <div className="flex flex-wrap gap-4 text-xs text-muted-foreground mt-2">
                     <div className="flex items-center gap-2">
                         <div className="w-3 h-3 bg-blue-600 rounded" /> Aktif
