@@ -14,7 +14,7 @@ export const tryoutsRouter = createTRPCRouter({
       const tryout = await ctx.db.findByID({
         collection: "tryouts",
         id: input.tryoutId,
-        depth: 4,
+        depth: 2,
       });
 
       return {

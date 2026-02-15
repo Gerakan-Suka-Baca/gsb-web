@@ -32,7 +32,7 @@ export const searchUniversities = async (query: string): Promise<University[]> =
         headers: {
           "x-api-co-id": apiKey,
         },
-        next: { revalidate: 3600 }, // Cache for 1 hour
+        next: { revalidate: 3600 }, 
       }
     );
 
