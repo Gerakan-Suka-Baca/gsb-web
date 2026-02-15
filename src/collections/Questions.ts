@@ -21,7 +21,7 @@ export const Questions: CollectionConfig = {
       name: "subtest",
       label: "Subtest Type",
       type: "select",
-      required: true,
+      required: false,
       options: [
         { label: "Penalaran Umum", value: "PU" },
         { label: "Pengetahuan Kuantitatif", value: "PK" },
