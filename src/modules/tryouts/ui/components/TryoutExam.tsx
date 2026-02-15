@@ -214,8 +214,8 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const [isNavigatorOpen, setIsNavigatorOpen] = useState(false);
 
   // Derived
-  const debouncedAnswers = useDebounce(answers, 3000);
-  const debouncedFlags = useDebounce(flags, 3000);
+  const debouncedAnswers = useDebounce(answers, 5000);
+  const debouncedFlags = useDebounce(flags, 5000);
   const currentSubtest = subtests[currentSubtestIndex];
   const questions = (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[];
   const currentQuestion = questions[currentQuestionIndex];
@@ -237,10 +237,14 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   }));
 
   const saveProgressMutation = useMutation(trpc.tryoutAttempts.saveProgress.mutationOptions({
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
     onError: (err) => console.error("Auto-save failed:", err),
   }));
 
   const submitAttemptMutation = useMutation(trpc.tryoutAttempts.submitAttempt.mutationOptions({
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
     onSuccess: () => {
       setExamState("finished");
       if (attemptId) localStorage.removeItem(`gsb-tryout-backup-${attemptId}`);
@@ -376,14 +380,25 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
       window.history.pushState(null, "", window.location.href);
       setShowExitDialog(true);
     };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden" && attemptId) {
+        saveProgressMutation.mutate({
+          attemptId, answers, flags,
+          currentSubtest: currentSubtestIndex, examState: "running",
+          secondsRemaining: timeLeft, currentQuestionIndex,
+        });
+      }
+    };
     window.history.pushState(null, "", window.location.href);
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', handlePopState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [examState]);
+  }, [examState, attemptId, answers, flags, currentSubtestIndex, timeLeft, currentQuestionIndex, saveProgressMutation]);
 
   const handleStart = () => startAttemptMutation.mutate({ tryoutId: tryout.id });
 

@@ -42,6 +42,12 @@ export default buildConfig({
     url: process.env.DATABASE_URI || "",
     connectOptions: {
       family: 4,
+      maxPoolSize: 20,
+      minPoolSize: 2,
+      maxIdleTimeMS: 30000,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
     },
   }),
   sharp,
