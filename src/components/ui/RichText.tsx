@@ -200,7 +200,6 @@ function serialize(children: Node[]): React.ReactNode {
         );
       case 'block':
           // Handle custom blocks if any (layout blocks etc)
-          // For now just serialize children
           return <div key={i}>{serialize(node.children || [])}</div>;
 
       default:

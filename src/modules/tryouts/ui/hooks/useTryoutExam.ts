@@ -1,77 +1,216 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { useDebounce } from "@/hooks/use-debounce";
 import { useTRPC } from "@/trpc/client";
-import { useExamNavbar } from "@/components/layout/exam-navbar-context";
-import { saveBackup, loadBackup, clearBackup } from "@/lib/tryout-storage";
-import type { Question, Tryout, TryoutAttempt } from "@/payload-types";
+import { useDebounce } from "@/hooks/use-debounce";
+import { toast } from "sonner";
+import type { Tryout, Question, TryoutAttempt } from "@/payload-types";
+import {
+  appendEvent,
+  clearBackup,
+  clearEvents,
+  getPendingEvents,
+  loadBackup,
+  markEventsFailed,
+  markEventsSent,
+  saveBackup,
+  type TryoutEvent,
+} from "@/lib/tryout-storage";
 
-type AnswerMap = Record<string, string>;
-type FlagMap = Record<string, boolean>;
-type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
+// --- Types & Constants ---
 
-export type AttemptData = Omit<TryoutAttempt, "answers" | "flags"> & {
-  answers?: Record<string, AnswerMap> | null;
-  flags?: Record<string, FlagMap> | null;
-  currentSubtest?: number | null;
-  examState?: "running" | "bridging" | null;
-  secondsRemaining?: number | null;
-  currentQuestionIndex?: number | null;
-};
+export type AnswerMap = Record<string, string>;
+export type FlagMap = Record<string, boolean>;
+export type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
+export type SubtestAnswer = NonNullable<SubtestQuestion["tryoutAnswers"]>[number];
+export type ExamState = "loading" | "ready" | "running" | "bridging" | "finished";
 
-// Define exact type for Tryout with populated questions
-interface TryoutWithQuestions extends Omit<Tryout, "questions"> {
-  questions?: Question[] | string[] | null;
+export interface TryoutExamProps {
+  tryout: Tryout;
+  onFinish: (answers: Record<string, AnswerMap>) => void;
 }
 
-export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string, AnswerMap>) => void) => {
+interface TryoutWithTests extends Tryout {
+  tests?: Question[] | null;
+}
+
+export const SUBTEST_LABELS: Record<string, string> = {
+  PU: "Penalaran Umum", PK: "Pengetahuan Kuantitatif", PM: "Penalaran Matematika",
+  LBE: "Literasi Bahasa Inggris", LBI: "Literasi Bahasa Indonesia",
+  PPU: "Pengetahuan & Pemahaman Umum", KMBM: "Kemampuan Memahami Bacaan & Menulis",
+};
+
+export const ANIM = {
+  fadeSlide: {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0, 0, 0.2, 1] } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.25 } },
+  },
+  staggerContainer: { animate: { transition: { staggerChildren: 0.08 } } },
+  staggerChild: {
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+  }
+} as const;
+
+// --- Hook ---
+
+export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
+  const router = useRouter();
   const trpc = useTRPC();
-  useExamNavbar();
+  const tryoutData = tryout as TryoutWithTests;
+  const subtests = useMemo(() => (Array.isArray(tryoutData.tests) ? tryoutData.tests : []), [tryoutData.tests]);
 
-  // Cast tryout once
-  const tryoutData = tryout as unknown as TryoutWithQuestions;
-  const rawQuestions = tryoutData.questions;
-
-  const subtests = useMemo(() => {
-     if (Array.isArray(rawQuestions) && rawQuestions.length > 0 && typeof rawQuestions[0] !== "string") {
-         return rawQuestions as Question[];
-     }
-     return [];
-  }, [rawQuestions]);
-
-  // Initialize subtest index from localStorage (sync) if safe to prevent flash
-  const [currentSubtestIndex, setCurrentSubtestIndex] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(`gsb-subtest-${tryout.id}`);
-      return saved ? parseInt(saved, 10) : 0;
-    }
-    return 0;
-  });
-
+  // State
+  const [currentSubtestIndex, setCurrentSubtestIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AnswerMap>>({});
   const [flags, setFlags] = useState<Record<string, FlagMap>>({});
   const [timeLeft, setTimeLeft] = useState(0);
-  const [examState, setExamState] = useState<"loading" | "ready" | "running" | "bridging" | "finished">("loading");
+  const [examState, setExamState] = useState<ExamState>("loading");
   const [attemptId, setAttemptId] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bridgingSeconds, setBridgingSeconds] = useState(60);
   
+  // Dialog States
+  const [showConfirmFinish, setShowConfirmFinish] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [showTimeUpDialog, setShowTimeUpDialog] = useState(false);
+
+  // Refs — keep latest values accessible synchronously inside async callbacks
   const timeLeftRef = useRef(timeLeft);
   const currentSubtestIndexRef = useRef(currentSubtestIndex);
   const currentQuestionIndexRef = useRef(currentQuestionIndex);
   const examStateRef = useRef(examState);
   const answersRef = useRef(answers);
   const flagsRef = useRef(flags);
-  const isSavingRef = useRef(false);
-  const failCountRef = useRef(0);
-  const pausedUntilRef = useRef(0);
-  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const timerActiveRef = useRef(false);
-  const timerStartRef = useRef(0);
-  const timeLeftAtStartRef = useRef(0);
+  const revisionRef = useRef<Record<string, number>>({});
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRetryAtRef = useRef(0);
+  const flushEventsRef = useRef<(force?: boolean) => void>(() => {});
 
+  // Sequential write queue — every server write chains onto this promise
+  const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
 
+  // Derived
+  const [changeToken, setChangeToken] = useState(0);
+  const debouncedChangeToken = useDebounce(changeToken, 4000);
+  const currentSubtest = subtests[currentSubtestIndex];
+  const currentSubtestId = currentSubtest?.id ?? "";
+  const questions = (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[];
+  const currentQuestion = questions[currentQuestionIndex];
+  const subtestKey = currentSubtest?.subtest ?? "";
+  const subtestLabel = subtestKey ? (SUBTEST_LABELS[subtestKey] || subtestKey) : "";
+
+  // TRPC Hooks
+  const { data: attempt, isLoading: isAttemptLoading } = useQuery(
+    trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId: tryout.id })
+  );
+
+  const startAttemptMutation = useMutation(trpc.tryoutAttempts.startAttempt.mutationOptions({
+    onSuccess: (data) => {
+      setAttemptId(data.id);
+      setExamState("running");
+      setTimeLeft((currentSubtest?.duration ?? 0) * 60);
+      toast.success("Ujian dimulai!");
+    },
+    onError: (err) => toast.error("Gagal memulai: " + err.message),
+  }));
+
+  const saveProgressBatchMutation = useMutation(trpc.tryoutAttempts.saveProgressBatch.mutationOptions({
+    retry: false,
+    onError: () => {},
+  }));
+
+  const submitAttemptMutation = useMutation(trpc.tryoutAttempts.submitAttempt.mutationOptions({
+    onSuccess: () => {
+      setExamState("finished");
+      if (attemptId) {
+        clearBackup(attemptId);
+        clearEvents(attemptId);
+      }
+      toast.success("Ujian selesai! Jawaban tersimpan.");
+      onFinish(answers);
+    },
+    onError: (err) => toast.error("Gagal submit: " + err.message),
+  }));
+
+  const createId = useCallback(() => {
+    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+      return crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  }, []);
+
+  // --- Write Queue & Flush ---
+
+  const scheduleRetry = useCallback((failCount: number) => {
+    const delays = [5000, 15000, 45000, 120000, 300000];
+    const delay = delays[Math.min(failCount, delays.length - 1)];
+    const nextAt = Date.now() + delay;
+    if (nextAt <= lastRetryAtRef.current) return;
+    lastRetryAtRef.current = nextAt;
+    if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+    retryTimerRef.current = setTimeout(() => {
+      flushEventsRef.current(true);
+    }, delay);
+  }, []);
+
+  const flushEvents = useCallback(async (force?: boolean) => {
+    if (!attemptId) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      scheduleRetry(0);
+      return;
+    }
+
+    // The actual work — executed inside the sequential queue
+    const doFlush = async () => {
+      let pending: TryoutEvent[] = [];
+      try {
+        pending = await getPendingEvents(attemptId, 20);
+        if (pending.length === 0) return;
+
+        const persistedExamState =
+          examStateRef.current === "running" || examStateRef.current === "bridging"
+            ? examStateRef.current
+            : undefined;
+
+        await saveProgressBatchMutation.mutateAsync({
+          attemptId,
+          batchId: createId(),
+          clientTime: Date.now(),
+          events: pending,
+          currentSubtest: currentSubtestIndexRef.current,
+          examState: persistedExamState,
+          secondsRemaining: timeLeftRef.current,
+          currentQuestionIndex: currentQuestionIndexRef.current,
+        });
+        await markEventsSent(attemptId, pending.map((e) => e.id));
+
+        // Drain remaining events recursively
+        const more = await getPendingEvents(attemptId, 1);
+        if (more.length > 0) await doFlush();
+      } catch {
+        await markEventsFailed(attemptId, pending.map((e) => e.id));
+        const maxFail = pending.reduce((acc, e) => Math.max(acc, (e.failedCount ?? 0) + 1), 0);
+        scheduleRetry(maxFail);
+      }
+    };
+
+    if (force) {
+      // Wait for preceding writes, then flush
+      const queued = writeQueueRef.current.then(doFlush).catch(() => {});
+      writeQueueRef.current = queued;
+      await queued;
+    } else {
+      // Fire-and-forget but still sequential
+      writeQueueRef.current = writeQueueRef.current.then(doFlush).catch(() => {});
+    }
+  }, [attemptId, createId, saveProgressBatchMutation, scheduleRetry]);
+
+  // --- Ref Sync ---
+  useEffect(() => { flushEventsRef.current = flushEvents; }, [flushEvents]);
   useEffect(() => { timeLeftRef.current = timeLeft; }, [timeLeft]);
   useEffect(() => { currentSubtestIndexRef.current = currentSubtestIndex; }, [currentSubtestIndex]);
   useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
@@ -79,146 +218,53 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
   useEffect(() => { answersRef.current = answers; }, [answers]);
   useEffect(() => { flagsRef.current = flags; }, [flags]);
 
-
+  // --- Local Backup ---
   useEffect(() => {
-    if (tryout.id) {
-      localStorage.setItem(`gsb-subtest-${tryout.id}`, currentSubtestIndex.toString());
-    }
-  }, [currentSubtestIndex, tryout.id]);
+    if (!attemptId) return;
+    const handler = setTimeout(() => {
+      saveBackup(attemptId, {
+        answers: answersRef.current,
+        flags: flagsRef.current,
+        currentSubtest: currentSubtestIndexRef.current,
+        currentQuestionIndex: currentQuestionIndexRef.current,
+        examState: examStateRef.current,
+        secondsRemaining: timeLeftRef.current,
+      });
+    }, 1000);
+    return () => clearTimeout(handler);
+  }, [attemptId, answers, flags, currentSubtestIndex, currentQuestionIndex]);
 
-  const debouncedAnswers = useDebounce(answers, 3000);
-  const debouncedFlags = useDebounce(flags, 3000);
-
-  const currentSubtest = subtests[currentSubtestIndex];
-  const currentSubtestId = currentSubtest?.id ?? "";
-  const questions = useMemo(() => (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[], [currentSubtest?.tryoutQuestions]);
-  const currentQuestion = questions[currentQuestionIndex];
-
-  const startAttemptMutation = useMutation(trpc.tryoutAttempts.startAttempt.mutationOptions({
-    onSuccess: (data) => {
-      setAttemptId(data.id);
-      setExamState("running");
-      const duration = (currentSubtest?.duration ?? 0) * 60;
-      setTimeLeft(duration);
-      toast.success("Ujian dimulai!");
-    },
-    onError: (err) => toast.error("Gagal memulai: " + err.message),
-  }));
-
-  const saveProgressMutation = useMutation(trpc.tryoutAttempts.saveProgress.mutationOptions({
-    retry: false,
-    onError: () => {}, // Handled by circuit breaker logic
-  }));
-
-  const submitAttemptMutation = useMutation(trpc.tryoutAttempts.submitAttempt.mutationOptions({
-    retry: 3,
-    // Exponential backoff: 2s, 4s, 8s (max 10s)
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
-    onSuccess: () => {
-      setExamState("finished");
-      if (attemptId) {
-        clearBackup(attemptId);
-        localStorage.removeItem(`gsb-subtest-${tryout.id}`); // Clean up sync backup
-      }
-      toast.success("Ujian selesai! Jawaban tersimpan.");
-      setIsSubmitting(false); 
-      onFinish(answers);
-    },
-    onError: (err) => {
-      setIsSubmitting(false);
-      toast.error("Gagal submit: " + err.message);
-    },
-  }));
-
-  const { data: attempt, isLoading: isAttemptLoading } = useQuery(
-    trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId: tryout.id })
-  );
-
-  const doSave = useCallback((force?: boolean) => {
-    const aid = attemptId;
-    if (!aid) return;
-    
-
-    if (!force) {
-      if (isSavingRef.current) return;
-      if (failCountRef.current >= 3 && Date.now() < pausedUntilRef.current) return;
-    }
-    
-    if (failCountRef.current >= 3 && Date.now() >= pausedUntilRef.current) {
-        failCountRef.current = 0; // Reset after pause
-    }
-
-    const currentAnswers = answersRef.current;
-    const currentFlags = flagsRef.current;
-    const es = examStateRef.current;
-    const persistedExamState = es === "running" || es === "bridging" ? es : undefined;
-
-    isSavingRef.current = true;
-    saveProgressMutation.mutate({
-      attemptId: aid, answers: currentAnswers, flags: currentFlags,
-      currentSubtest: currentSubtestIndexRef.current,
-      examState: persistedExamState,
-      secondsRemaining: timeLeftRef.current,
-      currentQuestionIndex: currentQuestionIndexRef.current,
-    }, {
-      onSuccess: () => {
-        isSavingRef.current = false;
-        failCountRef.current = 0;
-      },
-      onError: () => {
-        isSavingRef.current = false;
-        failCountRef.current += 1;
-        if (failCountRef.current >= 3) {
-          pausedUntilRef.current = Date.now() + 60_000;
-        }
-      },
-    });
-  }, [attemptId, saveProgressMutation]);
-
-  const doSaveRef = useRef(doSave);
-  useEffect(() => { doSaveRef.current = doSave; }, [doSave]);
-
+  // --- Attempt Restoration ---
   useEffect(() => {
     if (isAttemptLoading) return;
     if (!attempt) {
+      setAttemptId(null);
       setExamState("ready");
       return;
     }
-    const data = attempt as AttemptData;
-    const serverSubtest = data.currentSubtest ?? 0;
-    const serverQuestion = data.currentQuestionIndex ?? 0;
-    
-
-    let localSubtest = serverSubtest;
-    if (typeof window !== "undefined") {
-        const savedSubtest = localStorage.getItem(`gsb-subtest-${tryout.id}`);
-        if(savedSubtest) localSubtest = Math.max(serverSubtest, parseInt(savedSubtest, 10));
-    }
-
-    setAttemptId(data.id);
-
-    const initialAnswers: Record<string, AnswerMap> = data.answers || {};
-    const initialFlags: Record<string, FlagMap> = data.flags || {};
-
-    loadBackup(data.id).then(backup => {
-      let finalSubtest = localSubtest;
+    let active = true;
+    const data = attempt as TryoutAttempt;
+    const run = async () => {
+      const serverSubtest = data.currentSubtest ?? 0;
+      const serverQuestion = data.currentQuestionIndex ?? 0;
+      const storedAnswers = (data.answers as Record<string, AnswerMap> | null | undefined) || {};
+      const storedFlags = (data.flags as Record<string, FlagMap> | null | undefined) || {};
+      let finalSubtest = serverSubtest;
       let finalQuestion = serverQuestion;
       let finalSeconds: number | undefined;
       let finalExamState = data.examState;
 
-      if (backup) {
-        // Merge answers/flags
-        if (backup.answers) {
-          Object.keys(backup.answers).forEach(subtestId => {
-            initialAnswers[subtestId] = { ...(initialAnswers[subtestId] || {}), ...backup.answers[subtestId] };
-          });
-        }
-        if (backup.flags) {
-          Object.keys(backup.flags).forEach(subtestId => {
-            initialFlags[subtestId] = { ...(initialFlags[subtestId] || {}), ...backup.flags[subtestId] };
-          });
-        }
+      const mergedAnswers: Record<string, AnswerMap> = { ...storedAnswers };
+      const mergedFlags: Record<string, FlagMap> = { ...storedFlags };
 
+      const backup = await loadBackup(data.id);
+      if (backup) {
+        Object.keys(backup.answers || {}).forEach((subtestId) => {
+          mergedAnswers[subtestId] = { ...(mergedAnswers[subtestId] || {}), ...backup.answers[subtestId] };
+        });
+        Object.keys(backup.flags || {}).forEach((subtestId) => {
+          mergedFlags[subtestId] = { ...(mergedFlags[subtestId] || {}), ...backup.flags[subtestId] };
+        });
 
         if (backup.currentSubtest > finalSubtest) {
           finalSubtest = backup.currentSubtest;
@@ -226,173 +272,274 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
           finalSeconds = backup.secondsRemaining;
           if (backup.examState) finalExamState = backup.examState as typeof finalExamState;
         } else if (backup.currentSubtest === finalSubtest) {
-             // Only update question index if meaningful diff and same subtest
-             finalQuestion = Math.max(finalQuestion, backup.currentQuestionIndex ?? 0);
-             if (backup.secondsRemaining !== undefined && backup.updatedAt > (Date.parse(data.updatedAt) || 0)) {
-                 finalSeconds = backup.secondsRemaining;
-             }
+          finalQuestion = Math.max(finalQuestion, backup.currentQuestionIndex ?? 0);
+          if (backup.secondsRemaining !== undefined && backup.updatedAt > (Date.parse(data.updatedAt) || 0)) {
+            finalSeconds = backup.secondsRemaining;
+          }
         }
       }
 
+      const pendingEvents = await getPendingEvents(data.id);
+      for (const event of pendingEvents) {
+        if (event.kind === "answer") {
+          const sub = mergedAnswers[event.subtestId] ? { ...mergedAnswers[event.subtestId] } : {};
+          if (event.answerId !== undefined) sub[event.questionId] = event.answerId;
+          mergedAnswers[event.subtestId] = sub;
+        } else {
+          const sub = mergedFlags[event.subtestId] ? { ...mergedFlags[event.subtestId] } : {};
+          sub[event.questionId] = Boolean(event.flag);
+          mergedFlags[event.subtestId] = sub;
+        }
+      }
+
+      if (!active) return;
+      setAttemptId(data.id);
       setCurrentSubtestIndex(finalSubtest);
       setCurrentQuestionIndex(finalQuestion);
-      setAnswers(initialAnswers);
-      setFlags(initialFlags);
+      setAnswers(mergedAnswers);
+      setFlags(mergedFlags);
 
       if (data.status === "completed") {
         setExamState("finished");
       } else if (data.status === "started") {
-        const subtestAtIndex = subtests[finalSubtest];
-        const defaultDuration = (subtestAtIndex?.duration ?? 0) * 60;
+        const targetSubtest = subtests[finalSubtest];
+        const defaultDuration = (targetSubtest?.duration ?? 0) * 60;
         setTimeLeft(finalSeconds ?? data.secondsRemaining ?? defaultDuration);
         setExamState(finalExamState || "running");
       }
-    }).catch(() => {
+    };
+    run();
+    return () => { active = false; };
+  }, [attempt, isAttemptLoading, subtests]);
 
-      setCurrentSubtestIndex(localSubtest);
-      setCurrentQuestionIndex(serverQuestion);
-      setAnswers(initialAnswers);
-      setFlags(initialFlags);
-
-       if (data.status === "completed") {
-        setExamState("finished");
-      } else if (data.status === "started") {
-        const defaultDuration = (currentSubtest?.duration ?? 0) * 60;
-        setTimeLeft(data.secondsRemaining ?? defaultDuration);
-        setExamState(data.examState || "running");
-      }
-    });
-  }, [attempt, isAttemptLoading, subtests, tryout.id, currentSubtest?.duration]); // attemptId dependence via attempt
+  // --- Auto Flush ---
+  useEffect(() => {
+    if (!attemptId) return;
+    if (debouncedChangeToken === 0) return;
+    flushEvents(false);
+  }, [debouncedChangeToken, attemptId, flushEvents]);
 
   useEffect(() => {
     if (!attemptId) return;
-    const handler = setTimeout(() => {
-      saveBackup(attemptId, {
-        answers, flags,
-        currentSubtest: currentSubtestIndexRef.current,
-        currentQuestionIndex: currentQuestionIndexRef.current,
-        examState: examStateRef.current,
-        secondsRemaining: timeLeftRef.current,
+    const timer = setInterval(() => { flushEvents(false); }, 12000);
+    return () => clearInterval(timer);
+  }, [attemptId, flushEvents]);
+
+  useEffect(() => {
+    const onOnline = () => flushEvents(true);
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [flushEvents]);
+
+  // --- Countdown Timer ---
+  useEffect(() => {
+    if (examState !== "running") return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setShowTimeUpDialog(true);
+          return 0;
+        }
+        return prev - 1;
       });
-    }, 1000); // Debounce local backup by 1s
-
-    return () => clearTimeout(handler);
-  }, [answers, flags, currentSubtestIndex, currentQuestionIndex, attemptId]);
-
-
-  useEffect(() => {
-    const hasProgress = Object.keys(debouncedAnswers).length > 0 || Object.keys(debouncedFlags).length > 0;
-    if (hasProgress && attemptId) {
-      // Auto-save to server
-      doSaveRef.current(false);
-    }
-  }, [debouncedAnswers, debouncedFlags, attemptId]);
-
-  const startTimer = useCallback((seconds: number) => {
-    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    timerActiveRef.current = true;
-    timerStartRef.current = Date.now();
-    timeLeftAtStartRef.current = seconds;
-    setTimeLeft(seconds);
-
-    timerIntervalRef.current = setInterval(() => {
-      if (!timerActiveRef.current) return;
-      const elapsed = Math.floor((Date.now() - timerStartRef.current) / 1000);
-      const remaining = Math.max(0, timeLeftAtStartRef.current - elapsed);
-      setTimeLeft(remaining);
-      if (remaining <= 0) {
-        timerActiveRef.current = false;
-        if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-      }
     }, 1000);
-  }, []);
+    return () => clearInterval(timer);
+  }, [examState]);
 
-  const stopTimer = useCallback(() => {
-    timerActiveRef.current = false;
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-  }, []);
-
+  // --- Navigation Protection ---
   useEffect(() => {
-    if (examState === "running" && timeLeft > 0 && !timerActiveRef.current) {
-      startTimer(timeLeft);
-    } else if (examState !== "running") {
-      stopTimer();
+    if (examState !== "running") return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    const handlePopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      setShowExitDialog(true);
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [examState]);
+
+  // --- Logic Handlers ---
+  const handleStart = () => startAttemptMutation.mutate({ tryoutId: tryout.id });
+
+  const handleSubtestFinish = useCallback(async () => {
+    if (submitAttemptMutation.isPending) return;
+    setShowConfirmFinish(false);
+
+    if (currentSubtestIndex < subtests.length - 1) {
+      setExamState("bridging");
+    } else {
+      if (attemptId) {
+        // Queue: drain pending events → submit — all sequential
+        const doSubmit = async () => {
+          try {
+            const pending = await getPendingEvents(attemptId, 50);
+            if (pending.length > 0) {
+              await saveProgressBatchMutation.mutateAsync({
+                attemptId,
+                batchId: createId(),
+                clientTime: Date.now(),
+                events: pending,
+                currentSubtest: currentSubtestIndexRef.current,
+                examState: undefined,
+                secondsRemaining: timeLeftRef.current,
+                currentQuestionIndex: currentQuestionIndexRef.current,
+              });
+              await markEventsSent(attemptId, pending.map((e) => e.id));
+            }
+          } catch { /* proceed to submit anyway */ }
+
+          await submitAttemptMutation.mutateAsync({ attemptId, answers: answersRef.current });
+        };
+
+        writeQueueRef.current = writeQueueRef.current.then(doSubmit).catch(() => {});
+      } else {
+        setExamState("finished");
+        onFinish(answers);
+      }
     }
-    return () => stopTimer();
-  }, [examState, startTimer, stopTimer, timeLeft]);
+  }, [currentSubtestIndex, subtests.length, attemptId, answers, onFinish, submitAttemptMutation, saveProgressBatchMutation, createId]);
+
+  // Time up auto-finish
+  useEffect(() => {
+    if (showTimeUpDialog) {
+      const timeout = setTimeout(() => {
+        setShowTimeUpDialog(false);
+        handleSubtestFinish();
+      }, 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [showTimeUpDialog, handleSubtestFinish]);
 
   const handleNextSubtest = useCallback(() => {
     const nextIdx = currentSubtestIndex + 1;
-    const nextSubtest = subtests[nextIdx];
-    const nextDuration = nextSubtest?.duration ?? 0;
-    
-    // Update state
     setCurrentSubtestIndex(nextIdx);
     setCurrentQuestionIndex(0);
+    const nextDuration = subtests[nextIdx]?.duration ?? 0;
     setTimeLeft(nextDuration * 60);
     setExamState("running");
+    flushEvents(true);
+  }, [currentSubtestIndex, subtests, flushEvents]);
 
-
-    if (attemptId) {
-      doSaveRef.current(true);
-
-      saveBackup(attemptId, {
-        answers: answersRef.current,
-        flags: flagsRef.current,
-        currentSubtest: nextIdx,
-        currentQuestionIndex: 0,
-        examState: "running",
-        secondsRemaining: nextDuration * 60
-      });
+  const triggerFinishCheck = useCallback(() => {
+    const answeredCount = currentSubtestId ? Object.keys(answers[currentSubtestId] || {}).length : 0;
+    if (answeredCount < questions.length) {
+      setShowConfirmFinish(true);
+    } else {
+      handleSubtestFinish();
     }
-  }, [currentSubtestIndex, subtests, attemptId]);
+  }, [answers, currentSubtestId, questions.length, handleSubtestFinish]);
+
+  const handleNextQuestion = useCallback(() => {
+    setCurrentQuestionIndex((prev) => prev + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    flushEvents(false);
+  }, [flushEvents]);
+
+  const handlePrevQuestion = useCallback(() => {
+    setCurrentQuestionIndex((prev) => Math.max(0, prev - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    flushEvents(false);
+  }, [flushEvents]);
+
+  const setCurrentQuestionIndexWithFlush = useCallback((idx: number) => {
+    setCurrentQuestionIndex(idx);
+    flushEvents(false);
+  }, [flushEvents]);
+
+  const queueEvent = useCallback(async (event: Omit<TryoutEvent, "id" | "attemptId" | "clientTs" | "revision">) => {
+    if (!attemptId) return;
+    const key = `${event.kind}-${event.subtestId}-${event.questionId}`;
+    const nextRev = (revisionRef.current[key] ?? 0) + 1;
+    revisionRef.current[key] = nextRev;
+    await appendEvent(attemptId, {
+      ...event,
+      id: createId(),
+      attemptId,
+      clientTs: Date.now(),
+      revision: nextRev,
+    });
+    setChangeToken((prev) => prev + 1);
+    const pending = await getPendingEvents(attemptId, 8);
+    if (pending.length >= 8) flushEvents(false);
+  }, [attemptId, createId, flushEvents]);
   
-  const finishExam = useCallback(() => {
-      if(!attemptId) return;
-      setIsSubmitting(true);
-      submitAttemptMutation.mutate({ attemptId, answers });
-  }, [attemptId, answers, submitAttemptMutation]);
+  const handleAnswer = useCallback((qId: string, aId: string) => {
+    if (!currentSubtestId) return;
+    setAnswers(prev => ({ ...prev, [currentSubtestId]: { ...(prev[currentSubtestId] || {}), [qId]: aId } }));
+    queueEvent({ kind: "answer", subtestId: currentSubtestId, questionId: qId, answerId: aId });
+  }, [currentSubtestId, queueEvent]);
+
+  const toggleFlag = useCallback((qId: string) => {
+    if (!currentSubtestId) return;
+    const nextFlag = !flagsRef.current[currentSubtestId]?.[qId];
+    setFlags(prev => ({ ...prev, [currentSubtestId]: { ...(prev[currentSubtestId] || {}), [qId]: nextFlag } }));
+    queueEvent({ kind: "flag", subtestId: currentSubtestId, questionId: qId, flag: nextFlag });
+  }, [currentSubtestId, queueEvent]);
+
+  // --- Bridging Timer ---
+  useEffect(() => {
+    if (examState !== "bridging") {
+      setBridgingSeconds(60);
+      return;
+    }
+    const timer = setInterval(() => {
+      setBridgingSeconds((prev) => {
+        if (prev <= 1) { clearInterval(timer); handleNextSubtest(); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [examState, handleNextSubtest]);
+
+  const formatTime = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
+    return `${Math.floor(seconds / 60).toString().padStart(2, "0")}:${(seconds % 60).toString().padStart(2, "0")}`;
+  };
 
   return {
+    // Derived data
+    subtests,
+    currentSubtestIndex,
+    currentSubtestId,
+    currentSubtest,
+    currentQuestionIndex,
+    currentQuestion,
+    questions,
+    subtestLabel,
+    answers,
+    flags,
+    timeLeft,
+    examState,
+    attemptId,
+    bridgingSeconds,
+    isAttemptLoading,
 
-  subtests, // Return subtests for use in UI
+    // Dialog state
+    showConfirmFinish, setShowConfirmFinish,
+    showExitDialog, setShowExitDialog,
+    showTimeUpDialog, setShowTimeUpDialog,
 
-      currentSubtestIndex,
-      currentQuestionIndex,
-      answers,
-      flags,
-      timeLeft,
-      examState,
-      isSubmitting,
-      isAttemptLoading,
-      attemptId,
-      
+    // Mutations state
+    startAttemptMutation,
+    submitAttemptMutation,
 
-      currentSubtest,
-      currentSubtestId,
-      questions,
-      currentQuestion,
-
-
-      setCurrentQuestionIndex,
-      setAnswers,
-      setFlags,
-      setExamState,
-      startAttempt: () => startAttemptMutation.mutate({ tryoutId: tryout.id }),
-      handleNextSubtest,
-      handleAnswer: (qId: string, aId: string) => {
-          if (!currentSubtestId) return;
-          setAnswers(prev => ({ ...prev, [currentSubtestId]: { ...(prev[currentSubtestId] || {}), [qId]: aId } }));
-      },
-      toggleFlag: (qId: string) => {
-          if (!currentSubtestId) return;
-          setFlags(prev => ({ ...prev, [currentSubtestId]: { ...(prev[currentSubtestId] || {}), [qId]: !prev[currentSubtestId]?.[qId] } }));
-      },
-      finishExam,
-      triggerFinishCheck: () => {}, // Handled in UI layer or exposes logic
-      doSave: useCallback((force?: boolean) => doSaveRef.current(force), [])
+    // Handlers
+    handleStart,
+    handleSubtestFinish,
+    handleNextSubtest,
+    handleNextQuestion,
+    handlePrevQuestion,
+    handleAnswer,
+    toggleFlag,
+    triggerFinishCheck,
+    setCurrentQuestionIndexWithFlush,
+    formatTime,
+    router,
   };
-};
+}
