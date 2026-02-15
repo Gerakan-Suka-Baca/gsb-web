@@ -191,12 +191,6 @@ export interface Tryout {
   'Date Open_tz': SupportedTimezones;
   'Date Close': string;
   'Date Close_tz': SupportedTimezones;
-  description: string;
-  /**
-   * Duration of the tryout in minutes
-   */
-  duration: number;
-  questions: (string | Question)[];
   updatedAt: string;
   createdAt: string;
 }
@@ -210,7 +204,7 @@ export interface Question {
    * Waktu pengerjaan untuk subtes ini dalam menit.
    */
   duration: number;
-  subtest: 'PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM';
+  subtest?: ('PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM') | null;
   tryout: string | Tryout;
   title: string;
   tryoutQuestions?:
@@ -326,6 +320,15 @@ export interface TryoutAttempt {
    * Index soal yang sedang dikerjakan di subtes saat ini (0-based).
    */
   currentQuestionIndex?: number | null;
+  processedBatchIds?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   /**
    * Paket hasil tryout yang dipilih peserta.
    */
@@ -512,9 +515,6 @@ export interface TryoutsSelect<T extends boolean = true> {
   'Date Open_tz'?: T;
   'Date Close'?: T;
   'Date Close_tz'?: T;
-  description?: T;
-  duration?: T;
-  questions?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -585,6 +585,7 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
   correctAnswersCount?: T;
   totalQuestionsCount?: T;
   currentQuestionIndex?: T;
+  processedBatchIds?: T;
   resultPlan?: T;
   updatedAt?: T;
   createdAt?: T;

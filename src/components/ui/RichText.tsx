@@ -82,6 +82,16 @@ function getAlignmentClass(node: Node): string {
   return '';
 }
 
+const inlineTypes = new Set(["text", "link", "linebreak", "br"]);
+
+function hasBlockChildren(children: Node[] = []) {
+  return children.some((child) => {
+    if (!child || typeof child !== "object") return false;
+    const type = String(child.type || "");
+    return type !== "" && !inlineTypes.has(type);
+  });
+}
+
 function serialize(children: Node[]): React.ReactNode {
   return children.map((node, i) => {
     if (React.isValidElement(node)) {
@@ -144,9 +154,11 @@ function serialize(children: Node[]): React.ReactNode {
 
     switch (node.type) {
       case 'paragraph':
-         // Check if paragraph has only zero-width space or empty, render break if needed
          if (node.children?.length === 0 || (node.children?.length === 1 && node.children[0].text === '')) {
              return <br key={i} />;
+         }
+         if (hasBlockChildren(node.children)) {
+             return <div key={i} className={classes}>{serialize(node.children || [])}</div>;
          }
          return <p key={i} className={classes}>{serialize(node.children || [])}</p>;
       case 'h1':

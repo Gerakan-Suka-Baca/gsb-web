@@ -20,11 +20,25 @@ export type AttemptData = Omit<TryoutAttempt, "answers" | "flags"> & {
   currentQuestionIndex?: number | null;
 };
 
+// Define exact type for Tryout with populated questions
+interface TryoutWithQuestions extends Omit<Tryout, "questions"> {
+  questions?: Question[] | string[] | null;
+}
+
 export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string, AnswerMap>) => void) => {
   const trpc = useTRPC();
   useExamNavbar();
 
-  const subtests = useMemo(() => (tryout.questions as Question[]) || [], [tryout.questions]);
+  // Cast tryout once
+  const tryoutData = tryout as unknown as TryoutWithQuestions;
+  const rawQuestions = tryoutData.questions;
+
+  const subtests = useMemo(() => {
+     if (Array.isArray(rawQuestions) && rawQuestions.length > 0 && typeof rawQuestions[0] !== "string") {
+         return rawQuestions as Question[];
+     }
+     return [];
+  }, [rawQuestions]);
 
   // Initialize subtest index from localStorage (sync) if safe to prevent flash
   const [currentSubtestIndex, setCurrentSubtestIndex] = useState(() => {
@@ -84,7 +98,7 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
     onSuccess: (data) => {
       setAttemptId(data.id);
       setExamState("running");
-      const duration = (currentSubtest?.duration ?? tryout.duration ?? 0) * 60;
+      const duration = (currentSubtest?.duration ?? 0) * 60;
       setTimeLeft(duration);
       toast.success("Ujian dimulai!");
     },
@@ -229,7 +243,7 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
         setExamState("finished");
       } else if (data.status === "started") {
         const subtestAtIndex = subtests[finalSubtest];
-        const defaultDuration = (subtestAtIndex?.duration ?? tryout.duration ?? 0) * 60;
+        const defaultDuration = (subtestAtIndex?.duration ?? 0) * 60;
         setTimeLeft(finalSeconds ?? data.secondsRemaining ?? defaultDuration);
         setExamState(finalExamState || "running");
       }
@@ -243,12 +257,12 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
        if (data.status === "completed") {
         setExamState("finished");
       } else if (data.status === "started") {
-        const defaultDuration = (currentSubtest?.duration ?? tryout.duration ?? 0) * 60;
+        const defaultDuration = (currentSubtest?.duration ?? 0) * 60;
         setTimeLeft(data.secondsRemaining ?? defaultDuration);
         setExamState(data.examState || "running");
       }
     });
-  }, [attempt, isAttemptLoading, subtests, tryout.id, tryout.duration, currentSubtest?.duration]); // attemptId dependence via attempt
+  }, [attempt, isAttemptLoading, subtests, tryout.id, currentSubtest?.duration]); // attemptId dependence via attempt
 
   useEffect(() => {
     if (!attemptId) return;
@@ -343,6 +357,8 @@ export const useTryoutExam = (tryout: Tryout, onFinish: (answers: Record<string,
   }, [attemptId, answers, submitAttemptMutation]);
 
   return {
+
+  subtests, // Return subtests for use in UI
 
       currentSubtestIndex,
       currentQuestionIndex,

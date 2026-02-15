@@ -132,6 +132,11 @@ export const TryoutAttempts: CollectionConfig = {
       admin: { description: "Index soal yang sedang dikerjakan di subtes saat ini (0-based)." },
     },
     {
+      name: "processedBatchIds",
+      type: "json",
+      defaultValue: [],
+    },
+    {
       name: "resultPlan",
       type: "select",
       label: "Paket Hasil",

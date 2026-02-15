@@ -49,7 +49,7 @@ export const ExamBridging = ({
                 <CheckCircle2 className="w-8 h-8 text-green-600" />
                 <div>
                   <h3 className="text-lg font-bold text-green-800">Subtes {currentSubtestIndex + 1} Selesai!</h3>
-                  <p className="text-green-700 text-sm">{completedSubtest?.title} — {subtestLabels[completedSubtest?.subtest] || completedSubtest?.subtest}</p>
+                  <p className="text-green-700 text-sm">{completedSubtest?.title} — {completedSubtest?.subtest ? (subtestLabels[completedSubtest.subtest as string] || completedSubtest.subtest) : ""}</p>
                 </div>
               </div>
               <div className="text-sm text-green-700 bg-green-100 rounded-lg p-3">
@@ -63,7 +63,7 @@ export const ExamBridging = ({
                 <div className="text-center mb-6">
                   <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Subtes Selanjutnya</p>
                   <h2 className="text-2xl md:text-3xl font-heading font-bold text-gsb-maroon">{nextSubtest.title}</h2>
-                  <p className="text-gsb-blue font-medium mt-1">{subtestLabels[nextSubtest.subtest] || nextSubtest.subtest}</p>
+                  <p className="text-gsb-blue font-medium mt-1">{nextSubtest?.subtest ? (subtestLabels[nextSubtest.subtest as string] || nextSubtest.subtest) : ""}</p>
                   <div className="w-16 h-1 bg-gsb-orange rounded-full mx-auto mt-3" />
                 </div>
                 <div className="flex justify-center mb-6">
