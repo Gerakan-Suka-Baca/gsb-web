@@ -265,8 +265,8 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     setAttemptId(data.id);
     
     // Load from DB first
-    let initialAnswers = data.answers || {};
-    let initialFlags = data.flags || {};
+    const initialAnswers = data.answers || {};
+    const initialFlags = data.flags || {};
 
     // Check local storage for unsaved progress
     if (typeof window !== 'undefined') {
