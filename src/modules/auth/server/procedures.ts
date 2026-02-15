@@ -112,7 +112,20 @@ export const authRouter = createTRPCRouter({
     return data;
   }),
   logout: baseProcedure.mutation(async ({ ctx }) => {
-    await deleteAuthCookie(ctx.db.config.cookiePrefix);
-    return { success: true };
+    try {
+      await deleteAuthCookie(ctx.db.config.cookiePrefix);
+      return { success: true };
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Return success true anyway to let client clear its state
+      return { success: true };
+      // Or throw a specific TRPCError if you want the client to handle it differently
+      /*
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Gagal menghapus sesi.",
+      });
+      */
+    }
   }),
 });

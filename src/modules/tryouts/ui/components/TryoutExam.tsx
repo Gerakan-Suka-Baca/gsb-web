@@ -30,6 +30,7 @@ type AttemptData = Omit<TryoutAttempt, "answers" | "flags"> & {
   currentSubtest?: number | null;
   examState?: "running" | "bridging" | null;
   secondsRemaining?: number | null;
+  currentQuestionIndex?: number | null;
 };
 
 interface TryoutExamProps {
@@ -213,8 +214,8 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const [isNavigatorOpen, setIsNavigatorOpen] = useState(false);
 
   // Derived
-  const debouncedAnswers = useDebounce(answers, 5000);
-  const debouncedFlags = useDebounce(flags, 5000);
+  const debouncedAnswers = useDebounce(answers, 3000);
+  const debouncedFlags = useDebounce(flags, 3000);
   const currentSubtest = subtests[currentSubtestIndex];
   const questions = (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[];
   const currentQuestion = questions[currentQuestionIndex];
@@ -258,6 +259,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     }
     const data = attempt as AttemptData;
     if (data.currentSubtest !== undefined && data.currentSubtest !== null) setCurrentSubtestIndex(data.currentSubtest);
+    if (data.currentQuestionIndex !== undefined && data.currentQuestionIndex !== null) setCurrentQuestionIndex(data.currentQuestionIndex);
     if (data.examState) setExamState(data.examState);
 
     setAttemptId(data.id);
@@ -282,9 +284,10 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
       saveProgressMutation.mutate({
         attemptId, answers: debouncedAnswers, flags: debouncedFlags,
         currentSubtest: currentSubtestIndex, examState: persistedExamState, secondsRemaining: timeLeft,
+        currentQuestionIndex: currentQuestionIndex,
       });
     }
-  }, [debouncedAnswers, debouncedFlags, attemptId, currentSubtestIndex, examState, saveProgressMutation, timeLeft]);
+  }, [debouncedAnswers, debouncedFlags, attemptId, currentSubtestIndex, examState, saveProgressMutation, timeLeft, currentQuestionIndex]);
 
   useEffect(() => {
     if (examState !== "running") return;

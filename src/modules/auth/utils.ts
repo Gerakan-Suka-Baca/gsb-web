@@ -19,14 +19,22 @@ export const generateAuthCookie = async ({ prefix, value }: Props) => {
 };
 
 export const deleteAuthCookie = async (prefix: string) => {
-  const cookies = await getCookies();
-  cookies.set({
-    name: `${prefix}-token`,
-    value: "",
-    httpOnly: true,
-    path: "/",
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 0,
-  });
+  try {
+    const cookies = await getCookies();
+    // Default to 'payload' if prefix is missing/empty, though it should usually be provided
+    const cookieName = `${prefix || "payload"}-token`;
+    
+    cookies.set({
+      name: cookieName,
+      value: "",
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 0,
+    });
+  } catch (error) {
+    // Log error but don't crash, allowing the client to continue its cleanup
+    console.error("Failed to delete auth cookie:", error);
+  }
 };
