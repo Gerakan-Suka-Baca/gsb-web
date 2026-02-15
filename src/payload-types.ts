@@ -193,7 +193,6 @@ export interface Tryout {
 export interface Question {
   id: string;
   /**
-   * Waktu pengerjaan untuk subtes ini dalam menit.
    */
   duration: number;
   subtest: 'PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM';
