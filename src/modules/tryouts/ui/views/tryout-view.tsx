@@ -64,8 +64,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
     return (
       <TryoutResultGate
         attemptId={existingAttempt?.id ?? ""}
-        username="" // User ID is not populated in getAttempt (depth: 0), so we can't reliably get username here without a separate fetch or session check. 
-                    // Since it's only used for the WhatsApp message defaults, empty string is acceptable/safe.
+        username="" // Username not available in shallow fetch, default to empty
         onPlanSelected={(plan) => {
           if (plan === "free" || plan === "paid") {
             setView("thankyou");

@@ -151,38 +151,41 @@ export const TryoutsList = () => {
       </motion.div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-8 bg-muted/50 p-1.5 rounded-xl w-fit border border-border/50">
-        {TABS.map((tab) => {
-          const Icon = tab.icon;
-          const count =
-            tab.key === "current" ? currentTryouts.length :
-            tab.key === "registered" ? registeredTryouts.length :
-            availableTryouts.length;
+      {/* Tabs */}
+      <div className="w-full overflow-x-auto pb-2 md:pb-0 mb-6 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0">
+        <div className="flex gap-2 bg-muted/50 p-1.5 rounded-xl w-fit border border-border/50 min-w-max">
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            const count =
+              tab.key === "current" ? currentTryouts.length :
+              tab.key === "registered" ? registeredTryouts.length :
+              availableTryouts.length;
 
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={cn(
-                "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 select-none",
-                activeTab === tab.key
-                  ? "bg-gsb-orange text-white shadow-md"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background"
-              )}
-            >
-              <Icon className="w-4 h-4" />
-              {tab.label}
-              {count > 0 && (
-                <span className={cn(
-                  "text-xs px-1.5 py-0.5 rounded-full font-bold min-w-[20px] text-center",
-                  activeTab === tab.key ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
-                )}>
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={cn(
+                  "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 select-none shrink-0",
+                  activeTab === tab.key
+                    ? "bg-gsb-orange text-white shadow-md"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+                {count > 0 && (
+                  <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded-full font-bold min-w-[20px] text-center",
+                    activeTab === tab.key ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
+                  )}>
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {attemptsLoading ? (

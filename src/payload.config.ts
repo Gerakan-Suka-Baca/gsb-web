@@ -40,6 +40,9 @@ export default buildConfig({
   },
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || "",
+    connectOptions: {
+      family: 4,
+    },
   }),
   sharp,
   plugins: [

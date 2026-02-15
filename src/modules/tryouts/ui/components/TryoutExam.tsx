@@ -243,7 +243,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const submitAttemptMutation = useMutation(trpc.tryoutAttempts.submitAttempt.mutationOptions({
     onSuccess: () => {
       setExamState("finished");
-
+      if (attemptId) localStorage.removeItem(`gsb-tryout-backup-${attemptId}`);
       toast.success("Ujian selesai! Jawaban tersimpan.");
       onFinish(answers);
     },
@@ -263,8 +263,38 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     if (data.examState) setExamState(data.examState);
 
     setAttemptId(data.id);
-    setAnswers(data.answers || {});
-    setFlags(data.flags || {});
+    
+    // Load from DB first
+    let initialAnswers = data.answers || {};
+    let initialFlags = data.flags || {};
+
+    // Check local storage for unsaved progress
+    if (typeof window !== 'undefined') {
+        const backupKey = `gsb-tryout-backup-${data.id}`;
+        const raw = localStorage.getItem(backupKey);
+        if (raw) {
+            try {
+                const parsed = JSON.parse(raw);
+                // Prioritize local storage data as it might have unsaved changes
+                if (parsed.answers) {
+                    Object.keys(parsed.answers).forEach(subtestId => {
+                        initialAnswers[subtestId] = { ...(initialAnswers[subtestId] || {}), ...parsed.answers[subtestId] };
+                    });
+                }
+                if (parsed.flags) {
+                    Object.keys(parsed.flags).forEach(subtestId => {
+                        initialFlags[subtestId] = { ...(initialFlags[subtestId] || {}), ...parsed.flags[subtestId] };
+                    });
+                }
+                console.log("Restored unsaved progress");
+            } catch (e) {
+                console.error("Failed to parse local backup", e);
+            }
+        }
+    }
+
+    setAnswers(initialAnswers);
+    setFlags(initialFlags);
 
     if (data.status === "completed") {
       setExamState("finished");
@@ -275,6 +305,17 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
       if (!data.examState) setExamState("running");
     }
   }, [attempt, isAttemptLoading, currentSubtest?.duration, tryout.duration]);
+
+  // Backup to local storage on change
+  useEffect(() => {
+    if (!attemptId) return;
+    const backupKey = `gsb-tryout-backup-${attemptId}`;
+    localStorage.setItem(backupKey, JSON.stringify({
+        answers,
+        flags,
+        updatedAt: Date.now()
+    }));
+  }, [answers, flags, attemptId]);
 
 
   useEffect(() => {
