@@ -47,7 +47,12 @@ import { updateProfile } from "@/actions/profile";
 import type { User as PayloadUser } from "@/payload-types";
 
 const profileSchema = z.object({
-  username: z.string().min(3, "Minimal 3 karakter"),
+  username: z
+    .string()
+    .min(3, "Minimal 3 karakter")
+    .max(63, "Maksimal 63 karakter")
+    .regex(/^[^\s]+$/, "Username tidak boleh mengandung spasi.")
+    .refine((val) => val.trim().length === val.length, "Username tidak boleh diawali atau diakhiri spasi"),
   fullName: z.string().min(1, "Nama Lengkap wajib diisi"),
   whatsapp: z.string().min(10, "Nomor WhatsApp tidak valid"),
   schoolOrigin: z.string().min(1, "Asal Sekolah wajib diisi"),

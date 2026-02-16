@@ -23,6 +23,11 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -77,6 +82,13 @@ export const SignUpView = () => {
   const onSubmit = (data: z.infer<typeof registerSchema>) => {
     register.mutate(data);
   };
+  const passwordValue = form.watch("password") || "";
+  const passwordRules = [
+    { key: "upper", label: "Harus ada 1 huruf besar", ok: /[A-Z]/.test(passwordValue) },
+    { key: "lower", label: "Harus ada 1 huruf kecil", ok: /[a-z]/.test(passwordValue) },
+    { key: "number", label: "Harus ada 1 angka", ok: /[0-9]/.test(passwordValue) },
+    { key: "symbol", label: "Harus ada 1 simbol", ok: /[!@#$%^&*()_\-+=\[\]{};:,.<>/?]/.test(passwordValue) },
+  ];
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -130,7 +142,33 @@ export const SignUpView = () => {
                           name="username"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Username</FormLabel>
+                              <FormLabel className="flex items-center gap-2">
+                                Username
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-border text-[11px] font-bold text-muted-foreground hover:bg-muted"
+                                      aria-label="Info aturan username"
+                                    >
+                                      ?
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="bottom" align="center" sideOffset={8} collisionPadding={12} className="max-w-[85vw] sm:max-w-xs">
+                                    <div className="space-y-2 text-xs leading-relaxed">
+                                      <div>
+                                        Aturan: boleh huruf besar/kecil, angka, dan simbol apa pun. Tidak boleh ada spasi.
+                                      </div>
+                                      <div>
+                                        Boleh: <span className="font-semibold">Andi_01</span>, <span className="font-semibold">budi2025</span>, <span className="font-semibold">@rani7</span>
+                                      </div>
+                                      <div>
+                                        Tidak boleh: <span className="font-semibold">andi 01</span>, <span className="font-semibold">rani 7</span>
+                                      </div>
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </FormLabel>
                               <FormControl>
                                 <Input placeholder="siswa_juara" {...field} />
                               </FormControl>
@@ -161,6 +199,15 @@ export const SignUpView = () => {
                           <FormControl>
                             <PasswordInput placeholder="••••••••" {...field} />
                           </FormControl>
+                          {passwordRules.some((rule) => !rule.ok) && (
+                            <div className="mt-2 text-xs text-muted-foreground">
+                              <ul className="list-disc pl-4 space-y-1">
+                                {passwordRules.filter((rule) => !rule.ok).map((rule) => (
+                                  <li key={rule.key}>{rule.label}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}

@@ -20,6 +20,8 @@ interface Props {
   tryoutId: string;
   attemptId: string;
   username: string;
+  fullName: string;
+  tryoutTitle: string;
   onPlanSelected: (plan: "free" | "paid") => void;
   isUpgrading?: boolean;
 }
@@ -32,7 +34,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected, isUpgrading }: Props) => {
+export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryoutTitle, onPlanSelected, isUpgrading }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<"free" | "paid" | null>(null);
@@ -70,7 +72,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
 
   const handleWAConfirm = () => {
     const message = encodeURIComponent(
-      `Halo Admin GSB, saya (${username}) sudah melakukan pembayaran untuk Tryout SNBT Premium sebesar Rp 5.000. Mohon verifikasi. (Mohon sertakan bukti transfer)`
+      `Halo Admin GSB, saya ${fullName} (@${username}) sudah melakukan pembayaran untuk Tryout SNBT Premium ${tryoutTitle} sebesar Rp 5.000. Mohon verifikasi. (Mohon sertakan bukti transfer)`
     );
     window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
     
