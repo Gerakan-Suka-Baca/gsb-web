@@ -8,7 +8,9 @@ import { TryoutExam } from "../components/TryoutExam";
 import { TryoutResultGate } from "../components/TryoutResultGate";
 import { TryoutThankYou } from "../components/TryoutThankYou";
 import { Tryout } from "@/payload-types";
+import type { TryoutAttempt } from "../../types";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   tryoutId: string;
@@ -17,20 +19,39 @@ interface Props {
 export const TryoutView = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data } = useSuspenseQuery(
-    trpc.tryouts.getOne.queryOptions({ tryoutId })
+  
+  // Disable retries to fail fast on 401
+  const { data, isLoading: isMetadataLoading, isError: isMetadataError } = useQuery(
+    trpc.tryouts.getMetadata.queryOptions({ tryoutId }, { retry: false })
   );
 
-  const { data: existingAttempt, isLoading: isAttemptLoading } = useQuery(
-    trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId })
+  const { data: existingAttempt, isLoading: isAttemptLoading, isError: isAttemptError } = useQuery(
+    trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId }, { retry: false })
   );
 
   const [view, setView] = useState<"loading" | "intro" | "exam" | "result" | "thankyou">("loading");
   const [holdResult, setHoldResult] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const tryout = data as unknown as Tryout;
+  
+  // Handle Session Expired / 401 (Metadata or Attempt failure)
+  if (isMetadataError || isAttemptError) {
+      return (
+          <div className="flex flex-col h-[60vh] items-center justify-center gap-4 text-center px-4">
+              <div className="p-4 bg-red-50 text-red-600 rounded-full"><Loader2 className="w-8 h-8 animate-spin" /></div>
+              <h2 className="text-xl font-bold text-gsb-maroon">Sesi Berakhir</h2>
+              <p className="text-muted-foreground">Silakan login kembali untuk melanjutkan ujian.</p>
+              <Button onClick={() => window.location.href = "/sign-in"} variant="default" className="mt-2 text-white bg-gsb-orange hover:bg-gsb-orange/90">
+                  Login Ulang
+              </Button>
+          </div>
+      )
+  }
 
   useEffect(() => {
+    // Wait for metadata to load first
+    if (isMetadataLoading) return;
+    
     if (isAttemptLoading) return;
 
     if (holdResult) {
@@ -62,9 +83,9 @@ export const TryoutView = ({ tryoutId }: Props) => {
       // If we are already in 'exam' (optimistic update), don't revert to 'intro' just because data is stale.
       if (view === "loading") setView("intro");
     }
-  }, [existingAttempt, isAttemptLoading, view, holdResult, isUpgrading]);
+  }, [existingAttempt, isAttemptLoading, view, holdResult, isUpgrading, isMetadataLoading]);
 
-  if (view === "loading" || isAttemptLoading) {
+  if (view === "loading" || isAttemptLoading || isMetadataLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-gsb-orange" />
@@ -80,6 +101,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
     return (
       <TryoutExam
         tryout={tryout}
+        initialAttempt={existingAttempt as TryoutAttempt}
         onFinish={async () => {
           setHoldResult(true);
           setView("result");

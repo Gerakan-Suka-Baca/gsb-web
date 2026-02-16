@@ -37,6 +37,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           ],
         },
         limit: 1,
+        sort: "-createdAt", // Ensure we get the latest attempt
         depth: 0,
       });
       return (attempts.docs.length === 0
@@ -58,12 +59,31 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           ],
         },
         limit: 1,
+        sort: "-createdAt",
         depth: 0,
       });
 
-      if (existing.docs.length > 0)
-        return existing.docs[0] as unknown as TryoutAttempt;
+      // If there is an existing attempt (latest)
+      if (existing.docs.length > 0) {
+        const attempt = existing.docs[0] as unknown as TryoutAttempt;
+        
+        // If it's still running, RESUME it
+        if (attempt.status !== "completed") {
+          return attempt;
+        }
 
+        // If it's completed, check if it was a valid attempt (has answers)
+        // If it has answers, we DO NOT allow retakes -> Return it (Frontend will redirect to result)
+        const hasAnswers = attempt.answers && Object.keys(attempt.answers).length > 0;
+        if (hasAnswers) {
+          return attempt;
+        }
+
+        // If it's completed but has NO answers (likely a system error/ghost attempt),
+        // we allow creating a NEW attempt to "fix" the user's state.
+      }
+
+      // Create a NEW attempt (First time OR fixing a ghost attempt)
       const newAttempt = await payload.create({
         collection: "tryout-attempts",
         data: {
@@ -74,7 +94,9 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           flags: {},
           startedAt: new Date().toISOString(),
           currentSubtest: 0,
+          currentQuestionIndex: 0,
           examState: "running",
+          secondsRemaining: null, // Let client calculate based on subtest duration
         },
       });
       return newAttempt as unknown as TryoutAttempt;

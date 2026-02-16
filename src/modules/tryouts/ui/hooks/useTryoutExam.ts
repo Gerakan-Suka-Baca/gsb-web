@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
 import type { Tryout, Question } from "@/payload-types";
@@ -24,6 +24,7 @@ export type { ExamState, AnswerMap, FlagMap, ExamStatus };
 
 export interface TryoutExamProps {
   tryout: Tryout;
+  initialAttempt?: TryoutAttempt | null;
   onFinish: (answers: Record<string, AnswerMap>) => void;
 }
 
@@ -52,24 +53,92 @@ export const ANIM = {
 
 // --- Main Hook ---
 
-export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
+export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamProps) {
   const router = useRouter();
   const trpc = useTRPC();
   const tryoutData = tryout as TryoutWithTests;
   const subtests = useMemo(() => (Array.isArray(tryoutData.tests) ? tryoutData.tests : []), [tryoutData.tests]);
 
   const { state, dispatch } = useExamState();
+  const queryClient = useQueryClient();
 
-  const currentSubtest = useMemo(() => subtests[state.currentSubtestIndex], [subtests, state.currentSubtestIndex]);
-  const currentSubtestId = currentSubtest?.id ?? "";
-  const questions = useMemo(() => (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[], [currentSubtest]);
+  // DEBUG: Trace Subtest ID
+  const safeSubtestIndex = useMemo(() => {
+    if (!Number.isFinite(state.currentSubtestIndex)) return 0;
+    if (state.currentSubtestIndex < 0) return 0;
+    if (subtests.length > 0 && state.currentSubtestIndex >= subtests.length) return 0;
+    return state.currentSubtestIndex;
+  }, [state.currentSubtestIndex, subtests.length]);
+
+  useEffect(() => {
+    if (subtests.length === 0) return;
+    if (safeSubtestIndex !== state.currentSubtestIndex) {
+      dispatch({ type: "SET_SUBTEST", index: safeSubtestIndex });
+    }
+  }, [safeSubtestIndex, state.currentSubtestIndex, subtests.length, dispatch]);
+
+  const currentSubtest = useMemo(() => subtests[safeSubtestIndex], [subtests, safeSubtestIndex]);
+  const currentSubtestId = typeof currentSubtest?.id === "string" ? currentSubtest.id : "";
+  
+  // --- Lazy Load Content ---
+  const { data: subtestContent, isLoading: isContentLoading, isError: isContentError, refetch: refetchSubtest } = useQuery(
+    trpc.tryouts.getSubtest.queryOptions(
+      { subtestId: currentSubtestId },
+      { enabled: !!currentSubtestId, staleTime: Infinity }
+    )
+  );
+
+  // Prefetch next 2 subtests
+  const prefetchNext = useCallback(() => {
+    const nextIdx = state.currentSubtestIndex + 1;
+    for (let i = nextIdx; i < nextIdx + 2; i++) {
+        const nextSub = subtests[i];
+        if (nextSub?.id) {
+            queryClient.prefetchQuery(
+                trpc.tryouts.getSubtest.queryOptions({ subtestId: nextSub.id }, { staleTime: Infinity })
+            );
+        }
+    }
+  }, [state.currentSubtestIndex, subtests, queryClient, trpc]);
+
+  // Trigger prefetch when subtest changes
+  useMemo(() => {
+     if (subtests.length > 0) prefetchNext();
+  }, [prefetchNext, subtests.length]);
+
+  const questions = useMemo(() => {
+    // DEBUG: Trace Question Loading
+    console.log("[useTryoutExam] Resolving questions:", { 
+        currentSubtestId, 
+        contentId: subtestContent?.id, 
+        hasContent: !!subtestContent,
+        contentQLen: subtestContent?.tryoutQuestions?.length,
+        fallbackQLen: currentSubtest?.tryoutQuestions?.length
+    });
+
+    if (subtestContent && subtestContent.id === currentSubtestId) {
+        return (subtestContent.tryoutQuestions || []) as SubtestQuestion[];
+    }
+    return (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[];
+  }, [subtestContent, currentSubtest, currentSubtestId]);
+
+  const getSubtestQuestionCount = useCallback((subtestId: string, fallback = 0) => {
+    if (!subtestId) return fallback;
+    const { queryKey } = trpc.tryouts.getSubtest.queryOptions({ subtestId });
+    const cached = queryClient.getQueryData(queryKey) as Question | undefined;
+    const cachedCount = cached?.tryoutQuestions?.length;
+    return typeof cachedCount === "number" ? cachedCount : fallback;
+  }, [trpc, queryClient]);
+
   const currentQuestion = questions[state.currentQuestionIndex];
   const subtestKey = currentSubtest?.subtest ?? "";
   const subtestLabel = useMemo(() => subtestKey ? (SUBTEST_LABELS[subtestKey] || subtestKey) : "", [subtestKey]);
 
+  const subtestDuration = currentSubtest?.duration ? currentSubtest.duration * 60 : 0;
+
   const { timeLeft, setTimeLeft, formatTime } = useExamTimer({
-    initialSeconds: (currentSubtest?.duration ?? 0) * 60,
-    isRunning: state.status === "running",
+    initialSeconds: subtestDuration,
+    isRunning: state.status === "running" && subtestDuration > 0,
     onTimeUp: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true }), [dispatch]),
   });
 
@@ -88,11 +157,15 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId: tryout.id })
   );
 
+
   const startAttemptMutation = useMutation(trpc.tryoutAttempts.startAttempt.mutationOptions({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       dispatch({ type: "SET_ATTEMPT", id: data.id, status: "running" });
       setTimeLeft((currentSubtest?.duration ?? 0) * 60);
       toast.success("Ujian dimulai!");
+      await queryClient.invalidateQueries({
+        queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId: tryout.id }, type: "query" }],
+      });
     },
     onError: (err) => toast.error("Gagal memulai: " + err.message),
   }));
@@ -108,20 +181,21 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
   }));
 
   useAttemptRestoration({
-    attempt,
-    isLoading: isAttemptLoading,
+    attempt: initialAttempt,
+    isLoading: false, // Data is passed from parent, so it's already loaded
     subtests,
+    currentAttemptId: state.attemptId,
     onRestore: useCallback((restoredState) => {
-      dispatch({ 
-        type: "LOAD_STATE", 
-        state: {
-          attemptId: restoredState.attemptId,
-          currentSubtestIndex: restoredState.currentSubtestIndex,
-          currentQuestionIndex: restoredState.currentQuestionIndex,
-          answers: restoredState.answers,
-          flags: restoredState.flags,
-          status: restoredState.status,
-        }
+      const nextState: Partial<ExamState> = {};
+      if (restoredState.attemptId !== undefined) nextState.attemptId = restoredState.attemptId;
+      if (restoredState.currentSubtestIndex !== undefined) nextState.currentSubtestIndex = restoredState.currentSubtestIndex;
+      if (restoredState.currentQuestionIndex !== undefined) nextState.currentQuestionIndex = restoredState.currentQuestionIndex;
+      if (restoredState.answers !== undefined) nextState.answers = restoredState.answers;
+      if (restoredState.flags !== undefined) nextState.flags = restoredState.flags;
+      if (restoredState.status !== undefined) nextState.status = restoredState.status;
+      dispatch({
+        type: "LOAD_STATE",
+        state: nextState,
       });
       if (restoredState.timeLeft !== undefined) {
         setTimeLeft(restoredState.timeLeft);
@@ -227,6 +301,10 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     attemptId: state.attemptId,
     bridgingSeconds: state.bridgingSeconds,
     isAttemptLoading,
+    isContentLoading,
+    isContentError,
+    refetchSubtest,
+    getSubtestQuestionCount,
 
     showConfirmFinish: state.dialogs.confirmFinish, 
     setShowConfirmFinish: (open: boolean) => dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open }),
