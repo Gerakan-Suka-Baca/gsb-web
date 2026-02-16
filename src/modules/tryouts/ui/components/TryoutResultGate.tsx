@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Check, ShieldCheck, MessageCircle } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -29,7 +29,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
 export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected }: Props) => {
@@ -242,11 +241,3 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
   );
 };
 
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
-}

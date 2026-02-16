@@ -1,6 +1,6 @@
 "use client";
 
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { useState, useEffect } from "react";
 import { TryoutIntro } from "../components/TryoutIntro";
@@ -34,19 +34,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
   const [isUpgrading, setIsUpgrading] = useState(false);
   const tryout = data as unknown as Tryout;
   
-  // Handle Session Expired / 401 (Metadata or Attempt failure)
-  if (isMetadataError || isAttemptError) {
-      return (
-          <div className="flex flex-col h-[60vh] items-center justify-center gap-4 text-center px-4">
-              <div className="p-4 bg-red-50 text-red-600 rounded-full"><Loader2 className="w-8 h-8 animate-spin" /></div>
-              <h2 className="text-xl font-bold text-gsb-maroon">Sesi Berakhir</h2>
-              <p className="text-muted-foreground">Silakan login kembali untuk melanjutkan ujian.</p>
-              <Button onClick={() => window.location.href = "/sign-in"} variant="default" className="mt-2 text-white bg-gsb-orange hover:bg-gsb-orange/90">
-                  Login Ulang
-              </Button>
-          </div>
-      )
-  }
+  const isSessionError = isMetadataError || isAttemptError;
 
   useEffect(() => {
     // Wait for metadata to load first
@@ -84,6 +72,19 @@ export const TryoutView = ({ tryoutId }: Props) => {
       if (view === "loading") setView("intro");
     }
   }, [existingAttempt, isAttemptLoading, view, holdResult, isUpgrading, isMetadataLoading]);
+
+  if (isSessionError) {
+    return (
+      <div className="flex flex-col h-[60vh] items-center justify-center gap-4 text-center px-4">
+        <div className="p-4 bg-red-50 text-red-600 rounded-full"><Loader2 className="w-8 h-8 animate-spin" /></div>
+        <h2 className="text-xl font-bold text-gsb-maroon">Sesi Berakhir</h2>
+        <p className="text-muted-foreground">Silakan login kembali untuk melanjutkan ujian.</p>
+        <Button onClick={() => window.location.href = "/sign-in"} variant="default" className="mt-2 text-white bg-gsb-orange hover:bg-gsb-orange/90">
+          Login Ulang
+        </Button>
+      </div>
+    );
+  }
 
   if (view === "loading" || isAttemptLoading || isMetadataLoading) {
     return (

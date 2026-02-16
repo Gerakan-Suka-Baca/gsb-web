@@ -127,5 +127,5 @@ export function useAttemptRestoration({
     return () => {
       active = false;
     };
-  }, [attempt, isLoading, subtests, onRestore]);
+  }, [attempt, isLoading, subtests, currentAttemptId, onRestore]);
 }

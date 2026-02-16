@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import type { ExamState, ExamAction, ExamStatus } from "./useExamState";
+import type { ExamAction, ExamStatus } from "./useExamState";
 
 interface UseExamDialogsProps {
   status: ExamStatus;

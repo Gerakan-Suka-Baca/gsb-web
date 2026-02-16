@@ -53,6 +53,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-} as any;
+};
 
 export default withPayload(nextConfig);
