@@ -16,7 +16,7 @@ const Page = async ({ params }: Props) => {
 
   const session = await caller.auth.session();
   if (!session.user) {
-    redirect("/sign-in");
+    redirect(`/sign-in?callbackUrl=${encodeURIComponent(`/tryout/${tryoutId}`)}`);
   }
 
   const queryClient = getQueryClient();

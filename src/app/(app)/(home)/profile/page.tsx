@@ -18,7 +18,7 @@ export default async function ProfilePage() {
   const session = await caller.auth.session();
 
   if (!session.user) {
-    redirect("/sign-in");
+    redirect(`/sign-in?callbackUrl=${encodeURIComponent("/profile")}`);
   }
 
   const user = session.user as ProfileUser;

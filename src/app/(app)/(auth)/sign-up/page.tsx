@@ -4,11 +4,17 @@ import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
-const Page = async () => {
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+const Page = async ({ searchParams }: PageProps) => {
   const session = await caller.auth.session();
 
   if (session.user) {
-    redirect("/");
+    const params = await searchParams;
+    const callbackUrl = (params.callbackUrl as string) || "/";
+    redirect(callbackUrl);
   }
 
   return <SignUpView />;
