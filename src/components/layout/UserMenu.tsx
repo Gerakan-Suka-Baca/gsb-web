@@ -52,8 +52,8 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
   const handleLogout = () => logout.mutate(undefined);
 
   if (isLoading) {
-      if (mobile) return <div className="h-14 w-full bg-gray-100 rounded-full animate-pulse" />;
-      return <div className="h-10 w-24 bg-gray-100 rounded-full animate-pulse" />;
+      if (mobile) return <div className="h-14 w-full bg-muted rounded-full animate-pulse" />;
+      return <div className="h-10 w-24 bg-muted rounded-full animate-pulse" />;
   }
 
   if (!session?.user) {
@@ -79,23 +79,23 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
   if (mobile) {
       return (
           <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                  <Avatar className="h-10 w-10 border border-gray-200">
+              <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-xl border border-border/50">
+                  <Avatar className="h-10 w-10 border border-border">
                     <AvatarImage src={avatarUrl || ""} />
                     <AvatarFallback className="bg-gsb-orange/10 text-gsb-orange font-bold">{initials}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col overflow-hidden">
-                      <span className="font-bold text-sm truncate text-gray-900">{user.username}</span>
+                      <span className="font-bold text-sm truncate text-foreground">{user.username}</span>
                       <span className="text-xs text-muted-foreground truncate">{user.email}</span>
                   </div>
               </div>
               
               <div className="grid grid-cols-2 gap-2">
-                  <Link href="/profile" onClick={onClose} className="flex items-center justify-center gap-2 p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700">
+                  <Link href="/profile" onClick={onClose} className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background border border-border hover:bg-muted transition-colors text-sm font-medium text-muted-foreground">
                       <User className="w-4 h-4" />
                       Profil
                   </Link>
-                  <Link href="/tryout" onClick={onClose} className="flex items-center justify-center gap-2 p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-sm font-medium text-gray-700">
+                  <Link href="/tryout" onClick={onClose} className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background border border-border hover:bg-muted transition-colors text-sm font-medium text-muted-foreground">
                       <LayoutDashboard className="w-4 h-4" />
                       Dashboard
                   </Link>
@@ -149,7 +149,7 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
         
         <DropdownMenuSeparator />
         
-        <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 cursor-pointer">
+        <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
             {logout.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
             <span>Keluar</span>
         </DropdownMenuItem>

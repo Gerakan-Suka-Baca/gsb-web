@@ -44,7 +44,7 @@ export const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, o
               variant={isFlagged ? "secondary" : "outline"}
               size="sm"
               onClick={() => onFlag(qID)}
-              className={cn("gap-1.5 md:gap-2 select-none text-xs md:text-sm", isFlagged && "bg-yellow-100 text-yellow-900 hover:bg-yellow-200")}
+              className={cn("gap-1.5 md:gap-2 select-none text-xs md:text-sm", isFlagged && "bg-gsb-yellow/10 text-gsb-yellow hover:bg-gsb-yellow/20")}
             >
               <Flag className={cn("w-3.5 h-3.5 md:w-4 md:h-4", isFlagged && "fill-current")} />
               {isFlagged ? "Ditandai" : "Tandai"}
@@ -67,8 +67,8 @@ export const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, o
                   whileTap={{ scale: 0.995 }}
                   onClick={() => onAnswer(qID, optID)}
                   className={cn(
-                    "flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl border-2 cursor-pointer transition-colors duration-200 select-none",
-                    isSelected ? "border-gsb-orange bg-[rgba(255,247,237,0.8)] shadow-sm" : "border-border hover:border-gsb-orange/30"
+                    "flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-xl border-2 cursor-pointer hover:bg-muted/50 hover:border-gsb-orange/50 transition-all duration-200 select-none",
+                    isSelected ? "border-gsb-orange bg-[rgba(255,247,237,0.8)] shadow-sm" : "border-border"
                   )}
                 >
                   <div className={cn(

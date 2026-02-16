@@ -39,7 +39,7 @@ export const ExamDialogs = ({
       <AlertDialog open={showTimeUpDialog} onOpenChange={setShowTimeUpDialog}>
         <AlertDialogContent className="select-none">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
               <Timer className="h-5 w-5" />Waktu Habis!
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -82,7 +82,7 @@ export const ExamDialogs = ({
           <AlertDialogFooter>
             <AlertDialogCancel 
               onClick={() => router.push("/tryout")} 
-              className="text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
             >
               Keluar (Batalkan)
             </AlertDialogCancel>

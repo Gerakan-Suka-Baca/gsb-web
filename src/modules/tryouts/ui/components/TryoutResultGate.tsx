@@ -82,7 +82,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-          className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl"
+          className="w-20 h-20 bg-gsb-tosca/10 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl"
         >
           🎉
         </motion.div>
@@ -101,7 +101,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
           <Card
             className={`p-8 border-2 cursor-pointer transition-all duration-300 rounded-2xl h-full ${
               selectedPlan === "free"
-                ? "border-gsb-blue bg-blue-50/20 shadow-xl"
+                ? "border-gsb-blue bg-gsb-blue/10 shadow-xl"
                 : "border-gray-200 hover:border-gsb-blue/30 hover:shadow-lg"
             }`}
             onClick={() => handleSelectPlan("free")}
@@ -115,12 +115,12 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
             </div>
             <ul className="space-y-4 mb-8">
               <li className="flex gap-3 items-center text-base">
-                <Check className="w-5 h-5 text-green-500 shrink-0" />
+                <Check className="w-5 h-5 text-gsb-tosca shrink-0" />
                 <span>Skor Keluar H+7</span>
-                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-auto">Nilai H+7</span>
+                <span className="text-xs bg-gsb-yellow/20 text-gsb-yellow px-2 py-0.5 rounded-full ml-auto">Nilai H+7</span>
               </li>
               <li className="flex gap-3 items-center text-base">
-                <Check className="w-5 h-5 text-green-500 shrink-0" />
+                <Check className="w-5 h-5 text-gsb-tosca shrink-0" />
                 <span>Ranking Nasional</span>
               </li>
               {/* Hidden for Free */}
@@ -147,7 +147,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
           <Card
             className={`relative p-8 border-2 cursor-pointer transition-all duration-300 rounded-2xl h-full ${
               selectedPlan === "paid"
-                ? "border-gsb-orange bg-orange-50/20 shadow-xl ring-2 ring-gsb-orange/10"
+                ? "border-gsb-orange bg-gsb-orange/5 shadow-xl ring-2 ring-gsb-orange/10"
                 : "border-gsb-orange/30 hover:border-gsb-orange hover:shadow-lg"
             }`}
             onClick={() => handleSelectPlan("paid")}
@@ -164,10 +164,10 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
             </div>
             <ul className="space-y-4 mb-8">
               <li className="flex gap-3 items-center text-base">
-                <Check className="w-5 h-5 text-green-500 shrink-0" />
+                <Check className="w-5 h-5 text-gsb-tosca shrink-0" />
                 <span className="font-medium">Skor Langsung Keluar</span>
               </li>
-              <li className="flex gap-3 items-center text-base bg-orange-50 p-2 -ml-2 rounded-lg border border-orange-100">
+              <li className="flex gap-3 items-center text-base bg-gsb-orange/5 p-2 -ml-2 rounded-lg border border-gsb-orange/10">
                 <ShieldCheck className="w-5 h-5 text-gsb-orange shrink-0" />
                 <b className="text-gsb-orange">Pembahasan Lengkap (Dalam bentuk PDF)</b>
               </li>
@@ -196,7 +196,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
             </DialogHeader>
 
              <div className="grid md:grid-cols-2 gap-8 items-center mt-4">
-              <div className="flex justify-center bg-gray-50 p-4 rounded-lg">
+              <div className="flex justify-center bg-muted/50 p-4 rounded-lg">
                 <div className="relative w-64 aspect-[3/4]">
                   <Image
                     src="/home/qris.jpeg"
@@ -214,11 +214,11 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
                     atau Mobile Banking apa pun.
                   </p>
                 </div>
-                <div className="bg-gray-100 p-4 rounded-lg">
+                <div className="bg-muted/50 p-4 rounded-lg">
                   <p className="text-sm font-semibold mb-1">Nominal Transfer</p>
                   <div className="flex items-center gap-2">
                     <p className="text-2xl font-mono font-bold text-gsb-orange">Rp 5.020</p>
-                    <span className="text-xs bg-white px-2 py-1 rounded border border-gray-200">Kode Unik: 020</span>
+                    <span className="text-xs bg-background px-2 py-1 rounded border border-border">Kode Unik: 020</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
                     *Mohon transfer tepat hingga 3 digit terakhir agar verifikasi otomatis.
@@ -227,7 +227,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
 
                 <Button
                   onClick={handleWAConfirm}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold h-12 gap-2"
+                  className="w-full bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold h-12 gap-2"
                   disabled={updatePlanMutation.isPending}
                 >
                   <MessageCircle className="w-5 h-5" />

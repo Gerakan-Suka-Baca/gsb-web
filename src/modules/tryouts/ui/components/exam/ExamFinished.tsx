@@ -33,16 +33,16 @@ export const ExamFinished = ({
   
   return (
       <motion.div {...ANIM.fadeSlide} className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-        <Card className="max-w-md w-full p-8 border-none shadow-xl bg-green-50">
+        <Card className="max-w-md w-full p-8 border-none shadow-xl bg-gsb-tosca/5">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.2 }}>
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-              {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-green-700" /> : "🎉"}
+            <div className="w-16 h-16 bg-gsb-tosca/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+              {isLoading ? <Loader2 className="w-6 h-6 animate-spin text-gsb-tosca" /> : "🎉"}
             </div>
           </motion.div>
-          <h2 className="text-2xl font-bold text-green-800 mb-2">{title}</h2>
-          <p className="text-green-700 mb-6">{description}</p>
+          <h2 className="text-2xl font-bold text-gsb-tosca mb-2">{title}</h2>
+          <p className="text-muted-foreground mb-6">{description}</p>
           {showButton && (
-            <Button onClick={onButtonClick ?? (() => router.push("/tryout"))} className="w-full bg-green-600 hover:bg-green-700 text-white">
+            <Button onClick={onButtonClick ?? (() => router.push("/tryout"))} className="w-full bg-gsb-tosca hover:bg-gsb-tosca/90 text-white">
               {buttonLabel}
             </Button>
           )}

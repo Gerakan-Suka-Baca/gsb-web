@@ -93,13 +93,13 @@ export const MobileExamControls = ({
           >
             {/* Handle bar */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 bg-gray-300 rounded-full" />
+              <div className="w-10 h-1 bg-muted rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3 border-b border-gray-100">
+            <div className="flex items-center justify-between px-5 pb-3 border-b border-border/50">
               <div>
-                <h3 className="font-heading font-bold text-base text-gsb-maroon">Navigasi Soal</h3>
+                <h3 className="bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold border-none">Navigasi Soal</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {answeredCount}/{questions.length} soal dijawab
                 </p>
@@ -108,22 +108,22 @@ export const MobileExamControls = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsOpen(false)}
-                className="h-8 w-8 rounded-full hover:bg-gray-100"
+                className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold h-12"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
 
             {/* Legend */}
-            <div className="flex gap-4 px-5 py-2.5 text-[11px] text-muted-foreground bg-gray-50/80">
+            <div className="flex gap-4 px-5 py-2.5 text-[11px] text-muted-foreground bg-muted/30">
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 bg-blue-600 rounded-sm" /> Aktif
+                <div className="w-2.5 h-2.5 bg-gsb-blue rounded-sm" /> Aktif
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 bg-green-600 rounded-sm" /> Dijawab
+                <div className="w-2.5 h-2.5 bg-gsb-tosca rounded-sm" /> Dijawab
               </div>
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 bg-yellow-400 rounded-sm" /> Ragu
+                <div className="w-2.5 h-2.5 bg-gsb-yellow rounded-sm" /> Ragu
               </div>
             </div>
 
@@ -150,7 +150,7 @@ export const MobileExamControls = ({
         {/* Timer */}
         <div className={cn(
             "flex items-center gap-2 font-mono font-bold text-base md:text-lg tabular-nums bg-secondary/30 px-3 py-1.5 rounded-full border border-border/50",
-            isWarning ? "text-red-600 bg-red-50 border-red-200 animate-pulse" : "text-slate-700"
+            isWarning ? "text-gsb-red bg-gsb-red/10 border-gsb-red/20 animate-pulse" : "text-slate-700"
         )}>
             <Clock className="w-4 h-4 md:w-5 md:h-5" />
             <span>{formatTime(timeLeft)}</span>

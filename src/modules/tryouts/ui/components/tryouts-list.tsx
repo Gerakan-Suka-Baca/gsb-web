@@ -45,9 +45,9 @@ const stagger = {
 type StatusBadge = "available" | "in-progress" | "finished";
 
 const badgeStyles: Record<StatusBadge, string> = {
-  available: "bg-green-100 text-green-700 border-green-200",
-  "in-progress": "bg-yellow-100 text-yellow-700 border-yellow-200",
-  finished: "bg-blue-100 text-blue-700 border-blue-200",
+  available: "bg-gsb-tosca/10 text-gsb-tosca border-gsb-tosca/20",
+  "in-progress": "bg-gsb-yellow/10 text-gsb-yellow border-gsb-yellow/20",
+  finished: "bg-gsb-blue/10 text-gsb-blue border-gsb-blue/20",
 };
 
 const badgeLabels: Record<StatusBadge, string> = {

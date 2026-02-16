@@ -68,15 +68,15 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
       <motion.div {...ANIM.fadeSlide} className="container mx-auto py-12 flex flex-col items-center justify-center min-h-[70vh] px-4 space-y-8">
         <motion.div variants={ANIM.staggerContainer} initial="initial" animate="animate" className="max-w-2xl w-full space-y-8">
           <motion.div variants={ANIM.staggerChild}>
-            <Card className="p-8 bg-green-50 border-green-200 shadow-lg">
+            <Card className="p-8 bg-gsb-tosca/5 border-gsb-tosca/20 shadow-lg">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold text-lg">✓</div>
+                <div className="w-8 h-8 rounded-full bg-gsb-tosca/10 flex items-center justify-center text-gsb-tosca font-bold text-lg">✓</div>
                 <div>
-                  <h3 className="text-lg font-bold text-green-800">Subtes {exam.currentSubtestIndex + 1} Selesai!</h3>
-                  <p className="text-green-700 text-sm">{completedSubtest?.title} — {completedLabel}</p>
+                  <h3 className="text-lg font-bold text-gsb-tosca">Subtes {exam.currentSubtestIndex + 1} Selesai!</h3>
+                  <p className="text-muted-foreground text-sm">{completedSubtest?.title} — {completedLabel}</p>
                 </div>
               </div>
-              <div className="text-sm text-green-700 bg-green-100 rounded-lg p-3">
+              <div className="text-sm text-gsb-tosca bg-gsb-tosca/10 rounded-lg p-3">
                 Kamu menjawab <span className="font-bold">{completedSubtest?.id ? Object.keys(exam.answers[completedSubtest.id] || {}).length : 0}</span> dari <span className="font-bold">{completedSubtest?.tryoutQuestions?.length || 0}</span> soal.
               </div>
             </Card>
@@ -135,7 +135,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
               <span className="text-2xl font-bold text-gsb-blue">{exam.questions.length} Butir</span>
             </motion.div>
           </motion.div>
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg text-sm text-yellow-800 mb-8 flex gap-3 text-left">
+          <div className="bg-gsb-yellow/5 border border-gsb-yellow/20 p-4 rounded-lg text-sm text-gsb-yellow mb-8 flex gap-3 text-left">
             <span className="shrink-0 mt-0.5">⚠️</span><p>Waktu akan berjalan segera setelah Anda menekan tombol mulai.</p>
           </div>
           <Button size="lg" onClick={exam.handleStart} className="w-full md:w-auto px-12 h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg" disabled={exam.startAttemptMutation.isPending}>

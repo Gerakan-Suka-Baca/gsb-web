@@ -109,7 +109,7 @@ export default async function ProfilePage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border">
+                    <div className="bg-muted/50 p-4 rounded-lg border">
                         <div className="mb-1 flex items-center justify-between">
                             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pilihan 1</span>
                             <Badge variant="secondary" className="bg-gsb-maroon/10 text-gsb-maroon hover:bg-gsb-maroon/20">Utama</Badge>
@@ -125,12 +125,12 @@ export default async function ProfilePage() {
                     </div>
 
                     {(user.targetPTN2 || user.targetMajor2) && (
-                        <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg border">
+                        <div className="bg-muted/50 p-4 rounded-lg border">
                              <div className="mb-1">
                                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pilihan 2</span>
                             </div>
                             <div className="mt-2">
-                                <p className="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                <p className="text-lg font-bold text-foreground">
                                     {user.targetPTN2}
                                 </p>
                                 <p className="text-muted-foreground font-medium">
@@ -141,7 +141,7 @@ export default async function ProfilePage() {
                     )}
                     
                     {!user.targetPTN && !user.targetPTN2 && (
-                         <div className="text-center py-4 bg-gray-50 border border-dashed rounded-lg text-muted-foreground text-sm">
+                         <div className="text-center py-4 bg-muted/30 border border-dashed rounded-lg text-muted-foreground text-sm">
                             Anda belum menentukan target kampus. <br/> Yuk edit profil untuk menambahkan target impianmu!
                         </div>
                     )}

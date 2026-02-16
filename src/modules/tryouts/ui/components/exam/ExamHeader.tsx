@@ -29,7 +29,7 @@ export const ExamHeader = ({ currentSubtestIndex, subtests, currentSubtestTitle 
             key={idx} 
             className={cn(
               "w-2 h-2 rounded-full", 
-              idx === currentSubtestIndex ? "bg-white" : idx < currentSubtestIndex ? "bg-green-400" : "bg-white/30"
+              idx === currentSubtestIndex ? "bg-white" : idx < currentSubtestIndex ? "bg-gsb-tosca" : "bg-white/30"
             )} 
           />
         ))}
