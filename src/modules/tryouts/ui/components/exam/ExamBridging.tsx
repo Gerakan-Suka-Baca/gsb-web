@@ -44,15 +44,15 @@ export const ExamBridging = ({
       <motion.div {...ANIM.fadeSlide} className="container mx-auto py-12 flex flex-col items-center justify-center min-h-[70vh] px-4 space-y-8">
         <motion.div variants={ANIM.staggerContainer} initial="initial" animate="animate" className="max-w-2xl w-full space-y-8">
           <motion.div variants={ANIM.staggerChild}>
-            <Card className="p-8 bg-green-50 border-green-200 shadow-lg">
+            <Card className="p-8 bg-gsb-tosca/5 border-gsb-tosca/20 shadow-lg">
               <div className="flex items-center gap-3 mb-3">
-                <CheckCircle2 className="w-8 h-8 text-green-600" />
+                <CheckCircle2 className="w-8 h-8 text-gsb-tosca" />
                 <div>
-                  <h3 className="text-lg font-bold text-green-800">Subtes {currentSubtestIndex + 1} Selesai!</h3>
-                  <p className="text-green-700 text-sm">{completedSubtest?.title} — {completedSubtest?.subtest ? (subtestLabels[completedSubtest.subtest as string] || completedSubtest.subtest) : ""}</p>
+                  <h3 className="text-lg font-bold text-gsb-tosca">Subtes {currentSubtestIndex + 1} Selesai!</h3>
+                  <p className="text-muted-foreground text-sm">{completedSubtest?.title} — {completedSubtest?.subtest ? (subtestLabels[completedSubtest.subtest as string] || completedSubtest.subtest) : ""}</p>
                 </div>
               </div>
-              <div className="text-sm text-green-700 bg-green-100 rounded-lg p-3">
+              <div className="text-sm text-gsb-tosca bg-gsb-tosca/10 rounded-lg p-3">
                 Kamu menjawab <span className="font-bold">{Object.keys(answers[completedSubtest?.id] || {}).length}</span> dari <span className="font-bold">{completedSubtest?.tryoutQuestions?.length || 0}</span> soal.
               </div>
             </Card>

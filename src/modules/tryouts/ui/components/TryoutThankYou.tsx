@@ -24,7 +24,7 @@ export const TryoutThankYou = ({ plan, onChangePlan }: Props) => {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-        className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl"
+        className="w-24 h-24 bg-gsb-tosca/10 rounded-full flex items-center justify-center mx-auto mb-8 text-5xl"
       >
         🎉
       </motion.div>

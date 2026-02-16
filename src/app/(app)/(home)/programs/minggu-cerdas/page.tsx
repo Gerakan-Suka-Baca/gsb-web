@@ -51,7 +51,7 @@ export default function MingguCerdasPage() {
                   </FadeIn>
 
                   <FadeIn direction="left" className="relative hidden lg:block">
-                     <div className="relative z-10 bg-white border border-border p-8 rounded-3xl shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
+                     <div className="relative z-10 bg-card border border-border p-8 rounded-3xl shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-500">
                         <div className="flex gap-4 mb-6">
                            <div className="w-12 h-12 rounded-xl bg-gsb-yellow/10 flex items-center justify-center">
                               <BookOpen className="w-6 h-6 text-gsb-orange" />

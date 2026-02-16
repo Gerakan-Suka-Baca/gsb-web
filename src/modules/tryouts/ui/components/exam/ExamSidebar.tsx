@@ -38,7 +38,7 @@ export const ExamSidebar = ({
         <span className="text-xs text-slate-400 uppercase tracking-wider mb-1">
           Sisa Waktu
         </span>
-        <div className={cn("text-4xl font-mono font-bold", timeLeft < 60 && "text-red-400 animate-pulse")}>
+        <div className={cn("text-4xl font-mono font-bold", timeLeft < 60 && "text-gsb-red animate-pulse")} >
           {formatTime(timeLeft)}
         </div>
         <div className="mt-2 text-sm text-slate-300 border-t border-slate-700 pt-2">
@@ -64,13 +64,13 @@ export const ExamSidebar = ({
 
         <div className="mt-6 flex flex-col gap-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-blue-600 rounded" /> Sedang Dikerjakan
+            <div className="w-3 h-3 bg-gsb-blue rounded" /> Sedang Dikerjakan
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-600 rounded" /> Sudah Dijawab
+            <div className="w-3 h-3 bg-gsb-tosca rounded" /> Sudah Dijawab
           </div>
           <div className="flex items-center gap-2">
-             <div className="w-3 h-3 bg-yellow-400 rounded" /> Ditandai
+             <div className="w-3 h-3 bg-gsb-yellow rounded" /> Ditandai
           </div>
         </div>
       </Card>

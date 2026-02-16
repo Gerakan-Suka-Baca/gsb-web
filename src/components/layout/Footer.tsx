@@ -28,9 +28,9 @@ export function Footer() {
               <span className="text-lg font-heading font-bold">Gema Simpul Berdaya</span>
             </Link>
 
-            <p className="text-gray-400 text-xs leading-relaxed">Bergerak berdampak untuk pendidikan setara Indonesia sejak 2016.</p>
+            <p className="text-gray-300 text-xs leading-relaxed">Bergerak berdampak untuk pendidikan setara Indonesia sejak 2016.</p>
 
-            <div className="space-y-1 text-xs text-gray-400">
+            <div className="space-y-1 text-xs text-gray-300">
               <div className="flex items-center gap-1.5"><MapPin className="h-3 w-3 shrink-0" /><span>Depok & Bogor, Indonesia</span></div>
               <div className="flex items-center gap-1.5"><Mail className="h-3 w-3 shrink-0" /><span>gerakansukabaca@gmail.com</span></div>
               <div className="flex items-center gap-1.5"><Phone className="h-3 w-3 shrink-0" /><span>0851-5642-3290</span></div>
@@ -48,7 +48,7 @@ export function Footer() {
                 { href: "/programs", label: "Program" },
                 { href: "/volunteer", label: "Relawan" },
               ].map((link) => (
-                <Link key={link.href} href={link.href} className="text-gray-400 hover:text-gsb-tosca transition-colors">{link.label}</Link>
+                <Link key={link.href} href={link.href} className="text-gray-400 hover:text-white transition-colors">{link.label}</Link>
               ))}
             </div>
           </div>
@@ -64,7 +64,7 @@ export function Footer() {
                 { href: "/programs#beasiswa", label: "Beasiswa" },
                 { href: "/programs#careducation", label: "Careducation" },
               ].map((p) => (
-                <Link key={p.label} href={p.href} className="text-gray-400 hover:text-gsb-tosca transition-colors">{p.label}</Link>
+                <Link key={p.label} href={p.href} className="text-gray-400 hover:text-white transition-colors">{p.label}</Link>
               ))}
             </div>
           </div>

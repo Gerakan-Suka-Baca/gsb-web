@@ -53,7 +53,7 @@ export function DonationModal({ isOpen, onClose }: DonationModalProps) {
                             <div className="grid md:grid-cols-2">
                                 {/* Left Column: QRIS Image */}
                                 <div className="bg-white p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-border/50">
-                                    <div className="relative w-full aspect-[3/4] max-w-[300px] shadow-lg rounded-xl overflow-hidden border border-gray-100">
+                                    <div className="relative w-full aspect-[3/4] max-w-[300px] shadow-lg rounded-xl overflow-hidden border border-border/50">
                                         <Image
                                             src="/home/qris.jpeg"
                                             alt="QRIS GSB"
@@ -91,7 +91,7 @@ export function DonationModal({ isOpen, onClose }: DonationModalProps) {
                                                         title="Salin kode"
                                                     >
                                                         {copied ? (
-                                                            <Check className="w-3 h-3 text-green-500" />
+                                                            <Check className="w-3 h-3 text-gsb-tosca" />
                                                         ) : (
                                                             <Copy className="w-3 h-3 text-muted-foreground" />
                                                         )}

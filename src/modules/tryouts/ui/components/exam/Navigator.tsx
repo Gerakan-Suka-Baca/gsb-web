@@ -24,10 +24,10 @@ export const Navigator = memo(({ questions, currentSubtestId, answers, flags, cu
       const isFlg = flags[currentSubtestId]?.[qID];
       const isCurr = currentIndex === idx;
 
-      let variant = "bg-white border-gray-200 text-gray-700 hover:bg-gray-50";
-      if (isCurr) variant = "bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-100";
-      else if (isFlg) variant = "bg-yellow-400 text-yellow-900 border-yellow-400";
-      else if (isAns) variant = "bg-green-600 text-white border-green-600";
+      let variant = "bg-white border-border/50 text-muted-foreground hover:bg-muted";
+      if (isCurr) variant = "bg-gsb-blue text-white border-gsb-blue shadow-md ring-2 ring-gsb-blue/20";
+      else if (isFlg) variant = "bg-gsb-yellow text-gsb-yellow-foreground border-gsb-yellow";
+      else if (isAns) variant = "bg-gsb-tosca text-white border-gsb-tosca";
 
       return (
         <motion.button
