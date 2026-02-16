@@ -184,7 +184,7 @@ export const TryoutsList = () => {
         </h1>
         <p className="text-muted-foreground">
           <span suppressHydrationWarning>
-            {mounted && session.data?.user ? `Halo, ${session.data.user.username || "Peserta"}! ` : ""}
+            {mounted && session.data?.user ? `Halo, ${session.data.user.fullName || session.data.user.username || "Peserta"}! ` : ""}
           </span>
           Kelola dan pantau tryout kamu di sini.
         </p>

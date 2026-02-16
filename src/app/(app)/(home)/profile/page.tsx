@@ -28,7 +28,7 @@ export default async function ProfilePage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 className="text-3xl font-bold font-heading text-gsb-maroon dark:text-gsb-orange">Profil Saya</h1>
-            <p className="text-muted-foreground">Kelola informasi akun dan target akademik Anda.</p>
+            <p className="text-muted-foreground">Halo, {user.fullName || user.username}. Kelola informasi akun dan target akademik Anda.</p>
         </div>
         <ProfileEditModal user={user} />
       </div>

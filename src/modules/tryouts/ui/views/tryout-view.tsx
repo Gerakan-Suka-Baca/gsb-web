@@ -24,6 +24,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
   const { data, isLoading: isMetadataLoading, isError: isMetadataError } = useQuery(
     trpc.tryouts.getMetadata.queryOptions({ tryoutId }, { retry: false })
   );
+  const { data: session } = useQuery(trpc.auth.session.queryOptions());
 
   const { data: existingAttempt, isLoading: isAttemptLoading, isError: isAttemptError } = useQuery(
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId }, { retry: false })
@@ -119,7 +120,9 @@ export const TryoutView = ({ tryoutId }: Props) => {
       <TryoutResultGate
         tryoutId={tryoutId}
         attemptId={existingAttempt?.id ?? ""}
-        username="" 
+        username={session?.user?.username || "peserta"}
+        fullName={session?.user?.fullName || session?.user?.username || "Peserta"}
+        tryoutTitle={tryout?.title || ""}
         isUpgrading={isUpgrading}
         onPlanSelected={(plan) => {
           if (plan === "free" || plan === "paid") {
