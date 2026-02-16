@@ -96,7 +96,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
       <TryoutResultGate
         tryoutId={tryoutId}
         attemptId={existingAttempt?.id ?? ""}
-        username="" // Username not available in shallow fetch, default to empty
+        username="" 
         onPlanSelected={(plan) => {
           if (plan === "free" || plan === "paid") {
             setView("thankyou");
