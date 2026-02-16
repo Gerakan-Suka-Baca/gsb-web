@@ -112,7 +112,6 @@ export default async function ProfilePage() {
                     <div className="bg-muted/50 p-4 rounded-lg border">
                         <div className="mb-1 flex items-center justify-between">
                             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pilihan 1</span>
-                            <Badge variant="secondary" className="bg-gsb-maroon/10 text-gsb-maroon hover:bg-gsb-maroon/20">Utama</Badge>
                         </div>
                         <div className="mt-2">
                             <p className="text-lg font-bold text-gsb-maroon dark:text-gsb-orange">

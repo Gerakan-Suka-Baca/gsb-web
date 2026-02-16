@@ -51,9 +51,9 @@ const badgeStyles: Record<StatusBadge, string> = {
 };
 
 const badgeLabels: Record<StatusBadge, string> = {
-  available: "Available",
-  "in-progress": "In Progress",
-  finished: "Finished",
+  available: "Tersedia",
+  "in-progress": "Sedang Dikerjakan",
+  finished: "Selesai",
 };
 
 import {

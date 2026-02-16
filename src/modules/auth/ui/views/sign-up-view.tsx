@@ -208,7 +208,13 @@ export const SignUpView = () => {
                               </ul>
                             </div>
                           )}
-                          <FormMessage />
+                          {/**/}
+                          <FormMessage>
+                            {typeof form.formState.errors.password?.message === "string" &&
+                            form.formState.errors.password.message.includes("minimal 8")
+                              ? form.formState.errors.password.message
+                              : null}
+                          </FormMessage>
                         </FormItem>
                       )}
                     />

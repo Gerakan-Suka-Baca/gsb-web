@@ -113,7 +113,11 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-2 border-gsb-orange/50 text-foreground hover:bg-gsb-orange/10 dark:text-white"
+        >
           <Pencil className="h-4 w-4" />
           Edit Profil
         </Button>
@@ -161,59 +165,81 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
-                    control={form.control}
-                    name="whatsapp"
-                    render={({ field }) => (
+                      control={form.control}
+                      name="whatsapp"
+                      render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Nomor WhatsApp</FormLabel>
-                        <FormControl>
+                          <FormLabel>Nomor WhatsApp</FormLabel>
+                          <FormControl>
                             <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
+                          </FormControl>
+                          <FormMessage />
                         </FormItem>
-                    )}
+                      )}
                     />
-                     <FormField
-                        control={form.control}
-                        name="dateOfBirth"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col mt-2">
-                            <FormLabel>Tanggal Lahir</FormLabel>
+                    <FormField
+                      control={form.control}
+                      name="dateOfBirth"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col mt-2">
+                          <FormLabel>Tanggal Lahir</FormLabel>
+                          {/* Native date input untuk mobile - lebih user friendly */}
+                          <div className="block md:hidden">
+                            <FormControl>
+                              <Input
+                                type="date"
+                                value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    field.onChange(new Date(e.target.value));
+                                  }
+                                }}
+                                max={format(new Date(), "yyyy-MM-dd")}
+                                className="w-full"
+                              />
+                            </FormControl>
+                          </div>
+                          {/* Calendar popover untuk desktop */}
+                          <div className="hidden md:block">
                             <Popover>
-                                <PopoverTrigger asChild>
+                              <PopoverTrigger asChild>
                                 <FormControl>
-                                    <Button
+                                  <Button
                                     variant={"outline"}
                                     className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
+                                      "w-full pl-3 text-left font-normal",
+                                      !field.value && "text-muted-foreground"
                                     )}
-                                    >
+                                  >
                                     {field.value ? (
-                                        format(field.value, "d MMMM yyyy")
+                                      format(field.value, "d MMMM yyyy")
                                     ) : (
-                                        <span>Pilih tanggal lahir</span>
+                                      <span>Pilih tanggal lahir</span>
                                     )}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
+                                  </Button>
                                 </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-3" align="start" sideOffset={4}>
                                 <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
+                                  mode="single"
+                                  selected={field.value}
+                                  onSelect={field.onChange}
+                                  captionLayout="dropdown-buttons"
+                                  fromYear={1960}
+                                  toYear={new Date().getFullYear()}
+                                  disabled={(date) =>
                                     date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
+                                  }
+                                  initialFocus
                                 />
-                                </PopoverContent>
+                              </PopoverContent>
                             </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                 </div>
             </div>
 
