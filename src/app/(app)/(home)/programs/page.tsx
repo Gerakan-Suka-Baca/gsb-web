@@ -48,7 +48,7 @@ export default function ProgramsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <section className="relative py-20 bg-muted/30 overflow-hidden">
+      <section className="relative py-12 md:py-16 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
           <FadeIn direction="up">
             <h1 className="text-4xl md:text-6xl font-heading font-bold text-gsb-maroon dark:text-white mb-6">
@@ -61,9 +61,9 @@ export default function ProgramsPage() {
         </div>
       </section>
 
-      <section id="minggu-cerdas" className="py-16 md:py-24">
+      <section id="minggu-cerdas" className="py-12 md:py-16">
         <div className="container mx-auto px-4 lg:px-6">
-          <div className="mb-12">
+          <div className="mb-8">
             <span className="inline-block py-1 px-3 rounded-full bg-gsb-orange/10 text-gsb-orange text-sm font-bold mb-4">Program Unggulan</span>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon dark:text-white mb-6">Minggu Cerdas</h2>
             <p className="text-lg text-muted-foreground max-w-3xl">
@@ -71,7 +71,7 @@ export default function ProgramsPage() {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 mb-16">
+          <div className="grid lg:grid-cols-2 gap-8 mb-12">
             <FadeIn className="bg-card p-8 rounded-3xl shadow-sm border border-border">
               <div className="flex items-center gap-4 mb-6">
                 <MapPin className="w-8 h-8 text-gsb-red" />
@@ -120,7 +120,7 @@ export default function ProgramsPage() {
             </FadeIn>
           </div>
 
-          <div className="bg-muted/30 p-8 rounded-3xl">
+          <div className="bg-muted/30 p-6 md:p-8 rounded-3xl">
             <h3 className="text-xl font-bold text-center mb-8">Kelas Sesuai Kemampuan (Fase)</h3>
             <div className="flex flex-wrap justify-center gap-4">
               {phases.map((phase) => (
@@ -134,9 +134,9 @@ export default function ProgramsPage() {
         </div>
       </section>
 
-      <section id="careducation" className="py-16 bg-muted/30">
+      <section id="careducation" className="py-12 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10">
             <span className="text-gsb-tosca font-bold tracking-wider uppercase text-sm">Social Enterprise</span>
             <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon dark:text-white mt-2 mb-6">Careducation Movement</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
@@ -144,7 +144,7 @@ export default function ProgramsPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {careducation.map((item, idx) => (
               <FadeIn key={item.title} delay={idx * 0.1} className="p-8 rounded-3xl bg-background border border-border hover:border-gsb-tosca/50 transition-colors group">
                 <div className={`${item.bg} w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
@@ -158,10 +158,10 @@ export default function ProgramsPage() {
         </div>
       </section>
 
-      <section id="pendukung" className="py-16 md:py-24">
+      <section id="pendukung" className="py-12 md:py-16">
         <div className="container mx-auto px-4 lg:px-6">
           <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-12 text-center">Program Pendukung</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               { title: "Beasiswa Minggu Cerdas", desc: "Bantuan biaya pendidikan parsial berbasis seleksi Project Based Learning.", icon: Star },
               { title: "Lapak Baca", desc: "Literasi outdoor di Taman Lembah Gurame, Depok (Minggu Sore).", icon: BookOpen },

@@ -3,6 +3,32 @@ import z from "zod";
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { Question } from "@/payload-types";
 
+const stripAnswerKeyFromSubtest = (subtest: Question): Question => {
+  const tryoutQuestions = Array.isArray(subtest.tryoutQuestions)
+    ? subtest.tryoutQuestions
+    : [];
+
+  const sanitizedQuestions = tryoutQuestions.map((question) => {
+    const tryoutAnswers = Array.isArray(question.tryoutAnswers)
+      ? question.tryoutAnswers
+      : [];
+
+    return {
+      ...question,
+      tryoutAnswers: tryoutAnswers.map((answer) => {
+        const runtimeAnswer = { ...answer } as Record<string, unknown>;
+        delete runtimeAnswer.isCorrect;
+        return runtimeAnswer;
+      }),
+    };
+  });
+
+  return {
+    ...subtest,
+    tryoutQuestions: sanitizedQuestions,
+  } as unknown as Question;
+};
+
 export const tryoutsRouter = createTRPCRouter({
   getOne: protectedProcedure
     .input(
@@ -29,9 +55,13 @@ export const tryoutsRouter = createTRPCRouter({
         depth: 1, 
       });
 
+      const runtimeTests = questions.docs.map((doc) =>
+        stripAnswerKeyFromSubtest(doc as Question)
+      );
+
       return {
         ...tryout,
-        tests: questions.docs as Question[] | [],
+        tests: runtimeTests,
       };
     }),
 
@@ -116,7 +146,8 @@ export const tryoutsRouter = createTRPCRouter({
         id: input.subtestId,
         depth: 2,
       });
-      return subtest as Question;
+
+      return stripAnswerKeyFromSubtest(subtest as Question);
     }),
   getMany: baseProcedure
     .input(

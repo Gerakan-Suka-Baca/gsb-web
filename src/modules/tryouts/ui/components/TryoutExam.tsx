@@ -171,8 +171,12 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
               <span className="text-2xl font-bold text-gsb-blue">{exam.questions.length} Butir</span>
             </motion.div>
           </motion.div>
-          <div className="bg-gsb-yellow/5 border border-gsb-yellow/20 p-4 rounded-lg text-sm text-gsb-yellow mb-8 flex gap-3 text-left">
-            <span className="shrink-0 mt-0.5">⚠️</span><p>Waktu akan berjalan segera setelah Anda menekan tombol mulai.</p>
+          <div className="bg-gsb-orange/5 border border-gsb-orange/30 p-4 rounded-lg text-sm text-gsb-maroon mb-8 flex gap-3 text-left">
+            <span className="shrink-0 mt-0.5">⚠️</span>
+            <p>
+              Waktu ujian akan mulai berjalan segera setelah Anda menekan tombol{" "}
+              <span className="font-semibold">Mulai Subtes Ini</span>.
+            </p>
           </div>
           <Button size="lg" onClick={exam.handleStart} className="w-full md:w-auto px-12 h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg" disabled={exam.startAttemptMutation.isPending}>
             {exam.startAttemptMutation.isPending && <Loader2 className="mr-2 animate-spin" />} Mulai Subtes Ini

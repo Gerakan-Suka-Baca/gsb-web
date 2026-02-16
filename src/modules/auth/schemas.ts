@@ -7,10 +7,12 @@ const passwordDisallowedRegex = /^[^\s"'\\`]+$/;
 const passwordSchema = z
   .string()
   .min(8, "Password minimal 8 karakter")
-  .regex(/[A-Z]/, "Password minimal 1 huruf besar")
-  .regex(/[a-z]/, "Password minimal 1 huruf kecil")
-  .regex(/[0-9]/, "Password minimal 1 angka")
-  .regex(passwordSymbolRegex, "Password minimal 1 simbol")
+  // Pesan detail untuk aturan huruf/angka/simbol ditampilkan di UI,
+  // jadi di level schema cukup satu pesan umum agar tidak dobel.
+  .regex(/[A-Z]/, "Password belum memenuhi aturan keamanan")
+  .regex(/[a-z]/, "Password belum memenuhi aturan keamanan")
+  .regex(/[0-9]/, "Password belum memenuhi aturan keamanan")
+  .regex(passwordSymbolRegex, "Password belum memenuhi aturan keamanan")
   .regex(passwordDisallowedRegex, "Password tidak boleh mengandung spasi atau karakter ' \" \\ `");
 
 export const registerSchema = z.object({
