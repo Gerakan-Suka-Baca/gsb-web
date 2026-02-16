@@ -27,6 +27,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
 
   const [view, setView] = useState<"loading" | "intro" | "exam" | "result" | "thankyou">("loading");
   const [holdResult, setHoldResult] = useState(false);
+  const [isUpgrading, setIsUpgrading] = useState(false);
   const tryout = data as unknown as Tryout;
 
   useEffect(() => {
@@ -47,6 +48,12 @@ export const TryoutView = ({ tryoutId }: Props) => {
     if (existingAttempt?.status === "completed") {
       const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
       const target = (plan && plan !== "none") ? "thankyou" : "result";
+      
+      // If we are upgrading from free plan, ensure we can stay on the result page
+      if (isUpgrading && view === "result" && plan === "free") {
+         return;
+      }
+
       if (view !== target) setView(target);
     } else if (existingAttempt?.status === "started") {
       if (view !== "exam") setView("exam");
@@ -55,7 +62,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
       // If we are already in 'exam' (optimistic update), don't revert to 'intro' just because data is stale.
       if (view === "loading") setView("intro");
     }
-  }, [existingAttempt, isAttemptLoading, view, holdResult]);
+  }, [existingAttempt, isAttemptLoading, view, holdResult, isUpgrading]);
 
   if (view === "loading" || isAttemptLoading) {
     return (
@@ -93,6 +100,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
         onPlanSelected={(plan) => {
           if (plan === "free" || plan === "paid") {
             setView("thankyou");
+            setIsUpgrading(false);
           }
         }}
       />
@@ -104,7 +112,10 @@ export const TryoutView = ({ tryoutId }: Props) => {
     return (
       <TryoutThankYou
         plan={(plan as "free" | "paid") ?? "free"}
-        onChangePlan={() => setView("result")}
+        onChangePlan={() => {
+            setIsUpgrading(true);
+            setView("result");
+        }}
       />
     );
   }

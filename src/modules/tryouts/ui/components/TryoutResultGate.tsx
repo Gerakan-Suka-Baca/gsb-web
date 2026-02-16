@@ -23,10 +23,20 @@ interface Props {
   onPlanSelected: (plan: "free" | "paid") => void;
 }
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+
 export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<"free" | "paid" | null>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   const updatePlanMutation = useMutation(
     trpc.tryoutAttempts.updatePlan.mutationOptions({
@@ -47,6 +57,8 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
     setSelectedPlan(plan);
     if (plan === "free") {
       updatePlanMutation.mutate({ attemptId, plan: "free" });
+    } else {
+      setShowPaymentDialog(true);
     }
   };
 
@@ -57,6 +69,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
     window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
     
     // Optimistic / Auto-confirm
+    setShowPaymentDialog(false);
     updatePlanMutation.mutate({ attemptId, plan: "paid" });
   };
 
@@ -74,7 +87,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
           🎉
         </motion.div>
         <h1 className="text-4xl md:text-5xl font-heading font-bold text-gsb-maroon mb-4">
-          Selamat! Anda Telah Menyelesaikan Tryout
+          {selectedPlan === 'free' ? "Terima kasih" : "Selamat! Anda Telah Menyelesaikan Tryout"}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Perjalanan pejuang PTN belum berakhir. Pilih opsi di bawah untuk
@@ -104,14 +117,19 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
               <li className="flex gap-3 items-center text-base">
                 <Check className="w-5 h-5 text-green-500 shrink-0" />
                 <span>Skor Keluar H+7</span>
+                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-auto">Nilai H+7</span>
               </li>
               <li className="flex gap-3 items-center text-base">
                 <Check className="w-5 h-5 text-green-500 shrink-0" />
                 <span>Ranking Nasional</span>
               </li>
-              <li className="flex gap-3 items-center text-base text-muted-foreground/50">
+              {/* Hidden for Free */}
+              {/* <li className="flex gap-3 items-center text-base text-muted-foreground/50">
                 <XIcon className="w-5 h-5 shrink-0" />
                 <span>Tidak Ada Pembahasan</span>
+              </li> */}
+              <li className="text-sm text-muted-foreground mt-4 italic border-t pt-4">
+                 Silahkan Cek Berkala di halaman Dashboard Tryout ini.
               </li>
             </ul>
             <Button
@@ -132,7 +150,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
                 ? "border-gsb-orange bg-orange-50/20 shadow-xl ring-2 ring-gsb-orange/10"
                 : "border-gsb-orange/30 hover:border-gsb-orange hover:shadow-lg"
             }`}
-            onClick={() => setSelectedPlan("paid")}
+            onClick={() => handleSelectPlan("paid")}
           >
             <div className="absolute top-0 right-0 bg-gsb-orange text-white text-sm px-4 py-1.5 rounded-bl-2xl rounded-tr-xl font-bold tracking-wide shadow-sm">
               RECOMMENDED
@@ -157,6 +175,10 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
             <Button
               className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white h-12 text-lg font-bold rounded-xl shadow-md"
               variant="default"
+              onClick={(e) => {
+                 e.stopPropagation();
+                 handleSelectPlan("paid");
+              }}
             >
               Pilih Premium
             </Button>
@@ -164,10 +186,16 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
         </motion.div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {selectedPlan === "paid" && (
-          <motion.div key="paid" {...fadeUp} className="bg-white p-8 rounded-xl border border-border shadow-sm">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-3xl">
+            <DialogHeader>
+                <DialogTitle>Instruksi Pembayaran</DialogTitle>
+                <DialogDescription>
+                    Scan QRIS di bawah ini untuk mengaktifkan paket Premium.
+                </DialogDescription>
+            </DialogHeader>
+
+             <div className="grid md:grid-cols-2 gap-8 items-center mt-4">
               <div className="flex justify-center bg-gray-50 p-4 rounded-lg">
                 <div className="relative w-64 aspect-[3/4]">
                   <Image
@@ -181,7 +209,6 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
               </div>
               <div className="space-y-6">
                 <div>
-                  <h3 className="text-xl font-bold mb-2">Instruksi Pembayaran</h3>
                   <p className="text-muted-foreground text-sm">
                     Scan QRIS di samping menggunakan GoPay, OVO, Dana, ShopeePay,
                     atau Mobile Banking apa pun.
@@ -208,9 +235,9 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
                 </Button>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 };

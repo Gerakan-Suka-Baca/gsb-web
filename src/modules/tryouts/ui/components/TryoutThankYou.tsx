@@ -30,13 +30,17 @@ export const TryoutThankYou = ({ plan, onChangePlan }: Props) => {
       </motion.div>
 
       <h1 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-4">
-        Terimakasih Sudah Mengikuti Tryout GSB!
+        {plan === 'paid' ? "Terima Kasih Sudah Mengikuti Tryout GSB!" : "Terima Kasih Sudah Mengikuti Tryout GSB!"}
       </h1>
 
       <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
-        {plan === "paid"
-          ? "Pembayaran Anda sedang diverifikasi. Silakan menunggu hasil dan pembahasan yang akan disediakan setelah verifikasi selesai."
-          : "Silakan menunggu hasil dan pembahasan yang disediakan. Hasil akan dipublish sesuai jadwal."}
+        {plan === "paid" ? (
+          <>
+            Pembayaran Anda sedang diverifikasi. Silakan menunggu <span className="font-bold text-foreground">hasil dan pembahasan</span> yang akan disediakan setelah verifikasi selesai.
+          </>
+        ) : (
+          "Nilai akan muncul H+7 setelah periode tryout berakhir. Silahkan cek berkala di halaman Dashboard Tryout ini."
+        )}
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">

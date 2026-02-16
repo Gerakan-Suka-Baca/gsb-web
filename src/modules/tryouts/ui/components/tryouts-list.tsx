@@ -20,9 +20,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Tryout, TryoutAttempt } from "@/payload-types";
 
 const TABS = [
-  { key: "current", label: "Current", icon: Play },
-  { key: "registered", label: "Registered", icon: CheckCircle2 },
-  { key: "others", label: "Others", icon: BookOpen },
+  { key: "current", label: "Berjalan", icon: Play },
+  { key: "registered", label: "Selesai", icon: CheckCircle2 },
+  { key: "others", label: "Lainnya", icon: BookOpen },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -56,6 +56,14 @@ const badgeLabels: Record<StatusBadge, string> = {
   finished: "Finished",
 };
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 export const TryoutsList = () => {
   const trpc = useTRPC();
   const { data } = useSuspenseQuery(trpc.tryouts.getMany.queryOptions({}));
@@ -63,6 +71,8 @@ export const TryoutsList = () => {
     trpc.tryoutAttempts.getMyAttempts.queryOptions()
   );
   const session = useQuery(trpc.auth.session.queryOptions());
+  
+  // Use "others" as initial state, but effect will update it
   const [activeTab, setActiveTab] = useState<TabKey>("others");
   const [mounted, setMounted] = useState(false);
 
@@ -93,6 +103,20 @@ export const TryoutsList = () => {
       availableTryouts.push(tryout);
     }
   }
+
+  // Set default tab based on data presence
+  useEffect(() => {
+    if (!attemptsLoading && mounted) {
+      if (currentTryouts.length > 0) {
+        setActiveTab("current");
+      } else if (registeredTryouts.length > 0) {
+        setActiveTab("registered");
+      } else {
+        setActiveTab("others");
+      }
+    }
+  }, [attemptsLoading, mounted, currentTryouts.length, registeredTryouts.length]);
+
 
   const renderCard = (tryout: Tryout, badge: StatusBadge, subtitle?: string) => {
     const descriptionValue = (tryout as unknown as Record<string, unknown>).description;
@@ -143,6 +167,11 @@ export const TryoutsList = () => {
     <motion.div {...fadeCard} className="col-span-full flex flex-col items-center justify-center py-16 text-center">
       <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 text-2xl">📝</div>
       <p className="text-muted-foreground text-lg">{message}</p>
+      {activeTab === 'current' && (
+         <p className="text-muted-foreground text-sm mt-2">
+           Cek <button onClick={() => setActiveTab('others')} className="text-gsb-orange underline font-semibold">Lainnya</button> untuk melihat Tryout lain yang sedang dibuka.
+         </p>
+      )}
     </motion.div>
   );
 
@@ -162,39 +191,45 @@ export const TryoutsList = () => {
       </motion.div>
 
 
-      <div className="w-full overflow-x-auto pb-2 md:pb-0 mb-6 md:mb-8 -mx-4 px-4 md:mx-0 md:px-0">
-        <div className="flex gap-2 bg-muted/50 p-1.5 rounded-xl w-fit border border-border/50 min-w-max">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const count =
-              tab.key === "current" ? currentTryouts.length :
-              tab.key === "registered" ? registeredTryouts.length :
-              availableTryouts.length;
-
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 select-none shrink-0",
-                  activeTab === tab.key
-                    ? "bg-gsb-orange text-white shadow-md"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background"
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-                {count > 0 && (
-                  <span className={cn(
-                    "text-xs px-1.5 py-0.5 rounded-full font-bold min-w-[20px] text-center",
-                    activeTab === tab.key ? "bg-white/20 text-white" : "bg-muted text-muted-foreground"
-                  )}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+      <div className="mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="w-full sm:w-64">
+                <Select
+                    value={activeTab}
+                    onValueChange={(val) => setActiveTab(val as TabKey)}
+                >
+                    <SelectTrigger className="w-full h-12 text-base font-medium">
+                        <SelectValue placeholder="Pilih status tryout" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {TABS.map((tab) => {
+                             const Icon = tab.icon;
+                             const count =
+                               tab.key === "current" ? currentTryouts.length :
+                               tab.key === "registered" ? registeredTryouts.length :
+                               availableTryouts.length;
+                             
+                             return (
+                                <SelectItem key={tab.key} value={tab.key}>
+                                    <div className="flex items-center gap-2">
+                                        <Icon className="w-4 h-4 text-muted-foreground" />
+                                        <span>{tab.label}</span>
+                                        {count > 0 && (
+                                            <span className="ml-2 text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+                                                {count}
+                                            </span>
+                                        )}
+                                    </div>
+                                </SelectItem>
+                             )
+                        })}
+                    </SelectContent>
+                </Select>
+            </div>
+            
+            <p className="text-sm text-muted-foreground hidden md:block">
+                Cek <span className="font-semibold text-foreground">Lainnya</span> untuk melihat tryout yang tersedia.
+            </p>
         </div>
       </div>
 
