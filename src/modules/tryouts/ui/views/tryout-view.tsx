@@ -120,6 +120,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
         tryoutId={tryoutId}
         attemptId={existingAttempt?.id ?? ""}
         username="" 
+        isUpgrading={isUpgrading}
         onPlanSelected={(plan) => {
           if (plan === "free" || plan === "paid") {
             setView("thankyou");

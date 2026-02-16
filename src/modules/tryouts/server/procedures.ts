@@ -48,7 +48,7 @@ export const tryoutsRouter = createTRPCRouter({
       const rawTryout = tryout as { questions?: Array<string | { id?: string }> };
       const orderedIds: string[] = (Array.isArray(rawTryout.questions) ? rawTryout.questions : [])
         .map((q) => (typeof q === "string" ? q : q?.id ? String(q.id) : null))
-        .filter((id: string): id is string => !!id);
+        .filter((id): id is string => id !== null);
 
       let finalTests: Question[] = [];
 
