@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
@@ -9,12 +9,14 @@ import type { Tryout, Question } from "@/payload-types";
 import type { TryoutAttempt } from "../../types";
 import { clearBackup, clearEvents } from "@/lib/tryout-storage";
 
-
 import { useExamState, type ExamState, type AnswerMap, type FlagMap, type ExamStatus } from "./useExamState";
 import { useExamTimer } from "./useExamTimer";
 import { useNavigationProtection } from "./useNavigationProtection";
 import { useExamSync } from "./useExamSync";
 import { useAttemptRestoration } from "./useAttemptRestoration";
+import { useExamDialogs } from "./useExamDialogs";
+
+// --- Types & Constants ---
 
 export type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
 export type SubtestAnswer = NonNullable<SubtestQuestion["tryoutAnswers"]>[number];
@@ -48,7 +50,7 @@ export const ANIM = {
   }
 } as const;
 
-
+// --- Main Hook ---
 
 export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
   const router = useRouter();
@@ -56,9 +58,7 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
   const tryoutData = tryout as TryoutWithTests;
   const subtests = useMemo(() => (Array.isArray(tryoutData.tests) ? tryoutData.tests : []), [tryoutData.tests]);
 
-
   const { state, dispatch } = useExamState();
-
 
   const currentSubtest = useMemo(() => subtests[state.currentSubtestIndex], [subtests, state.currentSubtestIndex]);
   const currentSubtestId = currentSubtest?.id ?? "";
@@ -67,13 +67,11 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
   const subtestKey = currentSubtest?.subtest ?? "";
   const subtestLabel = useMemo(() => subtestKey ? (SUBTEST_LABELS[subtestKey] || subtestKey) : "", [subtestKey]);
 
-
   const { timeLeft, setTimeLeft, formatTime } = useExamTimer({
     initialSeconds: (currentSubtest?.duration ?? 0) * 60,
     isRunning: state.status === "running",
     onTimeUp: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true }), [dispatch]),
   });
-
 
   const { queueEvent, flushEvents, clearSyncData, saveProgressBatchMutation } = useExamSync({
     attemptId: state.attemptId,
@@ -81,12 +79,10 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     timeLeft,
   });
 
-
   useNavigationProtection({
     isEnabled: state.status === "running",
     onPopState: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "exit", open: true }), [dispatch]),
   });
-
 
   const { data: attempt, isLoading: isAttemptLoading } = useQuery(
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId: tryout.id })
@@ -111,9 +107,8 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     onError: (err) => toast.error("Gagal submit: " + err.message),
   }));
 
-
   useAttemptRestoration({
-    attempt: attempt as TryoutAttempt | undefined,
+    attempt,
     isLoading: isAttemptLoading,
     subtests,
     onRestore: useCallback((restoredState) => {
@@ -134,8 +129,6 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     }, [dispatch, setTimeLeft]),
   });
 
-
-
   const handleStart = () => startAttemptMutation.mutate({ tryoutId: tryout.id });
 
   const handleSubtestFinish = useCallback(async () => {
@@ -147,10 +140,11 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     } else {
       if (state.attemptId) {
         await flushEvents(true);
-        await submitAttemptMutation.mutateAsync({ attemptId: state.attemptId, answers: state.answers });
+        const safeAnswers = state.answers || {};
+        await submitAttemptMutation.mutateAsync({ attemptId: state.attemptId, answers: safeAnswers });
       } else {
         dispatch({ type: "SET_STATUS", status: "finished" });
-        onFinish(state.answers);
+        onFinish(state.answers || {});
       }
     }
   }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, onFinish, submitAttemptMutation, flushEvents, dispatch]);
@@ -161,37 +155,20 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     
     dispatch({ type: "SET_SUBTEST", index: nextIdx });
     dispatch({ type: "SET_STATUS", status: "running" });
-    setTimeLeft(nextDuration * 60); // Reset timer
+    setTimeLeft(nextDuration * 60);
+    window.scrollTo({ top: 0, behavior: "smooth" });
     flushEvents(true);
   }, [state.currentSubtestIndex, subtests, flushEvents, dispatch, setTimeLeft]);
 
-
-  useEffect(() => {
-    if (state.status !== "bridging") {
-      if (state.bridgingSeconds !== 60) dispatch({ type: "SET_BRIDGING_SECONDS", seconds: 60 });
-      return;
-    }
-    const timer = setInterval(() => {
-      if (state.bridgingSeconds <= 1) {
-        clearInterval(timer);
-        handleNextSubtest();
-      } else {
-        dispatch({ type: "SET_BRIDGING_SECONDS", seconds: state.bridgingSeconds - 1 });
-      }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [state.status, state.bridgingSeconds, handleNextSubtest, dispatch]);
-
-
-  useEffect(() => {
-    if (state.dialogs.timeUp) {
-      const timeout = setTimeout(() => {
-        dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: false });
-        handleSubtestFinish();
-      }, 3000);
-      return () => clearTimeout(timeout);
-    }
-  }, [state.dialogs.timeUp, handleSubtestFinish, dispatch]);
+  // Consolidates dialog timing logic
+  useExamDialogs({
+    status: state.status,
+    bridgingSeconds: state.bridgingSeconds,
+    timeUpDialog: state.dialogs.timeUp,
+    onNextSubtest: handleNextSubtest,
+    onFinish: handleSubtestFinish,
+    dispatch,
+  });
 
   const triggerFinishCheck = useCallback(() => {
     const answeredCount = currentSubtestId ? Object.keys(state.answers[currentSubtestId] || {}).length : 0;
@@ -235,7 +212,6 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
   }, [currentSubtestId, queueEvent, dispatch, state.flags]);
 
   return {
-    // Data
     subtests,
     currentSubtestIndex: state.currentSubtestIndex,
     currentSubtestId,
@@ -252,7 +228,6 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     bridgingSeconds: state.bridgingSeconds,
     isAttemptLoading,
 
-    // Dialogs
     showConfirmFinish: state.dialogs.confirmFinish, 
     setShowConfirmFinish: (open: boolean) => dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open }),
     showExitDialog: state.dialogs.exit, 
@@ -260,11 +235,9 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
     showTimeUpDialog: state.dialogs.timeUp, 
     setShowTimeUpDialog: (open: boolean) => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open }),
 
-    // Mutations
     startAttemptMutation,
     submitAttemptMutation,
 
-    // Handlers
     handleStart,
     handleSubtestFinish,
     handleNextSubtest,

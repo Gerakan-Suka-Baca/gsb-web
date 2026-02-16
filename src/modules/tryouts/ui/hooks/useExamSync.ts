@@ -175,10 +175,50 @@ export function useExamSync({ attemptId, state, timeLeft }: { attemptId: string 
   }, [attemptId, flushEvents]);
 
   useEffect(() => {
+    if (!attemptId) return;
+
     const onOnline = () => flushEvents(true);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        saveBackup(attemptId, {
+          answers: stateRef.current.answers,
+          flags: stateRef.current.flags,
+          currentSubtest: stateRef.current.currentSubtestIndex,
+          currentQuestionIndex: stateRef.current.currentQuestionIndex,
+          examState: stateRef.current.status,
+          secondsRemaining: timeLeftRef.current,
+        });
+        flushEvents(true);
+      }
+    };
+
+    // For mobile/tablet backgrounding and tab closing
+    const onPageHide = () => {
+      const s = stateRef.current;
+      saveBackup(attemptId, {
+        answers: s.answers,
+        flags: s.flags,
+        currentSubtest: s.currentSubtestIndex,
+        currentQuestionIndex: s.currentQuestionIndex,
+        examState: s.status,
+        secondsRemaining: timeLeftRef.current,
+      });
+      // flush
+      flushEvents(true);
+    };
+
     window.addEventListener("online", onOnline);
-    return () => window.removeEventListener("online", onOnline);
-  }, [flushEvents]);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onPageHide);
+
+    return () => {
+      window.removeEventListener("online", onOnline);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onPageHide);
+    };
+  }, [attemptId, flushEvents]);
 
   useEffect(() => {
     if (!attemptId) return;

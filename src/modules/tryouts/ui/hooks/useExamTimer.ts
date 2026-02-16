@@ -16,9 +16,7 @@ export function useExamTimer({ initialSeconds, isRunning, onTimeUp }: UseExamTim
     onTimeUpRef.current = onTimeUp;
   }, [onTimeUp]);
 
-  useEffect(() => {
-    setTimeLeft(initialSeconds);
-  }, [initialSeconds]);
+
 
   useEffect(() => {
     if (!isRunning) return;

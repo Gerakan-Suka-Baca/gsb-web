@@ -44,8 +44,8 @@ export function useAttemptRestoration({
       const storedAnswers = (data.answers as Record<string, AnswerMap> | null | undefined) || {};
       const storedFlags = (data.flags as Record<string, FlagMap> | null | undefined) || {};
 
-      let finalSubtest = serverSubtest;
-      let finalQuestion = serverQuestion;
+      let finalSubtest = typeof serverSubtest === "number" && !isNaN(serverSubtest) ? serverSubtest : 0;
+      let finalQuestion = typeof serverQuestion === "number" && !isNaN(serverQuestion) ? serverQuestion : 0;
       let finalSeconds: number | undefined;
       let finalStatus: ExamStatus =
         data.status === "completed"
@@ -70,13 +70,14 @@ export function useAttemptRestoration({
           };
         });
 
-        if (backup.currentSubtest > finalSubtest) {
+        if (Number.isFinite(backup.currentSubtest) && backup.currentSubtest > finalSubtest) {
           finalSubtest = backup.currentSubtest;
-          finalQuestion = backup.currentQuestionIndex ?? 0;
+          finalQuestion = Number.isFinite(backup.currentQuestionIndex) ? backup.currentQuestionIndex ?? 0 : 0;
           finalSeconds = backup.secondsRemaining;
           if (backup.examState) finalStatus = backup.examState as ExamStatus;
         } else if (backup.currentSubtest === finalSubtest) {
-          finalQuestion = Math.max(finalQuestion, backup.currentQuestionIndex ?? 0);
+          const backupQ = Number.isFinite(backup.currentQuestionIndex) ? backup.currentQuestionIndex ?? 0 : 0;
+          finalQuestion = Math.max(finalQuestion, backupQ);
           if (
             backup.secondsRemaining !== undefined &&
             backup.updatedAt > (Date.parse(data.updatedAt ?? "") || 0)
