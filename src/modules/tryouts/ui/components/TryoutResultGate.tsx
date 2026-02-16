@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check, ShieldCheck, MessageCircle } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -21,6 +21,7 @@ interface Props {
   attemptId: string;
   username: string;
   onPlanSelected: (plan: "free" | "paid") => void;
+  isUpgrading?: boolean;
 }
 
 import {
@@ -31,7 +32,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected }: Props) => {
+export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected, isUpgrading }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<"free" | "paid" | null>(null);
@@ -61,9 +62,15 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
     }
   };
 
+  useEffect(() => {
+    if (!isUpgrading) return;
+    setSelectedPlan("paid");
+    setShowPaymentDialog(true);
+  }, [isUpgrading]);
+
   const handleWAConfirm = () => {
     const message = encodeURIComponent(
-      `Halo Admin GSB, saya (${username}) sudah melakukan pembayaran untuk Tryout SNBT Premium sebesar Rp 5.020. Mohon verifikasi. (Mohon sertakan bukti transfer)`
+      `Halo Admin GSB, saya (${username}) sudah melakukan pembayaran untuk Tryout SNBT Premium sebesar Rp 5.000. Mohon verifikasi. (Mohon sertakan bukti transfer)`
     );
     window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
     
@@ -94,6 +101,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
         </p>
       </div>
 
+      {!isUpgrading && (
       <div className="grid md:grid-cols-2 gap-8 mb-12 max-w-4xl mx-auto">
 
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -184,9 +192,10 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
           </Card>
         </motion.div>
       </div>
+      )}
 
       <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
                 <DialogTitle>Instruksi Pembayaran</DialogTitle>
                 <DialogDescription>
@@ -216,12 +225,8 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, onPlanSelected
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <p className="text-sm font-semibold mb-1">Nominal Transfer</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-2xl font-mono font-bold text-gsb-orange">Rp 5.020</p>
-                    <span className="text-xs bg-background px-2 py-1 rounded border border-border">Kode Unik: 020</span>
+                    <p className="text-2xl font-mono font-bold text-gsb-orange">Rp 5.000</p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    *Mohon transfer tepat hingga 3 digit terakhir agar verifikasi otomatis.
-                  </p>
                 </div>
 
                 <Button

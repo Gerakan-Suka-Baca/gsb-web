@@ -244,7 +244,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         id: input.attemptId,
       })) as unknown as TryoutAttempt;
 
-      validateTryoutAttempt(attemptRaw, session.user.id, {
+      const attempt = validateTryoutAttempt(attemptRaw, session.user.id, {
         allowCompleted: true,
       });
 
