@@ -65,6 +65,10 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
     const nextSubtest = exam.subtests[exam.currentSubtestIndex + 1];
     const completedLabel = completedSubtest?.subtest ? (SUBTEST_LABELS[completedSubtest.subtest] || completedSubtest.subtest) : "";
     const nextLabel = nextSubtest?.subtest ? (SUBTEST_LABELS[nextSubtest.subtest] || nextSubtest.subtest) : "";
+    const completedQuestionCount = exam.questions.length;
+    const nextQuestionCount = nextSubtest?.id
+      ? exam.getSubtestQuestionCount(nextSubtest.id, nextSubtest.tryoutQuestions?.length ?? 0)
+      : 0;
 
     return (
       <motion.div {...ANIM.fadeSlide} className="container mx-auto py-12 flex flex-col items-center justify-center min-h-[70vh] px-4 space-y-8">
@@ -79,7 +83,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
                 </div>
               </div>
               <div className="text-sm text-gsb-tosca bg-gsb-tosca/10 rounded-lg p-3">
-                Kamu menjawab <span className="font-bold">{completedSubtest?.id ? Object.keys(exam.answers[completedSubtest.id] || {}).length : 0}</span> dari <span className="font-bold">{completedSubtest?.tryoutQuestions?.length || 0}</span> soal.
+                Kamu menjawab <span className="font-bold">{completedSubtest?.id ? Object.keys(exam.answers[completedSubtest.id] || {}).length : 0}</span> dari <span className="font-bold">{completedQuestionCount}</span> soal.
               </div>
             </Card>
           </motion.div>
@@ -102,7 +106,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
                   </div>
                   <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-1 text-center">
                     <span className="text-muted-foreground text-xs uppercase tracking-wider font-semibold">Soal</span>
-                    <span className="text-xl font-bold text-gsb-blue">{nextSubtest.tryoutQuestions?.length || 0} Butir</span>
+                    <span className="text-xl font-bold text-gsb-blue">{nextQuestionCount} Butir</span>
                   </div>
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>

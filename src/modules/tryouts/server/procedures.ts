@@ -45,9 +45,9 @@ export const tryoutsRouter = createTRPCRouter({
       });
 
       // 1. Get manually ordered IDs (normalize to string)
-      const rawTryout = tryout as any;
+      const rawTryout = tryout as { questions?: Array<string | { id?: string }> };
       const orderedIds: string[] = (Array.isArray(rawTryout.questions) ? rawTryout.questions : [])
-        .map((q: any) => (typeof q === "string" ? q : q.id ? String(q.id) : null))
+        .map((q) => (typeof q === "string" ? q : q?.id ? String(q.id) : null))
         .filter((id: string): id is string => !!id);
 
       let finalTests: Question[] = [];
@@ -68,7 +68,7 @@ export const tryoutsRouter = createTRPCRouter({
         });
 
         // 3. Sort to match manual order
-        const docsMap = new Map(manualDocs.docs.map((d: any) => [String(d.id), d]));
+        const docsMap = new Map(manualDocs.docs.map((d) => [String(d.id), d]));
         finalTests = orderedIds
           .map((id) => docsMap.get(id))
           .filter((doc): doc is Question => !!doc);

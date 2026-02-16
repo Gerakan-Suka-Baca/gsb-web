@@ -15,8 +15,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import { useTRPC } from "@/trpc/client";
-import { useSuspenseQuery, useQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState, useCallback } from "react";
 
 function formatDuration(ms: number): string {
@@ -327,12 +328,13 @@ export default function PodcastContent() {
                 <FadeIn key={episode.id} className={hiddenOnMobileOnly ? "hidden lg:block" : ""}>
                   <div className="bg-background rounded-2xl border border-border shadow-md hover:shadow-xl transition-shadow overflow-hidden group flex flex-col h-full">
                     {episode.images[0] && (
-                      <div className="aspect-square overflow-hidden">
-                        <img
+                      <div className="aspect-square overflow-hidden relative">
+                        <Image
                           src={episode.images[0].url}
                           alt={episode.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
+                          fill
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 20vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
                     )}

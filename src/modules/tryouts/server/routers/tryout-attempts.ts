@@ -6,7 +6,6 @@ import type { Question } from "@/payload-types";
 import { TryoutAttempt } from "../../types";
 import {
   MAX_PROCESSED_BATCHES,
-  getUserId,
   getTryoutId,
   calculateSubmissionResults,
   validateTryoutAttempt,
@@ -122,7 +121,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         id: input.attemptId,
       })) as unknown as TryoutAttempt;
 
-      const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
+      validateTryoutAttempt(attemptRaw, session.user.id);
 
       await payload.update({
         collection: "tryout-attempts",
@@ -245,7 +244,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         id: input.attemptId,
       })) as unknown as TryoutAttempt;
 
-      const attempt = validateTryoutAttempt(attemptRaw, session.user.id, {
+      validateTryoutAttempt(attemptRaw, session.user.id, {
         allowCompleted: true,
       });
 
@@ -318,7 +317,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         id: input.attemptId,
       })) as unknown as TryoutAttempt;
 
-      const attempt = validateTryoutAttempt(attemptRaw, session.user.id, {
+      validateTryoutAttempt(attemptRaw, session.user.id, {
         allowCompleted: true,
       });
 

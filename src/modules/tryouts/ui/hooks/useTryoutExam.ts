@@ -7,7 +7,6 @@ import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
 import type { Tryout, Question } from "@/payload-types";
 import type { TryoutAttempt } from "../../types";
-import { clearBackup, clearEvents } from "@/lib/tryout-storage";
 
 import { useExamState, type ExamState, type AnswerMap, type FlagMap, type ExamStatus } from "./useExamState";
 import { useExamTimer } from "./useExamTimer";
@@ -142,7 +141,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     onTimeUp: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true }), [dispatch]),
   });
 
-  const { queueEvent, flushEvents, clearSyncData, saveProgressBatchMutation } = useExamSync({
+  const { queueEvent, flushEvents, clearSyncData } = useExamSync({
     attemptId: state.attemptId,
     state,
     timeLeft,
@@ -153,7 +152,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     onPopState: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "exit", open: true }), [dispatch]),
   });
 
-  const { data: attempt, isLoading: isAttemptLoading } = useQuery(
+  const { isLoading: isAttemptLoading } = useQuery(
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId: tryout.id })
   );
 
