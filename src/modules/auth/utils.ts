@@ -21,7 +21,6 @@ export const generateAuthCookie = async ({ prefix, value }: Props) => {
 export const deleteAuthCookie = async (prefix: string) => {
   try {
     const cookies = await getCookies();
-    // Default to 'payload' if prefix is missing/empty, though it should usually be provided
     const cookieName = `${prefix || "payload"}-token`;
     
     cookies.set({
