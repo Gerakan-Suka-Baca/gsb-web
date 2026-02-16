@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import { Tryout, Question } from "@/payload-types";
 import { Calendar, Info } from "lucide-react";
+import { useTRPC } from "@/trpc/client";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TryoutIntroProps {
   tryout: Tryout;
@@ -9,6 +12,19 @@ interface TryoutIntroProps {
 }
 
 export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Prefetch the first subtest so it is ready when the user clicks start
+    const firstSubtest = ((tryout as Tryout & { tests: Question[] }).tests || [])[0];
+    if (firstSubtest?.id) {
+       queryClient.prefetchQuery(
+         trpc.tryouts.getSubtest.queryOptions({ subtestId: firstSubtest.id })
+       );
+    }
+  }, [tryout, queryClient, trpc]);
+
   return (
     <div className="max-w-5xl mx-auto px-6 lg:px-8 py-16 flex flex-col gap-10">
       <div className="space-y-4 border-b border-border/50 pb-8">

@@ -14,18 +14,20 @@ import { ExamFinished } from "./exam/ExamFinished";
 import { MobileExamControls } from "./exam/MobileExamControls";
 
 import type { Tryout } from "@/payload-types";
+import type { TryoutAttempt } from "../../types";
 import type { AnswerMap } from "../hooks/useTryoutExam";
 
 interface TryoutExamProps {
   tryout: Tryout;
+  initialAttempt?: TryoutAttempt | null;
   onFinish: (answers: Record<string, AnswerMap>) => void;
 }
 
-export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
-  const exam = useTryoutExam({ tryout, onFinish });
+export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps) => {
+  const exam = useTryoutExam({ tryout, initialAttempt, onFinish });
 
   // --- Loading ---
-  if (exam.isAttemptLoading || exam.examState === "loading") {
+  if (exam.isAttemptLoading || exam.examState === "loading" || exam.isContentLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}>
@@ -118,6 +120,36 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
 
   // --- Ready / Start Screen ---
   if (exam.examState === "ready") {
+    if (exam.isContentError || exam.questions.length === 0) {
+      return (
+        <motion.div {...ANIM.fadeSlide} className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <Card className="max-w-lg w-full p-8 border-none shadow-xl bg-white">
+            <div className="w-16 h-16 rounded-full bg-gsb-yellow/10 flex items-center justify-center mx-auto mb-4 text-2xl">⚠️</div>
+            <h2 className="text-xl font-bold text-gsb-maroon mb-2">Soal belum tersedia</h2>
+            <p className="text-muted-foreground mb-6">
+              Sistem belum berhasil memuat soal untuk subtes ini. Silakan coba muat ulang, atau kembali ke Dashboard Tryout.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={() => exam.refetchSubtest()}
+                className="bg-gsb-orange hover:bg-gsb-orange/90 text-white h-11 px-6 rounded-full"
+                disabled={exam.startAttemptMutation.isPending}
+              >
+                Coba Muat Lagi
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => exam.router.push("/tryout")}
+                className="h-11 px-6 rounded-full"
+              >
+                Kembali ke Dashboard
+              </Button>
+            </div>
+          </Card>
+        </motion.div>
+      );
+    }
+
     return (
       <motion.div {...ANIM.fadeSlide} className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <Card className="max-w-2xl w-full p-8 md:p-12 border-none shadow-xl bg-gradient-to-br from-white to-orange-50/50">

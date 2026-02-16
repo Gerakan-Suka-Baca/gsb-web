@@ -10,6 +10,7 @@ interface UseAttemptRestorationProps {
   attempt: unknown;
   isLoading: boolean;
   subtests: Question[];
+  currentAttemptId?: string | null;
   onRestore: (state: Partial<ExamState> & { timeLeft?: number }) => void;
 }
 
@@ -26,12 +27,19 @@ export function useAttemptRestoration({
   attempt,
   isLoading,
   subtests,
+  currentAttemptId,
   onRestore,
 }: UseAttemptRestorationProps) {
   useEffect(() => {
     if (isLoading) return;
     if (!isValidAttempt(attempt)) {
-      onRestore({ status: "ready" });
+      if (!currentAttemptId) {
+         onRestore({ status: "ready" });
+      }
+      return;
+    }
+
+    if (currentAttemptId && attempt.id !== currentAttemptId) {
       return;
     }
 

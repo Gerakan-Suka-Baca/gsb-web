@@ -97,9 +97,9 @@ export const MobileExamControls = ({
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3 border-b border-border/50">
+            <div className="flex items-center justify-between px-5 pb-3 pt-4 border-b border-border/50">
               <div>
-                <h3 className="bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold border-none">Navigasi Soal</h3>
+                <h3 className="text-lg font-bold text-gsb-maroon">Navigasi Soal</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {answeredCount}/{questions.length} soal dijawab
                 </p>
@@ -108,9 +108,9 @@ export const MobileExamControls = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsOpen(false)}
-                className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold h-12"
+                className="shrink-0 bg-gsb-orange/10 hover:bg-gsb-orange/20 text-gsb-orange rounded-full"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </Button>
             </div>
 

@@ -19,7 +19,16 @@ export function useExamTimer({ initialSeconds, isRunning, onTimeUp }: UseExamTim
 
 
   useEffect(() => {
-    if (!isRunning) return;
+    // Prevent starting if invalid duration or not running
+    if (!isRunning || initialSeconds <= 0) return;
+
+    // Reset if initialSeconds changes to a valid number
+    setTimeLeft((prev) => {
+       // Only reset if we are significantly off (e.g. new subtest)
+       // or if we are currently at 0 (from previous state)
+       if (prev === 0) return initialSeconds;
+       return prev;
+    });
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -33,7 +42,7 @@ export function useExamTimer({ initialSeconds, isRunning, onTimeUp }: UseExamTim
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isRunning]);
+  }, [isRunning, initialSeconds]);
 
   const formatTime = (seconds: number) => {
     if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
