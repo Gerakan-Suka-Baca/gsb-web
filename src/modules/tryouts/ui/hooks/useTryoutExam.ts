@@ -86,11 +86,15 @@ export function useTryoutExam({ tryout, onFinish }: TryoutExamProps) {
   const answersRef = useRef(answers);
   const flagsRef = useRef(flags);
   const revisionRef = useRef<Record<string, number>>({});
+  const flushInFlightRef = useRef(false);
+  const pendingFlushRef = useRef(false);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRetryAtRef = useRef(0);
   const flushEventsRef = useRef<(force?: boolean) => void>(() => {});
 
   // Sequential write queue — every server write chains onto this promise
+  // so we never have two in-flight writes at the same time, preventing
+  // the Payload "Write conflict during plan execution" error.
   const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   // Derived

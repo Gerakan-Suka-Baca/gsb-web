@@ -198,12 +198,13 @@ function serialize(children: Node[]): React.ReactNode {
             {serialize(node.children || [])}
           </a>
         );
+      case 'br':
+      case 'linebreak':
+        return <br key={i} />;
       case 'block':
-          // Handle custom blocks if any (layout blocks etc)
           return <div key={i}>{serialize(node.children || [])}</div>;
 
       default:
-        // Fallback for unknown types, serialize children
         return <div key={i}>{serialize(node.children || [])}</div>;
     }
   });
