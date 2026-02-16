@@ -121,7 +121,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
     return (
       <motion.div {...ANIM.fadeSlide} className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
         <Card className="max-w-2xl w-full p-8 md:p-12 border-none shadow-xl bg-gradient-to-br from-white to-orange-50/50">
-          <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Subtes {exam.currentSubtestIndex + 1} dari {exam.subtests.length}</p>
+          <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Subtes {(exam.currentSubtestIndex || 0) + 1} dari {exam.subtests.length}</p>
           <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-1">{exam.currentSubtest?.title}</h2>
           <p className="text-gsb-blue font-medium mb-2">{exam.subtestLabel}</p>
           <div className="w-20 h-1 bg-gsb-orange rounded-full mx-auto mb-8" />
@@ -154,7 +154,7 @@ export const TryoutExam = ({ tryout, onFinish }: TryoutExamProps) => {
   const unansweredCount = exam.questions.length - (exam.currentSubtestId ? Object.keys(exam.answers[exam.currentSubtestId] || {}).length : 0);
 
   return (
-    <div className="container mx-auto pt-4 pb-6 md:pt-8 md:pb-10 px-4 md:px-6 min-h-screen">
+    <div className="container mx-auto pt-8 pb-32 md:pt-12 md:pb-40 px-4 md:px-6 min-h-screen">
       <MobileExamControls
         timeLeft={exam.timeLeft}
         formatTime={exam.formatTime}
