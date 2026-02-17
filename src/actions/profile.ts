@@ -1,8 +1,7 @@
 "use server";
 
-import { getPayload } from "payload";
-import config from "@payload-config";
-import { caller } from "@/trpc/server";
+import { getPayloadCached } from "@/lib/payload";
+import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
 interface UpdateProfileInput {
@@ -19,16 +18,28 @@ interface UpdateProfileInput {
 }
 
 export const updateProfile = async (data: UpdateProfileInput) => {
-  const session = await caller.auth.session();
+  const [authResult, payload] = await Promise.all([auth(), getPayloadCached()]);
+  const { userId } = authResult;
 
-  if (!session.user) {
+  if (!userId) {
     throw new Error("Unauthorized");
   }
 
-  const payload = await getPayload({ config });
+  // Find user by clerkUserId
+  const existingUsers = await payload.find({
+    collection: "users",
+    where: { clerkUserId: { equals: userId } },
+    limit: 1,
+  });
+
+  const dbUser = existingUsers.docs[0];
+
+  if (!dbUser) {
+    throw new Error("User not found");
+  }
 
   try {
-    if (data.username !== session.user.username) {
+    if (data.username !== dbUser.username) {
         const existingUser = await payload.find({
             collection: "users",
             where: {
@@ -55,7 +66,7 @@ export const updateProfile = async (data: UpdateProfileInput) => {
 
     await payload.update({
       collection: "users",
-      id: session.user.id,
+      id: dbUser.id,
       data: updateData,
     });
 

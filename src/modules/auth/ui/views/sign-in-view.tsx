@@ -1,63 +1,15 @@
 "use client";
 
-import z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useTRPC } from "@/trpc/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
-import { useRouter, useSearchParams } from "next/navigation";
-
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/ui/password-input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-
-import { loginSchema } from "../../schemas";
+import { useRouter } from "next/navigation";
+import { SignIn } from "@clerk/nextjs";
+import { ArrowLeft } from "lucide-react";
+import { dark } from "@clerk/themes";
+import { useTheme } from "next-themes";
 
 export const SignInView = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
-
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
-  const login = useMutation(
-    trpc.auth.login.mutationOptions({
-      onError: (error) => {
-        toast.error(error.message);
-      },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries(trpc.auth.session.queryFilter());
-        toast.success("Berhasil Masuk! Mengalihkan...");
-        router.push(callbackUrl);
-        router.refresh();
-      },
-    })
-  );
-
-  const form = useForm<z.infer<typeof loginSchema>>({
-    mode: "all",
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  const onSubmit = (data: z.infer<typeof loginSchema>) => {
-    login.mutate(data);
-  };
+  const { resolvedTheme } = useTheme();
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full">
@@ -82,61 +34,58 @@ export const SignInView = () => {
             </div>
         </div>
 
-        {/* Form */}
-        <div className="flex flex-col justify-center items-center p-6 md:p-12 bg-background">
-            <div className="w-full max-w-md space-y-8 bg-card p-8 rounded-2xl shadow-sm border border-border">
-                <div className="text-center">
+        {/* Sign-in form */}
+        <div className="flex flex-col justify-center items-center p-6 md:p-12 bg-background relative">
+            {/* Back button */}
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="absolute top-6 left-6 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span>Kembali</span>
+            </button>
+
+            <div className="w-full max-w-md space-y-8">
+                <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold text-responsive-maroon font-heading">Selamat Datang Kembali</h2>
                     <p className="text-muted-foreground mt-2 text-sm">Masuk untuk melanjutkan progress belajar Anda</p>
                 </div>
 
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-foreground">Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="nama@email.com" {...field} className="h-11" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <div className="flex justify-between items-center">
-                               <FormLabel className="text-foreground">Password</FormLabel>
-                               <Link href="#" className="text-xs text-responsive-orange font-semibold hover:underline">Lupa Password?</Link>
-                          </div>
-                          <FormControl>
-                            <PasswordInput placeholder="••••••••" {...field} className="h-11" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        disabled={login.isPending}
-                        type="submit"
-                        className="w-full h-11 text-base font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white shadow-md hover:shadow-lg transition-all rounded-lg"
-                      >
-                        {login.isPending ? "Sedang Masuk..." : "Masuk Sekarang"}
-                      </Button>
-                    </motion.div>
-                  </form>
-                </Form>
+                <div className="flex justify-center">
+                  <SignIn
+                    appearance={{
+                      baseTheme: resolvedTheme === "dark" ? dark : undefined,
+                      elements: {
+                        rootBox: "w-full",
+                        cardBox: "w-full shadow-none border-0",
+                        card: "w-full shadow-none border border-border rounded-2xl bg-card",
+                        headerTitle: "hidden",
+                        headerSubtitle: "hidden",
+                        socialButtonsBlockButton:
+                          "border-2 border-border hover:bg-muted font-semibold transition-all",
+                        socialButtonsBlockButtonText: "font-semibold",
+                        formButtonPrimary:
+                          "bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg h-11",
+                        formFieldInput:
+                          "h-11 border-border rounded-lg focus:ring-2 focus:ring-gsb-orange/30 focus:border-gsb-orange",
+                        formFieldLabel: "text-foreground font-medium",
+                        footerActionLink:
+                          "text-gsb-orange font-bold hover:text-gsb-orange/80",
+                        dividerLine: "bg-border",
+                        dividerText: "text-muted-foreground",
+                        identityPreviewEditButton: "text-gsb-orange",
+                        formFieldAction: "text-gsb-orange font-semibold hover:text-gsb-orange/80",
+                        footer: "hidden",
+                      },
+                    }}
+                    forceRedirectUrl="/"
+                  />
+                </div>
 
                 <div className="text-center text-sm">
                     <span className="text-muted-foreground">Belum punya akun? </span>
-                    <Link href={`/sign-up${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-responsive-orange hover:opacity-90 transition-opacity">
+                    <Link href="/sign-up" className="font-bold text-responsive-orange hover:opacity-90 transition-opacity">
                         Daftar Gratis
                     </Link>
                 </div>

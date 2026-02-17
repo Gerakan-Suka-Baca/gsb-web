@@ -183,7 +183,7 @@ export default function AboutPage() {
             className="grid grid-cols-2 lg:grid-cols-3 gap-4"
           >
             <AnimatePresence>
-              {displayedBudaya.map((item, idx) => (
+              {displayedBudaya.map((item) => (
                 <motion.div
                   key={item.title}
                   layout

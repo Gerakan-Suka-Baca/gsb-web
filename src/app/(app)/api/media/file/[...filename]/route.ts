@@ -1,12 +1,11 @@
-import { getPayload } from "payload";
-import config from "@payload-config";
+import { getPayloadCached } from "@/lib/payload";
 import type { Media } from "@/payload-types";
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ filename: string[] }> }
 ) {
-  const payload = await getPayload({ config });
+  const payload = await getPayloadCached();
   const { filename } = await params;
   const target = decodeURIComponent(filename.join("/"));
 

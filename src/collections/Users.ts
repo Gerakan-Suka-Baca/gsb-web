@@ -5,22 +5,41 @@ export const Users: CollectionConfig = {
   admin: {
     useAsTitle: "email",
   },
+
   access: {
-    admin: ({ req: { user } }) => {
-      return Boolean(
-        user && "roles" in user && user.roles?.includes("super-admin"),
-      );
-    },
-  },
-  auth: {
-    maxLoginAttempts: 5,
-    lockTime: 600 * 1000,
+    admin: ({ req: { user } }) => Boolean(user),
+    create: () => true,
+    read: () => true,
+    update: ({ req: { user } }) => Boolean(user),
   },
   fields: [
     {
+      name: "email",
+      type: "email",
+      required: true,
+      unique: true,
+    },
+    {
+      name: "clerkUserId",
+      label: "Clerk User ID",
+      type: "text",
+      unique: true,
+      index: true,
+      admin: {
+        readOnly: true,
+        position: "sidebar",
+      },
+    },
+    {
+      name: "profileCompleted",
+      label: "Profil Lengkap",
+      type: "checkbox",
+      defaultValue: false,
+    },
+    {
       name: "username",
       type: "text",
-      required: true,
+      required: false,
       unique: true,
     },
     {
@@ -81,11 +100,7 @@ export const Users: CollectionConfig = {
       hasMany: true,
       options: ["super-admin", "admin", "user"],
       access: {
-        update: ({ req: { user } }) => {
-          return Boolean(
-            user && "roles" in user && user.roles?.includes("super-admin"),
-          );
-        },
+        update: ({ req: { user } }) => Boolean(user),
       },
     },
     {

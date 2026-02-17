@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { uploadthingStorage } from "@payloadcms/storage-uploadthing";
 
+import { Admins } from './collections/Admins'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Tryouts } from './collections/Tryouts'
@@ -21,12 +22,12 @@ import { TryoutPayments } from './collections/TryoutPayments'
 
 export default buildConfig({
   admin: {
-    user: Users.slug,
+    user: Admins.slug,
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments],
+  collections: [Admins, Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments],
   // @ts-expect-error: rateLimit type definition missing
   rateLimit: {
     trustProxy: true,

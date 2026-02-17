@@ -11,6 +11,9 @@
     "generate:types": "payload generate:types"
   },
   "dependencies": {
+    "@clerk/localizations": "^3.35.4",
+    "@clerk/nextjs": "^6.37.4",
+    "@clerk/themes": "^2.4.52",
     "@hookform/resolvers": "^5.2.1",
     "@payloadcms/db-mongodb": "^3.76.1",
     "@payloadcms/next": "^3.76.1",
@@ -75,6 +78,7 @@
     "sharp": "^0.33.5",
     "sonner": "^2.0.7",
     "superjson": "^2.2.6",
+    "svix": "^1.85.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
     "tanstack": "^1.0.3",
