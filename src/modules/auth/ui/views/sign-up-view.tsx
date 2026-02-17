@@ -92,10 +92,8 @@ export const SignUpView = () => {
 
   return (
     <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      {/* ... BRAND SECTION ... */}
       <div className="w-full max-w-7xl grid md:grid-cols-5 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
-        
-        {/* Left Side: Brand & Info (Hidden on Mobile) */}
+        {/* Brand panel — hidden on small screens */}
         <div className="hidden md:flex md:col-span-2 bg-gradient-to-br from-gsb-maroon to-gsb-red text-white p-8 flex-col justify-between relative">
              <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
              <div className="relative z-10">
@@ -123,7 +121,7 @@ export const SignUpView = () => {
              </div>
         </div>
 
-        {/* Right Side: Form */}
+        {/* Form column */}
         <div className="md:col-span-3 p-8 lg:p-12 overflow-y-auto max-h-[90vh]">
             <div className="mb-8">
                 <h1 className="text-2xl font-bold text-gsb-maroon font-heading">Buat Akun Baru</h1>
@@ -133,7 +131,7 @@ export const SignUpView = () => {
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 
-                {/* SECTION 1: Akun */}
+                {/* Account fields */}
                 <div className="space-y-4">
                     <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Informasi Akun</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -208,7 +206,6 @@ export const SignUpView = () => {
                               </ul>
                             </div>
                           )}
-                          {/**/}
                           <FormMessage>
                             {typeof form.formState.errors.password?.message === "string" &&
                             form.formState.errors.password.message.includes("minimal 8")
@@ -233,7 +230,7 @@ export const SignUpView = () => {
                     />
                 </div>
 
-                {/* SECTION 2: Data Diri */}
+                {/* Profile fields */}
                 <div className="space-y-4 pt-2">
                     <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Data Diri</h3>
                     <FormField
@@ -265,7 +262,7 @@ export const SignUpView = () => {
                     />
                 </div>
 
-                {/* SECTION 3: Akademik */}
+                {/* School & target uni */}
                 <div className="space-y-4 pt-2">
                     <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Data Akademik</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -307,7 +304,7 @@ export const SignUpView = () => {
                         />
                     </div>
                     
-                    {/* Pilihan 1 */}
+                    {/* First choice (PTN + major) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                          <FormField
                           control={form.control}
@@ -341,7 +338,7 @@ export const SignUpView = () => {
                         />
                     </div>
 
-                    {/* Pilihan 2 */}
+                    {/* Second choice (optional) */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                          <FormField
                           control={form.control}

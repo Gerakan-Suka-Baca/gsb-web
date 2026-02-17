@@ -20,7 +20,6 @@ export function useExamDialogs({
   onFinish,
   dispatch,
 }: UseExamDialogsProps) {
-  // Bridging Timer
   useEffect(() => {
     if (status !== "bridging") {
       if (bridgingSeconds !== 60) dispatch({ type: "SET_BRIDGING_SECONDS", seconds: 60 });
@@ -39,7 +38,6 @@ export function useExamDialogs({
     return () => clearInterval(timer);
   }, [status, bridgingSeconds, onNextSubtest, dispatch]);
 
-  // Auto-close TimeUp dialog
   useEffect(() => {
     if (!timeUpDialog) return;
     

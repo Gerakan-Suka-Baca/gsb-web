@@ -74,7 +74,6 @@ export const calculateSubmissionResults = (
       const selectedAnswerId = subtestAnswers[qID] || null;
       const qAnswers = q.tryoutAnswers || [];
 
-      // Find correct answer letter
       let correctAnswerId: string | null = null;
       let correctLetter: string | null = null;
       for (let aIdx = 0; aIdx < qAnswers.length; aIdx++) {
@@ -85,7 +84,6 @@ export const calculateSubmissionResults = (
         }
       }
 
-      // Find selected letter
       let selectedLetter: string | null = null;
       if (selectedAnswerId) {
         const selectedIdx = qAnswers.findIndex(

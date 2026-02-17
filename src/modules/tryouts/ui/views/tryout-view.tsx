@@ -20,7 +20,6 @@ export const TryoutView = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   
-  // Disable retries to fail fast on 401
   const { data, isLoading: isMetadataLoading, isError: isMetadataError } = useQuery(
     trpc.tryouts.getMetadata.queryOptions({ tryoutId }, { retry: false })
   );
@@ -38,7 +37,6 @@ export const TryoutView = ({ tryoutId }: Props) => {
   const isSessionError = isMetadataError || isAttemptError;
 
   useEffect(() => {
-    // Wait for metadata to load first
     if (isMetadataLoading) return;
     
     if (isAttemptLoading) return;
@@ -59,7 +57,6 @@ export const TryoutView = ({ tryoutId }: Props) => {
       const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
       const target = (plan && plan !== "none") ? "thankyou" : "result";
       
-      // If we are upgrading from free plan, ensure we can stay on the result page
       if (isUpgrading && view === "result" && plan === "free") {
          return;
       }
@@ -68,8 +65,6 @@ export const TryoutView = ({ tryoutId }: Props) => {
     } else if (existingAttempt?.status === "started") {
       if (view !== "exam") setView("exam");
     } else {
-      // Only default to intro if we are currently loading.
-      // If we are already in 'exam' (optimistic update), don't revert to 'intro' just because data is stale.
       if (view === "loading") setView("intro");
     }
   }, [existingAttempt, isAttemptLoading, view, holdResult, isUpgrading, isMetadataLoading]);

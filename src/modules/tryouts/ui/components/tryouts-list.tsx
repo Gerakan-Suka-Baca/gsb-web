@@ -72,7 +72,6 @@ export const TryoutsList = () => {
   );
   const session = useQuery(trpc.auth.session.queryOptions());
   
-  // Use "others" as initial state, but effect will update it
   const [activeTab, setActiveTab] = useState<TabKey>("others");
   const [mounted, setMounted] = useState(false);
 
@@ -104,7 +103,6 @@ export const TryoutsList = () => {
     }
   }
 
-  // Set default tab based on data presence
   useEffect(() => {
     if (!attemptsLoading && mounted) {
       if (currentTryouts.length > 0) {

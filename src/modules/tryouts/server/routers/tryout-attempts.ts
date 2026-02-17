@@ -38,8 +38,21 @@ const parseDateMs = (value: unknown): number | null => {
   return Number.isNaN(parsed) ? null : parsed;
 };
 
+/** Payload-shaped type used by helpers (ctx.db asserted at call site). */
+type PayloadLike = {
+  findByID: (args: { collection: string; id: string; depth: number }) => Promise<unknown>;
+  find: (args: {
+    collection: string;
+    where: unknown;
+    limit: number;
+    sort: string;
+    depth: number;
+    select?: unknown;
+  }) => Promise<{ docs?: unknown[] }>;
+};
+
 const getTryoutWindow = async (
-  payload: { findByID: (args: Record<string, unknown>) => Promise<unknown> },
+  payload: PayloadLike,
   tryoutId: string
 ): Promise<TryoutWindowDoc> => {
   return (await payload.findByID({
@@ -89,7 +102,7 @@ const getAttemptSubtestIndex = (attempt: TryoutAttempt): number => {
 };
 
 const getSubtestDurationSeconds = async (
-  payload: { find: (args: Record<string, unknown>) => Promise<unknown> },
+  payload: PayloadLike,
   tryoutId: string,
   subtestIndex: number
 ): Promise<number> => {
@@ -127,9 +140,7 @@ const buildServerTimerWindow = async ({
   allowLegacySecondsFallback,
   forceReset,
 }: {
-  payload: {
-    find: (args: Record<string, unknown>) => Promise<unknown>;
-  };
+  payload: PayloadLike;
   attempt: TryoutAttempt;
   tryoutId: string;
   targetSubtest: number;
@@ -206,7 +217,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           ],
         },
         limit: 1,
-        sort: "-createdAt", // Ensure we get the latest attempt
+        sort: "-createdAt",
         depth: 0,
       });
       return (attempts.docs.length === 0
@@ -220,7 +231,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       const { db: payload, session } = ctx;
       const now = new Date();
       const nowIso = now.toISOString();
-      const tryoutWindow = await getTryoutWindow(payload, input.tryoutId);
+      const tryoutWindow = await getTryoutWindow(payload as PayloadLike, input.tryoutId);
       assertTryoutWindowOpen(tryoutWindow, "memulai tryout", now);
 
       const existing = await payload.find({
@@ -236,14 +247,11 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         depth: 0,
       });
 
-      // If there is an existing attempt (latest)
       if (existing.docs.length > 0) {
         const attempt = existing.docs[0] as unknown as TryoutAttempt;
-        
-        // If it's still running, RESUME it
         if (attempt.status !== "completed") {
           const resumedTimer = await buildServerTimerWindow({
-            payload,
+            payload: payload as PayloadLike,
             attempt,
             tryoutId: getTryoutId(attempt.tryout),
             targetSubtest: getAttemptSubtestIndex(attempt),
@@ -278,20 +286,11 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           } as TryoutAttempt;
         }
 
-        // If it's completed, check if it was a valid attempt (has answers)
-        // If it has answers, we DO NOT allow retakes -> Return it (Frontend will redirect to result)
         const hasAnswers = attempt.answers && Object.keys(attempt.answers).length > 0;
-        if (hasAnswers) {
-          return attempt;
-        }
-
-        // If it's completed but has NO answers (likely a system error/ghost attempt),
-        // we allow creating a NEW attempt to "fix" the user's state.
+        if (hasAnswers) return attempt;
       }
-
-      // Create a NEW attempt (First time OR fixing a ghost attempt)
       const firstSubtestSeconds = await getSubtestDurationSeconds(
-        payload,
+        payload as PayloadLike,
         input.tryoutId,
         0
       );
@@ -346,7 +345,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
 
       const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
       const tryoutId = getTryoutId(attempt.tryout);
-      const tryoutWindow = await getTryoutWindow(payload, tryoutId);
+      const tryoutWindow = await getTryoutWindow(payload as PayloadLike, tryoutId);
       assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
       const attemptSubtest = getAttemptSubtestIndex(attempt);
       const nextSubtest =
@@ -356,7 +355,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           ? Math.floor(input.currentSubtest)
           : attemptSubtest;
       const timerWindow = await buildServerTimerWindow({
-        payload,
+        payload: payload as PayloadLike,
         attempt,
         tryoutId,
         targetSubtest: nextSubtest,
@@ -418,7 +417,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
 
       const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
       const tryoutId = getTryoutId(attempt.tryout);
-      const tryoutWindow = await getTryoutWindow(payload, tryoutId);
+      const tryoutWindow = await getTryoutWindow(payload as PayloadLike, tryoutId);
       assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
       const attemptSubtest = getAttemptSubtestIndex(attempt);
       const nextSubtest =
@@ -428,7 +427,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           ? Math.floor(input.currentSubtest)
           : attemptSubtest;
       const timerWindow = await buildServerTimerWindow({
-        payload,
+        payload: payload as PayloadLike,
         attempt,
         tryoutId,
         targetSubtest: nextSubtest,
@@ -454,7 +453,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         };
       }
 
-      // Ensure answers and flags are objects
       const nextAnswers = { ...attempt.answers };
       const nextFlags = { ...attempt.flags };
 
@@ -534,7 +532,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
 
       if (attempt.status === "completed") return attempt;
 
-      // Fetch the tryout with questions populated
       const tryoutId = getTryoutId(attempt.tryout);
       const tryout = await payload.findByID({
         collection: "tryouts",
@@ -559,7 +556,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         });
       }
 
-      // Calculate results (counts, basic correctness) - externalized logic
       const results = calculateSubmissionResults(subtests, input.answers);
 
       const updated = await payload.update({

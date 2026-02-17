@@ -48,7 +48,6 @@ export const MobileExamControls = ({
 
   const toggleOpen = useCallback(() => setIsOpen((prev) => !prev), []);
 
-  // Lock body scroll when overlay is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -62,7 +61,6 @@ export const MobileExamControls = ({
     return currentSubtestId ? Object.keys(answers[currentSubtestId] || {}).length : 0;
   }, [answers, currentSubtestId]);
 
-  // Overlay portal
   const overlay = useMemo(() => (
     <AnimatePresence>
       {isOpen && (
@@ -91,7 +89,7 @@ export const MobileExamControls = ({
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
             className="relative w-full max-w-lg bg-white rounded-t-2xl shadow-2xl max-h-[75vh] flex flex-col"
           >
-            {/* Handle bar */}
+            {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-1 bg-muted rounded-full" />
             </div>

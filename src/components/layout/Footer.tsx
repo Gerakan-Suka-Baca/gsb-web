@@ -18,10 +18,10 @@ export function Footer() {
     <footer id="kontak" className="bg-[#1a1a1a] text-white">
       <div className="container mx-auto px-4 lg:px-6 py-5 md:py-8">
 
-        {/* ── Main grid ── */}
+        {/* Main grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6 md:gap-8 mb-4 md:mb-6">
 
-          {/* Col 1: Brand + Contact */}
+          {/* Brand + contact */}
           <div className="col-span-2 lg:col-span-1 space-y-2">
             <Link href="/" className="flex items-center gap-2">
               <Image src="/home/logo-gsb.png" alt="GSB Logo" className="h-8 w-auto object-contain bg-white/10 rounded-lg p-0.5" width={32} height={32} />
@@ -37,7 +37,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Col 2: Link Cepat */}
+          {/* Quick links */}
           <div>
             <h3 className="font-heading font-semibold text-sm mb-2 md:mb-3">Link Cepat</h3>
             {/* Mobile: 2x2 grid | Desktop: stacked */}
@@ -53,10 +53,9 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Col 3: Program */}
+          {/* Program */}
           <div>
             <h3 className="font-heading font-semibold text-sm mb-2 md:mb-3">Program</h3>
-            {/* Mobile: 2x2 grid | Desktop: stacked */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 md:flex md:flex-col md:gap-y-1.5 text-xs">
               {[
                 { href: "/programs#minggu-cerdas", label: "Minggu Cerdas" },
@@ -69,7 +68,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Col 4: Ikuti Kami + Kolaborasi */}
+          {/* Follow + collaborate */}
           <div className="col-span-2 lg:col-span-1">
             <div className="flex items-start gap-6 md:flex-col md:gap-0">
               <div>
@@ -93,7 +92,7 @@ export function Footer() {
           </div>
         </div>
 
-        {/* ── Bottom bar ── */}
+        {/* Bottom bar */}
         <div className="border-t border-white/10 pt-3 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-400">
           <p>© 2026 Gerakan Suka Baca. Hak Cipta Dilindungi.</p>
           <div className="flex gap-4">

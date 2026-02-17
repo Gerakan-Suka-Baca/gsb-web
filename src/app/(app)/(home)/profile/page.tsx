@@ -34,7 +34,7 @@ export default async function ProfilePage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
-        {/* Main Profile Card */}
+        {/* Profile card */}
         <Card className="md:col-span-1 border-t-4 border-t-gsb-orange shadow-md">
             <CardHeader className="text-center">
                 <div className="mx-auto w-24 h-24 bg-gsb-maroon/10 rounded-full flex items-center justify-center mb-4">
@@ -78,7 +78,7 @@ export default async function ProfilePage() {
             </CardContent>
         </Card>
 
-        {/* Academic & Targets */}
+        {/* Academic */}
         <div className="md:col-span-2 space-y-6">
             <Card className="shadow-sm">
                 <CardHeader>

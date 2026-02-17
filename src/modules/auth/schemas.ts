@@ -7,8 +7,7 @@ const passwordDisallowedRegex = /^[^\s"'\\`]+$/;
 const passwordSchema = z
   .string()
   .min(8, "Password minimal 8 karakter")
-  // Pesan detail untuk aturan huruf/angka/simbol ditampilkan di UI,
-  // jadi di level schema cukup satu pesan umum agar tidak dobel.
+  // Detailed rules shown in UI; keep schema message generic.
   .regex(/[A-Z]/, "Password belum memenuhi aturan keamanan")
   .regex(/[a-z]/, "Password belum memenuhi aturan keamanan")
   .regex(/[0-9]/, "Password belum memenuhi aturan keamanan")

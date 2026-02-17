@@ -15,8 +15,6 @@ import { useExamSync, type ServerTimingSyncPayload } from "./useExamSync";
 import { useAttemptRestoration } from "./useAttemptRestoration";
 import { useExamDialogs } from "./useExamDialogs";
 
-// --- Types & Constants ---
-
 export type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
 export type SubtestAnswer = NonNullable<SubtestQuestion["tryoutAnswers"]>[number];
 export type { ExamState, AnswerMap, FlagMap, ExamStatus };
@@ -49,8 +47,6 @@ export const ANIM = {
     animate: { opacity: 1, y: 0, transition: { duration: 0.3 } },
   }
 } as const;
-
-// --- Main Hook ---
 
 export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamProps) {
   const router = useRouter();
@@ -102,7 +98,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     [applyServerTiming]
   );
 
-  // DEBUG: Trace Subtest ID
   const safeSubtestIndex = useMemo(() => {
     if (!Number.isFinite(state.currentSubtestIndex)) return 0;
     if (state.currentSubtestIndex < 0) return 0;
@@ -120,7 +115,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   const currentSubtest = useMemo(() => subtests[safeSubtestIndex], [subtests, safeSubtestIndex]);
   const currentSubtestId = typeof currentSubtest?.id === "string" ? currentSubtest.id : "";
   
-  // --- Lazy Load Content ---
   const { data: subtestContent, isLoading: isContentLoading, isError: isContentError, refetch: refetchSubtest } = useQuery(
     trpc.tryouts.getSubtest.queryOptions(
       { subtestId: currentSubtestId },
@@ -128,7 +122,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     )
   );
 
-  // Prefetch next 2 subtests
   const prefetchNext = useCallback(() => {
     const nextIdx = state.currentSubtestIndex + 1;
     for (let i = nextIdx; i < nextIdx + 2; i++) {
@@ -141,21 +134,11 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     }
   }, [state.currentSubtestIndex, subtests, queryClient, trpc]);
 
-  // Trigger prefetch when subtest changes
   useMemo(() => {
      if (subtests.length > 0) prefetchNext();
   }, [prefetchNext, subtests.length]);
 
   const questions = useMemo(() => {
-    // DEBUG: Trace Question Loading
-    console.log("[useTryoutExam] Resolving questions:", { 
-        currentSubtestId, 
-        contentId: subtestContent?.id, 
-        hasContent: !!subtestContent,
-        contentQLen: subtestContent?.tryoutQuestions?.length,
-        fallbackQLen: currentSubtest?.tryoutQuestions?.length
-    });
-
     if (subtestContent && subtestContent.id === currentSubtestId) {
         return (subtestContent.tryoutQuestions || []) as SubtestQuestion[];
     }
@@ -230,7 +213,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   useAttemptRestoration({
     attempt: initialAttempt,
-    isLoading: false, // Data is passed from parent, so it's already loaded
+    isLoading: false,
     subtests,
     currentAttemptId: state.attemptId,
     onRestore: useCallback((restoredState) => {
@@ -295,7 +278,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     await flushEvents(true);
   }, [state.currentSubtestIndex, subtests, flushEvents, dispatch, setTimeLeft]);
 
-  // Consolidates dialog timing logic
   useExamDialogs({
     status: state.status,
     bridgingSeconds: state.bridgingSeconds,

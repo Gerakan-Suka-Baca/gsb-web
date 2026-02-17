@@ -36,7 +36,6 @@ export function useExamTimer({
   useEffect(() => {
     const serverNowMs = parseDateMs(serverNow);
     if (serverNowMs === null) return;
-    // Keep a small drift correction to align UI countdown with server clock.
     clockOffsetMsRef.current = serverNowMs - Date.now();
   }, [serverNow]);
 

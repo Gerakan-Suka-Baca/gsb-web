@@ -254,7 +254,7 @@ export default function PodcastContent() {
         </div>
       </section>
 
-      {/* Episode Terbaru */}
+      {/* Latest episodes */}
       <section id="episode-terbaru" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
           <FadeIn className="text-center mb-12">
@@ -301,7 +301,7 @@ export default function PodcastContent() {
         </div>
       </section>
 
-      {/* Episode Lainnya */}
+      {/* More episodes */}
       {allEpisodes.length > 0 && (
         <section className="py-20">
           <div className="container mx-auto px-4 lg:px-6">

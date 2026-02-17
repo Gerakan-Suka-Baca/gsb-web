@@ -4,7 +4,6 @@ import { CheckCircle2, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Question } from "@/payload-types";
 
-// Animation variants
 const ANIM = {
   fadeSlide: {
     initial: { opacity: 0, y: 20 },
