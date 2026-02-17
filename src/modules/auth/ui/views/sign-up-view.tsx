@@ -91,8 +91,8 @@ export const SignUpView = () => {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-7xl grid md:grid-cols-5 bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+    <div className="min-h-screen w-full bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-7xl grid md:grid-cols-5 bg-card rounded-2xl shadow-xl overflow-hidden border border-border">
         {/* Brand panel — hidden on small screens */}
         <div className="hidden md:flex md:col-span-2 bg-gradient-to-br from-gsb-maroon to-gsb-red text-white p-8 flex-col justify-between relative">
              <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
@@ -124,7 +124,7 @@ export const SignUpView = () => {
         {/* Form column */}
         <div className="md:col-span-3 p-8 lg:p-12 overflow-y-auto max-h-[90vh]">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gsb-maroon font-heading">Buat Akun Baru</h1>
+                <h1 className="text-2xl font-bold text-responsive-maroon font-heading">Buat Akun Baru</h1>
                 <p className="text-muted-foreground text-sm mt-1">Lengkapi data diri untuk pengalaman tryout maksimal.</p>
             </div>
 
@@ -133,7 +133,7 @@ export const SignUpView = () => {
                 
                 {/* Account fields */}
                 <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Informasi Akun</h3>
+                    <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2 uppercase tracking-wide">Informasi Akun</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                          <FormField
                           control={form.control}
@@ -232,7 +232,7 @@ export const SignUpView = () => {
 
                 {/* Profile fields */}
                 <div className="space-y-4 pt-2">
-                    <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Data Diri</h3>
+                    <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2 uppercase tracking-wide">Data Diri</h3>
                     <FormField
                       control={form.control}
                       name="fullName"
@@ -264,7 +264,7 @@ export const SignUpView = () => {
 
                 {/* School & target uni */}
                 <div className="space-y-4 pt-2">
-                    <h3 className="text-sm font-semibold text-gray-900 border-b pb-2 uppercase tracking-wide">Data Akademik</h3>
+                    <h3 className="text-sm font-semibold text-foreground border-b border-border pb-2 uppercase tracking-wide">Data Akademik</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                         <FormField
                           control={form.control}
@@ -390,7 +390,7 @@ export const SignUpView = () => {
 
             <div className="mt-8 text-center text-sm">
                 <span className="text-muted-foreground">Sudah punya akun? </span>
-                <Link href={`/sign-in${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-gsb-maroon hover:text-gsb-orange transition-colors">
+                <Link href={`/sign-in${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-responsive-orange hover:opacity-90 transition-opacity">
                     Masuk di sini
                 </Link>
             </div>

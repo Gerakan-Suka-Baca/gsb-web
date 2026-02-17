@@ -124,13 +124,13 @@ export default function PodcastContent() {
 
         <div className="container mx-auto px-4 lg:px-6 relative z-10">
           <FadeIn className="max-w-3xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gsb-orange/10 text-gsb-orange text-sm font-bold mb-6 border border-gsb-orange/20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gsb-orange/10 text-responsive-orange text-sm font-bold mb-6 border border-gsb-orange/20">
               <Mic className="w-4 h-4" />
               <span>Media Pembelajaran Audio</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 leading-tight text-gsb-maroon">
-              MSG <span className="text-gsb-orange">Podcast</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 leading-tight text-responsive-maroon">
+              MSG <span className="text-responsive-orange">Podcast</span>
             </h1>
 
             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-8">
@@ -176,10 +176,10 @@ export default function PodcastContent() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <FadeIn direction="right">
               <div className="space-y-6">
-                <span className="text-gsb-orange font-bold tracking-wider uppercase">
+                <span className="text-responsive-orange font-bold tracking-wider uppercase">
                   Tentang
                 </span>
-                <h2 className="text-4xl md:text-5xl font-heading font-bold text-gsb-maroon">
+                <h2 className="text-4xl md:text-5xl font-heading font-bold text-responsive-maroon">
                   Apa itu MSG Podcast?
                 </h2>
                 <div className="space-y-4 text-lg text-muted-foreground leading-relaxed">
@@ -187,7 +187,7 @@ export default function PodcastContent() {
                     <strong className="text-foreground">MSG Podcast</strong>{" "}
                     adalah media pembelajaran inklusif dalam format audio dari
                     Gerakan Suka Baca dalam bentuk{" "}
-                    <span className="text-gsb-orange font-semibold">
+                    <span className="text-responsive-orange font-semibold">
                       dongeng
                     </span>
                     .
@@ -198,7 +198,7 @@ export default function PodcastContent() {
                     menjadi media belajar bagi para peserta didik, pendidik, dan
                     orangtua dari latar belakang apapun.
                   </p>
-                  <p className="text-gsb-maroon font-semibold italic">
+                  <p className="text-responsive-maroon font-semibold italic">
                     &ldquo;Selamat mendengarkan! Mari sama-sama bergerak, untuk
                     sama-sama berdampak!&rdquo;
                   </p>
@@ -258,10 +258,10 @@ export default function PodcastContent() {
       <section id="episode-terbaru" className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
           <FadeIn className="text-center mb-12">
-            <span className="text-gsb-orange font-bold tracking-wider uppercase">
+            <span className="text-responsive-orange font-bold tracking-wider uppercase">
               Dengarkan Sekarang
             </span>
-            <h2 className="text-4xl md:text-5xl font-heading font-bold text-gsb-maroon mt-4 mb-6">
+            <h2 className="text-4xl md:text-5xl font-heading font-bold text-responsive-maroon mt-4 mb-6">
               Episode Terbaru
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -306,10 +306,10 @@ export default function PodcastContent() {
         <section className="py-20">
           <div className="container mx-auto px-4 lg:px-6">
             <FadeIn className="text-center mb-12">
-              <span className="text-gsb-orange font-bold tracking-wider uppercase">
+              <span className="text-responsive-orange font-bold tracking-wider uppercase">
                 Jelajahi Lebih Banyak
               </span>
-              <h2 className="text-4xl md:text-5xl font-heading font-bold text-gsb-maroon mt-4 mb-6">
+              <h2 className="text-4xl md:text-5xl font-heading font-bold text-responsive-maroon mt-4 mb-6">
                 Podcast Lain dari GSB
               </h2>
               <p className="text-muted-foreground text-lg max-w-2xl mx-auto">

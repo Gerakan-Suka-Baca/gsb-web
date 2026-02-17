@@ -116,7 +116,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
         <Button
           variant="outline"
           size="sm"
-          className="gap-2 border-gsb-orange/50 text-foreground hover:bg-gsb-orange/10 dark:text-white"
+          className="gap-2 border-gsb-orange/50 text-foreground hover:bg-gsb-orange/10"
         >
           <Pencil className="h-4 w-4" />
           Edit Profil

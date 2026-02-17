@@ -35,8 +35,8 @@ export default function VolunteerPage() {
         <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
           <FadeIn direction="up">
             <span className="inline-block py-1 px-3 rounded-full bg-gsb-red/10 text-gsb-red text-sm font-bold mb-4 tracking-wider uppercase">Open Recruitment</span>
-            <h1 className="text-4xl md:text-6xl font-heading font-bold text-gsb-maroon dark:text-white mb-6">
-              Gabung <span className="text-gsb-orange">Geng Suba</span>
+            <h1 className="text-4xl md:text-6xl font-heading font-bold text-responsive-maroon mb-6">
+              Gabung <span className="text-responsive-orange">Geng Suba</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Jadilah bagian dari perubahan. Bergabunglah dengan 4.000+ relawan yang telah bergerak berdampak untuk pendidikan Indonesia.
@@ -53,7 +53,7 @@ export default function VolunteerPage() {
       <section className="py-16">
         <div className="container mx-auto px-4 lg:px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">Budaya Kami</h2>
+            <h2 className="text-3xl font-heading font-bold text-responsive-maroon mb-4">Budaya Kami</h2>
             <p className="text-muted-foreground">Lingkungan relawan yang suportif, seru, dan bertumbuh.</p>
           </div>
 
@@ -63,7 +63,7 @@ export default function VolunteerPage() {
                 <div className="mb-4 bg-muted w-12 h-12 rounded-full flex items-center justify-center">
                   {item.icon}
                 </div>
-                <h3 className="text-lg font-bold text-gsb-maroon dark:text-white mb-2">{item.title}</h3>
+                <h3 className="text-lg font-bold text-responsive-maroon mb-2">{item.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
               </FadeIn>
             ))}

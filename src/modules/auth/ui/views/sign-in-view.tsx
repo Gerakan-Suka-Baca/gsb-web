@@ -83,10 +83,10 @@ export const SignInView = () => {
         </div>
 
         {/* Form */}
-        <div className="flex flex-col justify-center items-center p-6 md:p-12 bg-gray-50/50">
-            <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div className="flex flex-col justify-center items-center p-6 md:p-12 bg-background">
+            <div className="w-full max-w-md space-y-8 bg-card p-8 rounded-2xl shadow-sm border border-border">
                 <div className="text-center">
-                    <h2 className="text-2xl font-bold text-gsb-maroon font-heading">Selamat Datang Kembali</h2>
+                    <h2 className="text-2xl font-bold text-responsive-maroon font-heading">Selamat Datang Kembali</h2>
                     <p className="text-muted-foreground mt-2 text-sm">Masuk untuk melanjutkan progress belajar Anda</p>
                 </div>
 
@@ -97,9 +97,9 @@ export const SignInView = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel className="text-foreground">Email</FormLabel>
                           <FormControl>
-                            <Input placeholder="nama@email.com" {...field} className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                            <Input placeholder="nama@email.com" {...field} className="h-11" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -111,11 +111,11 @@ export const SignInView = () => {
                       render={({ field }) => (
                         <FormItem>
                           <div className="flex justify-between items-center">
-                               <FormLabel>Password</FormLabel>
-                               <Link href="#" className="text-xs text-gsb-orange font-semibold hover:underline">Lupa Password?</Link>
+                               <FormLabel className="text-foreground">Password</FormLabel>
+                               <Link href="#" className="text-xs text-responsive-orange font-semibold hover:underline">Lupa Password?</Link>
                           </div>
                           <FormControl>
-                            <PasswordInput placeholder="••••••••" {...field} className="h-11 bg-gray-50 border-gray-200 focus:bg-white transition-all" />
+                            <PasswordInput placeholder="••••••••" {...field} className="h-11" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -136,7 +136,7 @@ export const SignInView = () => {
 
                 <div className="text-center text-sm">
                     <span className="text-muted-foreground">Belum punya akun? </span>
-                    <Link href={`/sign-up${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-gsb-maroon hover:text-gsb-orange transition-colors">
+                    <Link href={`/sign-up${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-responsive-orange hover:opacity-90 transition-opacity">
                         Daftar Gratis
                     </Link>
                 </div>

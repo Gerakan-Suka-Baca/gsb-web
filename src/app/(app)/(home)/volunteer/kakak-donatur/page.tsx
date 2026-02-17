@@ -68,8 +68,8 @@ export default function KakakDonaturPage() {
               <span>Program Beasiswa Minggu Cerdas</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 leading-tight text-gsb-maroon">
-              Kakak <span className="text-gsb-orange relative">Donatur
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-heading font-bold mb-6 leading-tight text-responsive-maroon">
+              Kakak <span className="text-responsive-orange relative">Donatur
                 <svg className="absolute w-full h-3 -bottom-1 left-0 text-gsb-yellow -z-10 opacity-60" viewBox="0 0 100 10" preserveAspectRatio="none">
                   <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
                 </svg>
@@ -101,9 +101,9 @@ export default function KakakDonaturPage() {
               <div className="relative">
                 <div className="absolute -inset-4 bg-gsb-orange/10 rounded-3xl transform -rotate-2" />
                 <div className="relative bg-background border border-border p-8 md:p-10 rounded-2xl shadow-sm">
-                  <h3 className="text-2xl font-heading font-bold mb-4 text-gsb-maroon">Apa itu Kakak Donatur?</h3>
+                  <h3 className="text-2xl font-heading font-bold mb-4 text-responsive-maroon">Apa itu Kakak Donatur?</h3>
                   <p className="text-lg leading-relaxed text-muted-foreground">
-                    Kakak donatur adalah orang yang berpartisipasi dalam <span className="font-bold text-gsb-orange">Beasiswa Minggu Cerdas</span>. Sebuah program bantuan biaya hidup dan pendidikan secara parsial atau sebagian untuk siswa GSB terpilih dari jenjang SD, SMP, SMA selama satu semester.
+                    Kakak donatur adalah orang yang berpartisipasi dalam <span className="font-bold text-responsive-orange">Beasiswa Minggu Cerdas</span>. Sebuah program bantuan biaya hidup dan pendidikan secara parsial atau sebagian untuk siswa GSB terpilih dari jenjang SD, SMP, SMA selama satu semester.
                   </p>
                 </div>
               </div>
@@ -111,8 +111,8 @@ export default function KakakDonaturPage() {
 
             <FadeIn direction="left">
               <div className="space-y-6">
-                <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon">
-                  Apresiasi Prestasi,<br /><span className="text-gsb-orange">Dukung Pendidikan</span>
+                <h2 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon">
+                  Apresiasi Prestasi,<br /><span className="text-responsive-orange">Dukung Pendidikan</span>
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
                   Program ini merupakan upaya GSB untuk mengapresiasi para siswa dari segi akademik maupun non-akademik dengan seleksi terlebih dahulu.
@@ -131,7 +131,7 @@ export default function KakakDonaturPage() {
         <div className="container mx-auto px-4 lg:px-6">
           <FadeIn className="text-center mb-12">
             <span className="text-gsb-tosca font-bold tracking-wider uppercase text-sm">Pilihan Donasi</span>
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mt-2 mb-4">Nominal Beasiswa</h2>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mt-2 mb-4">Nominal Beasiswa</h2>
             <p className="text-muted-foreground text-lg">Pilih jenjang pendidikan yang ingin kamu dukung</p>
           </FadeIn>
 
@@ -143,7 +143,7 @@ export default function KakakDonaturPage() {
                 </div>
                 <div className="p-8 text-center space-y-4">
                   <p className="text-sm text-muted-foreground font-medium">Siswa mendapatkan</p>
-                  <div className="text-3xl md:text-4xl font-bold text-gsb-maroon">
+                  <div className="text-3xl md:text-4xl font-bold text-responsive-maroon">
                     {tier.amount}
                   </div>
                   <p className="text-sm font-bold text-gsb-orange bg-gsb-orange/10 py-1 px-3 rounded-full inline-block">
@@ -160,14 +160,14 @@ export default function KakakDonaturPage() {
       <section className="py-20 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
           <FadeIn className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-6">Benefit Kakak Donatur</h2>
+            <h2 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mb-6">Benefit Kakak Donatur</h2>
             <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               {benefits.map((item) => (
                 <div key={item.title} className="flex flex-col items-center bg-background p-8 rounded-3xl border border-border hover:border-gsb-orange/50 transition-colors">
                   <div className={`w-16 h-16 rounded-2xl ${item.bg} flex items-center justify-center mb-6`}>
                     <item.icon className={`w-8 h-8 ${item.color}`} />
                   </div>
-                  <h3 className="text-xl font-bold text-gsb-maroon mb-2">{item.title}</h3>
+                  <h3 className="text-xl font-bold text-responsive-maroon mb-2">{item.title}</h3>
                   <p className="text-muted-foreground">{item.desc}</p>
                 </div>
               ))}

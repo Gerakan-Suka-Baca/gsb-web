@@ -149,7 +149,7 @@ export const TryoutsList = () => {
             </div>
 
             <div className="flex justify-end mt-1">
-              <span className="text-sm font-medium text-gsb-orange flex items-center gap-1 group-hover:gap-2 transition-all">
+              <span className="text-sm font-medium text-responsive-orange flex items-center gap-1 group-hover:gap-2 transition-all">
                 {badge === "in-progress" ? "Lanjutkan" : badge === "finished" ? "Lihat Hasil" : "Mulai"}
                 <ArrowRight className="w-4 h-4" />
               </span>
@@ -167,7 +167,7 @@ export const TryoutsList = () => {
       <p className="text-muted-foreground text-lg">{message}</p>
       {activeTab === 'current' && (
          <p className="text-muted-foreground text-sm mt-2">
-           Cek <button onClick={() => setActiveTab('others')} className="text-gsb-orange underline font-semibold">Lainnya</button> untuk melihat Tryout lain yang sedang dibuka.
+           Cek <button type="button" onClick={() => setActiveTab('others')} className="text-responsive-orange underline font-semibold hover:opacity-90">Lainnya</button> untuk melihat Tryout lain yang sedang dibuka.
          </p>
       )}
     </motion.div>
@@ -177,7 +177,7 @@ export const TryoutsList = () => {
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
 
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-2">
+        <h1 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mb-2">
           Dashboard Tryout
         </h1>
         <p className="text-muted-foreground">
@@ -186,48 +186,43 @@ export const TryoutsList = () => {
           </span>
           Kelola dan pantau tryout kamu di sini.
         </p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Cek <button type="button" onClick={() => setActiveTab("others")} className="font-semibold text-responsive-orange hover:underline focus:outline-none">Lainnya</button> untuk melihat tryout yang tersedia.
+        </p>
       </motion.div>
 
-
       <div className="mb-6 md:mb-8">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="w-full sm:w-64">
-                <Select
-                    value={activeTab}
-                    onValueChange={(val) => setActiveTab(val as TabKey)}
-                >
-                    <SelectTrigger className="w-full h-12 text-base font-medium">
-                        <SelectValue placeholder="Pilih status tryout" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {TABS.map((tab) => {
-                             const Icon = tab.icon;
-                             const count =
-                               tab.key === "current" ? currentTryouts.length :
-                               tab.key === "registered" ? registeredTryouts.length :
-                               availableTryouts.length;
-                             
-                             return (
-                                <SelectItem key={tab.key} value={tab.key}>
-                                    <div className="flex items-center gap-2">
-                                        <Icon className="w-4 h-4 text-muted-foreground" />
-                                        <span>{tab.label}</span>
-                                        {count > 0 && (
-                                            <span className="ml-2 text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
-                                                {count}
-                                            </span>
-                                        )}
-                                    </div>
-                                </SelectItem>
-                             )
-                        })}
-                    </SelectContent>
-                </Select>
-            </div>
-            
-            <p className="text-sm text-muted-foreground hidden md:block">
-                Cek <span className="font-semibold text-foreground">Lainnya</span> untuk melihat tryout yang tersedia.
-            </p>
+        <div className="w-full sm:w-64">
+          <Select
+            value={activeTab}
+            onValueChange={(val) => setActiveTab(val as TabKey)}
+          >
+            <SelectTrigger className="w-full h-12 text-base font-medium">
+              <SelectValue placeholder="Pilih status tryout" />
+            </SelectTrigger>
+            <SelectContent>
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const count =
+                  tab.key === "current" ? currentTryouts.length :
+                  tab.key === "registered" ? registeredTryouts.length :
+                  availableTryouts.length;
+                return (
+                  <SelectItem key={tab.key} value={tab.key}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="w-4 h-4 text-muted-foreground" />
+                      <span>{tab.label}</span>
+                      {count > 0 && (
+                        <span className="ml-2 text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+                          {count}
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

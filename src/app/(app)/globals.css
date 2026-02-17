@@ -226,4 +226,18 @@
   h6 {
     @apply font-heading;
   }
+
+  /* Theme-aware heading: maroon in light */
+  .text-responsive-maroon {
+    color: hsl(var(--gsb-maroon));
+  }
+
+  .dark .text-responsive-maroon {
+    color: hsl(var(--foreground));
+  }
+
+  /* Accent: always orange in both light and dark  */
+  .text-responsive-orange {
+    color: hsl(var(--gsb-orange));
+  }
 }

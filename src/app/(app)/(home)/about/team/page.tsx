@@ -32,9 +32,9 @@ export default function TeamPage() {
             <section className="relative py-20 bg-muted/30 overflow-hidden">
                 <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
                     <FadeIn direction="up">
-                        <span className="inline-block py-1 px-3 rounded-full bg-gsb-orange/10 text-gsb-orange text-sm font-bold mb-4">Tim GSB</span>
-                        <h1 className="text-4xl md:text-6xl font-heading font-bold text-gsb-maroon dark:text-white mb-6">
-                            Orang di Balik <span className="text-gsb-orange">Layar</span>
+                        <span className="inline-block py-1 px-3 rounded-full bg-gsb-orange/10 text-responsive-orange text-sm font-bold mb-4">Tim GSB</span>
+                        <h1 className="text-4xl md:text-6xl font-heading font-bold text-responsive-maroon mb-6">
+                            Orang di Balik <span className="text-responsive-orange">Layar</span>
                         </h1>
                         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                             Orang-orang hebat yang mendedikasikan waktu dan tenaga untuk keberlangsungan Yayasan Gema Simpul Berdaya.
@@ -51,7 +51,7 @@ export default function TeamPage() {
                                 <div className="w-20 h-20 rounded-full bg-gsb-orange/10 flex items-center justify-center mb-6 text-gsb-orange">
                                     {group.icon}
                                 </div>
-                                <h3 className="text-2xl font-bold text-gsb-maroon dark:text-white mb-6">{group.role}</h3>
+                                <h3 className="text-2xl font-bold text-responsive-maroon mb-6">{group.role}</h3>
                                 <ul className="space-y-3 text-center w-full">
                                     {group.members.map((member) => (
                                         <li key={member} className="text-muted-foreground font-medium py-2 border-b border-border/50 last:border-0 w-full">
