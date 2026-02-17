@@ -1,7 +1,8 @@
 import { TryoutListView } from "@/modules/tryouts/ui/views/tryout-list-view";
-import { caller, getQueryClient, trpc } from "@/trpc/server";
+import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,9 @@ export const dynamic = "force-dynamic";
 
 const Page = async () => {
   const queryClient = getQueryClient();
-  const session = await caller.auth.session();
+  const { userId } = await auth();
 
-  if (!session.user) {
+  if (!userId) {
     redirect(`/sign-in?callbackUrl=${encodeURIComponent("/tryout")}`);
   }
 

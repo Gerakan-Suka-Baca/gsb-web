@@ -1,7 +1,8 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { caller, getQueryClient, trpc } from "@/trpc/server";
+import { getQueryClient, trpc } from "@/trpc/server";
 import { TryoutView } from "@/modules/tryouts/ui/views/tryout-view";
 import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,8 +15,8 @@ interface Props {
 const Page = async ({ params }: Props) => {
   const { tryoutId } = await params;
 
-  const session = await caller.auth.session();
-  if (!session.user) {
+  const { userId } = await auth();
+  if (!userId) {
     redirect(`/sign-in?callbackUrl=${encodeURIComponent(`/tryout/${tryoutId}`)}`);
   }
 

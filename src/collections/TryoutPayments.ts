@@ -1,5 +1,16 @@
 import type { CollectionConfig } from "payload";
 
+const hasAdminRole = (user: unknown) => {
+  if (!user || typeof user !== "object") {
+    return false;
+  }
+  const roles = (user as { roles?: unknown }).roles;
+  if (!Array.isArray(roles)) {
+    return false;
+  }
+  return roles.includes("admin") || roles.includes("super-admin");
+};
+
 export const TryoutPayments: CollectionConfig = {
   slug: "tryout-payments",
   admin: {
@@ -9,22 +20,14 @@ export const TryoutPayments: CollectionConfig = {
   },
   access: {
     read: ({ req: { user } }) => {
-      if (user && "roles" in user && (user.roles?.includes("admin") || user.roles?.includes("super-admin"))) {
+      if (hasAdminRole(user)) {
         return true;
       }
       return { user: { equals: user?.id } };
     },
     create: () => true, 
-    update: ({ req: { user } }) => {
-      return Boolean(
-        user && "roles" in user && (user.roles?.includes("admin") || user.roles?.includes("super-admin"))
-      );
-    },
-    delete: ({ req: { user } }) => {
-      return Boolean(
-        user && "roles" in user && (user.roles?.includes("admin") || user.roles?.includes("super-admin"))
-      );
-    },
+    update: ({ req: { user } }) => hasAdminRole(user),
+    delete: ({ req: { user } }) => hasAdminRole(user),
   },
   fields: [
     {

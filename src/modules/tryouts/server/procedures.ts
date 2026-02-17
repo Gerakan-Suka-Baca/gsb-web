@@ -37,23 +37,20 @@ export const tryoutsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
-      const tryout = await ctx.db.findByID({
-        collection: "tryouts",
-        id: input.tryoutId,
-        depth: 0,
-      });
-
-      const questions = await ctx.db.find({
-        collection: "questions",
-        where: {
-          tryout: {
-            equals: input.tryoutId,
-          },
-        },
-        limit: 200, 
-        sort: "createdAt",
-        depth: 1, 
-      });
+      const [tryout, questions] = await Promise.all([
+        ctx.db.findByID({
+          collection: "tryouts",
+          id: input.tryoutId,
+          depth: 0,
+        }),
+        ctx.db.find({
+          collection: "questions",
+          where: { tryout: { equals: input.tryoutId } },
+          limit: 200,
+          sort: "createdAt",
+          depth: 1,
+        }),
+      ]);
 
       const runtimeTests = questions.docs.map((doc) =>
         stripAnswerKeyFromSubtest(doc as Question)

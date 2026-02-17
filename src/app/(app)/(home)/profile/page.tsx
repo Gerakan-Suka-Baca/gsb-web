@@ -1,4 +1,5 @@
-import { caller } from "@/trpc/server";
+import { auth } from "@clerk/nextjs/server";
+import { getPayloadCached } from "@/lib/payload";
 import { redirect } from "next/navigation";
 import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,13 +16,24 @@ type ProfileUser = User & {
 };
 
 export default async function ProfilePage() {
-  const session = await caller.auth.session();
+  const [authResult, db] = await Promise.all([auth(), getPayloadCached()]);
+  const { userId } = authResult;
 
-  if (!session.user) {
+  if (!userId) {
     redirect(`/sign-in?callbackUrl=${encodeURIComponent("/profile")}`);
   }
 
-  const user = session.user as ProfileUser;
+  const existingUsers = await db.find({
+    collection: "users",
+    where: { clerkUserId: { equals: userId } },
+    limit: 1,
+  });
+
+  if (!existingUsers.docs[0]) {
+    redirect("/complete-profile");
+  }
+
+  const user = existingUsers.docs[0] as ProfileUser;
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
@@ -44,7 +56,7 @@ export default async function ProfilePage() {
                 <CardDescription>@{user.username}</CardDescription>
                 <div className="flex justify-center mt-2">
                     <Badge variant="outline" className="capitalize">
-                        {user.roles?.includes("super-admin") ? "Admin" : "Siswa"}
+                        {user.roles?.includes("super-admin") || user.roles?.includes("admin") ? "Admin" : "Siswa"}
                     </Badge>
                 </div>
             </CardHeader>

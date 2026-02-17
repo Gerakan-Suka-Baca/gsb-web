@@ -63,10 +63,11 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
+    admins: AdminAuthOperations;
   };
   blocks: {};
   collections: {
+    admins: Admin;
     users: User;
     media: Media;
     tryouts: Tryout;
@@ -80,6 +81,7 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
+    admins: AdminsSelect<false> | AdminsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
@@ -98,13 +100,13 @@ export interface Config {
   globals: {};
   globalsSelect: {};
   locale: null;
-  user: User;
+  user: Admin;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
-export interface UserAuthOperations {
+export interface AdminAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -124,23 +126,11 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "admins".
  */
-export interface User {
+export interface Admin {
   id: string;
-  username: string;
-  fullName?: string | null;
-  whatsapp?: string | null;
-  schoolOrigin?: string | null;
-  grade?: ('10' | '11' | '12' | 'gap_year') | null;
-  targetPTN?: string | null;
-  targetMajor?: string | null;
-  targetPTN2?: string | null;
-  targetMajor2?: string | null;
-  paid?: boolean | null;
-  payment?: (string | null) | Media;
-  roles?: ('super-admin' | 'admin' | 'user')[] | null;
-  dateOfBirth?: string | null;
+  name?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -158,7 +148,32 @@ export interface User {
       }[]
     | null;
   password?: string | null;
-  collection: 'users';
+  collection: 'admins';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  email: string;
+  clerkUserId?: string | null;
+  profileCompleted?: boolean | null;
+  username?: string | null;
+  fullName?: string | null;
+  whatsapp?: string | null;
+  schoolOrigin?: string | null;
+  grade?: ('10' | '11' | '12' | 'gap_year') | null;
+  targetPTN?: string | null;
+  targetMajor?: string | null;
+  targetPTN2?: string | null;
+  targetMajor2?: string | null;
+  paid?: boolean | null;
+  payment?: (string | null) | Media;
+  roles?: ('super-admin' | 'admin' | 'user')[] | null;
+  dateOfBirth?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -394,6 +409,10 @@ export interface PayloadLockedDocument {
   id: string;
   document?:
     | ({
+        relationTo: 'admins';
+        value: string | Admin;
+      } | null)
+    | ({
         relationTo: 'users';
         value: string | User;
       } | null)
@@ -419,8 +438,8 @@ export interface PayloadLockedDocument {
       } | null);
   globalSlug?: string | null;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'admins';
+    value: string | Admin;
   };
   updatedAt: string;
   createdAt: string;
@@ -432,8 +451,8 @@ export interface PayloadLockedDocument {
 export interface PayloadPreference {
   id: string;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'admins';
+    value: string | Admin;
   };
   key?: string | null;
   value?:
@@ -461,22 +480,10 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "admins_select".
  */
-export interface UsersSelect<T extends boolean = true> {
-  username?: T;
-  fullName?: T;
-  whatsapp?: T;
-  schoolOrigin?: T;
-  grade?: T;
-  targetPTN?: T;
-  targetMajor?: T;
-  targetPTN2?: T;
-  targetMajor2?: T;
-  paid?: T;
-  payment?: T;
-  roles?: T;
-  dateOfBirth?: T;
+export interface AdminsSelect<T extends boolean = true> {
+  name?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -493,6 +500,30 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  email?: T;
+  clerkUserId?: T;
+  profileCompleted?: T;
+  username?: T;
+  fullName?: T;
+  whatsapp?: T;
+  schoolOrigin?: T;
+  grade?: T;
+  targetPTN?: T;
+  targetMajor?: T;
+  targetPTN2?: T;
+  targetMajor2?: T;
+  paid?: T;
+  payment?: T;
+  roles?: T;
+  dateOfBirth?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

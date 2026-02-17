@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
+import { optionalUserProcedure, protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
 import type { Question, Tryout } from "@/payload-types";
 import { TryoutAttempt } from "../../types";
@@ -204,10 +204,12 @@ const buildServerTimerWindow = async ({
 };
 
 export const tryoutAttemptsRouter = createTRPCRouter({
-  getAttempt: protectedProcedure
+  getAttempt: optionalUserProcedure
     .input(z.object({ tryoutId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const { db: payload, session } = ctx;
+      const session = ctx.session as { user: { id: string } } | null;
+      if (!session) return null;
+      const { db: payload } = ctx;
       const attempts = await payload.find({
         collection: "tryout-attempts",
         where: {
@@ -579,8 +581,10 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       return updated as unknown as TryoutAttempt;
     }),
 
-  getMyAttempts: protectedProcedure.query(async ({ ctx }) => {
-    const { db: payload, session } = ctx;
+  getMyAttempts: optionalUserProcedure.query(async ({ ctx }) => {
+    const session = ctx.session as { user: { id: string } } | null;
+    if (!session) return [];
+    const { db: payload } = ctx;
     const attempts = await payload.find({
       collection: "tryout-attempts",
       where: { user: { equals: session.user.id } },
