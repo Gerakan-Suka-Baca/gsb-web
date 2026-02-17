@@ -244,7 +244,7 @@ export function Navbar() {
           <ThemeButton />
         </div>
 
-        {/* Mobile Exam Slot — Timer & Navigator */}
+        {/* Mobile exam slot */}
         {examNavbarContent && (
           <div className="flex xl:hidden items-center flex-1 justify-center mx-2 min-w-0">
             {examNavbarContent}

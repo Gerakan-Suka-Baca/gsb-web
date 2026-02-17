@@ -67,7 +67,6 @@ export const authRouter = createTRPCRouter({
       });
     }),
   login: baseProcedure.input(loginSchema).mutation(async ({ input, ctx }) => {
-    // 1. Check if user exists first
     const existingUser = await ctx.db.find({
         collection: "users",
         limit: 1,
@@ -117,15 +116,7 @@ export const authRouter = createTRPCRouter({
       return { success: true };
     } catch (error) {
       console.error("Logout error:", error);
-      // Return success true anyway to let client clear its state
       return { success: true };
-      // Or throw a specific TRPCError if you want the client to handle it differently
-      /*
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Gagal menghapus sesi.",
-      });
-      */
     }
   }),
 });

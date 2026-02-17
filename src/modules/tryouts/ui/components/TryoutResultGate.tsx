@@ -43,7 +43,6 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
   const updatePlanMutation = useMutation(
     trpc.tryoutAttempts.updatePlan.mutationOptions({
       onSuccess: async () => {
-        // Invalidate specific attempt query using tryoutId
         await queryClient.invalidateQueries({ 
             queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId }, type: "query" }] 
         });
@@ -76,12 +75,9 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
     );
     window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
     
-    // Optimistic / Auto-confirm
     setShowPaymentDialog(false);
     updatePlanMutation.mutate({ attemptId, plan: "paid" });
   };
-
-
 
   return (
     <motion.div {...fadeUp} className="max-w-5xl mx-auto py-16 px-4">
@@ -132,7 +128,6 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
                 <Check className="w-5 h-5 text-gsb-tosca shrink-0" />
                 <span>Ranking Nasional</span>
               </li>
-              {/* Hidden for Free */}
               {/* <li className="flex gap-3 items-center text-base text-muted-foreground/50">
                 <XIcon className="w-5 h-5 shrink-0" />
                 <span>Tidak Ada Pembahasan</span>

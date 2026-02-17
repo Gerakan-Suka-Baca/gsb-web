@@ -74,7 +74,6 @@ export const tryoutsRouter = createTRPCRouter({
         depth: 0,
       });
 
-      // 1. Get manually ordered IDs (normalize to string)
       const rawTryout = tryout as { questions?: Array<string | { id?: string }> };
       const orderedIds: string[] = (Array.isArray(rawTryout.questions) ? rawTryout.questions : [])
         .map((q) => (typeof q === "string" ? q : q?.id ? String(q.id) : null))
@@ -83,7 +82,6 @@ export const tryoutsRouter = createTRPCRouter({
       let finalTests: Question[] = [];
 
       if (orderedIds.length > 0) {
-        // 2. Fetch metadata for these specific IDs
         const manualDocs = await ctx.db.find({
           collection: "questions",
           where: { id: { in: orderedIds } },
@@ -96,22 +94,18 @@ export const tryoutsRouter = createTRPCRouter({
             subtest: true,
           },
         });
-
-        // 3. Sort to match manual order
         const docsMap = new Map(manualDocs.docs.map((d) => [String(d.id), d]));
         finalTests = orderedIds
           .map((id) => docsMap.get(id))
           .filter((doc): doc is Question => !!doc);
       }
-
-      // 4. Fallback: If manual list yielded 0 results 
       if (finalTests.length === 0) {
         const fallbackDocs = await ctx.db.find({
           collection: "questions",
           where: { tryout: { equals: input.tryoutId } },
           limit: 200,
           sort: "createdAt",
-          depth: 0, // Metadata only
+          depth: 0,
           select: {
             id: true,
             title: true,
@@ -121,12 +115,10 @@ export const tryoutsRouter = createTRPCRouter({
         });
         finalTests = fallbackDocs.docs as Question[];
       }
-
-      // Ensure fields are present
       finalTests = finalTests.map(t => ({
         ...t,
         duration: t.duration || 0,
-        tryoutQuestions: t.tryoutQuestions || [], // Ensure array exists
+        tryoutQuestions: t.tryoutQuestions || [],
       }));
 
       return {

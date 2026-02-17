@@ -253,7 +253,6 @@ export function useExamSync({
       }
     };
 
-    // For mobile/tablet backgrounding and tab closing
     const onPageHide = () => {
       const s = stateRef.current;
       saveBackup(attemptId, {
@@ -264,7 +263,6 @@ export function useExamSync({
         examState: s.status,
         secondsRemaining: timeLeftRef.current,
       });
-      // flush
       flushEvents(true);
     };
 

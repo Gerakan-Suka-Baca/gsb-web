@@ -42,7 +42,7 @@ export function DonationModal({ isOpen, onClose }: DonationModalProps) {
                         className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-3xl max-h-[90vh] z-50 px-4 overflow-y-auto"
                     >
                         <div className="bg-background rounded-3xl overflow-hidden shadow-2xl border border-border relative my-4">
-                            {/* Header dengan tombol back/close */}
+                            {/* Header */}
                             <div className="sticky top-0 bg-background border-b border-border/50 px-4 py-3 flex items-center justify-between z-10">
                                 <button
                                     onClick={onClose}
@@ -61,7 +61,7 @@ export function DonationModal({ isOpen, onClose }: DonationModalProps) {
                             </div>
 
                             <div className="grid md:grid-cols-2 max-h-[calc(90vh-80px)] overflow-y-auto">
-                                {/* Left Column: QRIS Image */}
+                                {/* QRIS */}
                                 <div className="bg-white p-4 md:p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-border/50">
                                     <div className="relative w-full aspect-[3/4] max-w-[280px] md:max-w-[300px] shadow-lg rounded-xl overflow-hidden border border-border/50">
                                         <Image
@@ -74,7 +74,7 @@ export function DonationModal({ isOpen, onClose }: DonationModalProps) {
                                     </div>
                                 </div>
 
-                                {/* Right Column: Instructions */}
+                                {/* Instructions */}
                                 <div className="p-4 md:p-8 lg:p-10 flex flex-col justify-center">
                                     <div className="mb-6">
                                         <h3 className="text-2xl font-heading font-bold text-gsb-maroon mb-2">

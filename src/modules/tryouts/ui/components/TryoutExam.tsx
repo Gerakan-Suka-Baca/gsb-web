@@ -26,7 +26,6 @@ interface TryoutExamProps {
 export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps) => {
   const exam = useTryoutExam({ tryout, initialAttempt, onFinish });
 
-  // --- Loading ---
   if (exam.isAttemptLoading || exam.examState === "loading" || exam.isContentLoading) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
@@ -37,7 +36,6 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
     );
   }
 
-  // --- Submitting ---
   if (exam.submitAttemptMutation.isPending) {
     return (
       <ExamFinished
@@ -49,7 +47,6 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
     );
   }
 
-  // --- Finished ---
   if (exam.examState === "finished") {
     return (
       <ExamFinished
@@ -59,7 +56,6 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
     );
   }
 
-  // --- Bridging ---
   if (exam.examState === "bridging") {
     const completedSubtest = exam.subtests[exam.currentSubtestIndex];
     const nextSubtest = exam.subtests[exam.currentSubtestIndex + 1];
@@ -122,7 +118,6 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
     );
   }
 
-  // --- Ready / Start Screen ---
   if (exam.examState === "ready") {
     if (exam.isContentError || exam.questions.length === 0) {
       return (
@@ -186,7 +181,6 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
     );
   }
 
-  // --- Running: Main Exam View ---
   if (!exam.currentQuestion || !exam.currentSubtestId) {
     return <div className="flex h-[60vh] items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
   }

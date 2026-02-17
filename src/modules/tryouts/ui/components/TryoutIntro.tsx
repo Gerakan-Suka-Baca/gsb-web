@@ -16,7 +16,6 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Prefetch the first subtest so it is ready when the user clicks start
     const firstSubtest = ((tryout as Tryout & { tests: Question[] }).tests || [])[0];
     if (firstSubtest?.id) {
        queryClient.prefetchQuery(

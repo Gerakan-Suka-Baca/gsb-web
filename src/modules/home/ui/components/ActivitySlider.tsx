@@ -77,7 +77,7 @@ export function ActivitySlider() {
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-                    {/* Column 1: Cerita Suba (News) */}
+                    {/* News */}
                     <FadeIn direction="right" delay={0.2}>
                         <div className="space-y-6 h-full flex flex-col">
                             <div className="flex items-center justify-between mb-2">
@@ -120,7 +120,7 @@ export function ActivitySlider() {
                         </div>
                     </FadeIn>
 
-                    {/* Column 2: Podcast SUBA */}
+                    {/* Podcast */}
                     <FadeIn direction="left" delay={0.4}>
                         <div className="h-full flex flex-col">
                             <div className="flex items-center justify-between mb-6">

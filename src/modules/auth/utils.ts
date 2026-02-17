@@ -33,7 +33,6 @@ export const deleteAuthCookie = async (prefix: string) => {
       maxAge: 0,
     });
   } catch (error) {
-    // Log error but don't crash, allowing the client to continue its cleanup
     console.error("Failed to delete auth cookie:", error);
   }
 };

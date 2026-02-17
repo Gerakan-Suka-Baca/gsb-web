@@ -183,7 +183,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       render={({ field }) => (
                         <FormItem className="flex flex-col mt-2">
                           <FormLabel>Tanggal Lahir</FormLabel>
-                          {/* Native date input untuk mobile - lebih user friendly */}
+                          {/* Date input (mobile) */}
                           <div className="block md:hidden">
                             <FormControl>
                               <Input
@@ -199,7 +199,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                               />
                             </FormControl>
                           </div>
-                          {/* Calendar popover untuk desktop */}
+                          {/* Calendar (desktop) */}
                           <div className="hidden md:block">
                             <Popover>
                               <PopoverTrigger asChild>
