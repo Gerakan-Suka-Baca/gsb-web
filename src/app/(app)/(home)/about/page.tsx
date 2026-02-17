@@ -55,8 +55,8 @@ export default function AboutPage() {
       <section className="relative py-12 md:py-16 bg-muted/30 overflow-hidden">
         <div className="container mx-auto px-4 lg:px-6 relative z-10 text-left">
           <FadeIn direction="up">
-            <h1 className="text-4xl md:text-6xl font-heading font-bold text-gsb-maroon dark:text-white mb-6">
-              Tentang <span className="text-gsb-orange">Kami</span>
+            <h1 className="text-4xl md:text-6xl font-heading font-bold text-responsive-maroon mb-6">
+              Tentang <span className="text-responsive-orange">Kami</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl leading-relaxed">
               Yayasan Gema Simpul Berdaya (GSB) adalah organisasi nirlaba yang bergerak untuk mewujudkan
@@ -72,8 +72,8 @@ export default function AboutPage() {
         <div className="container mx-auto px-4 lg:px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <FadeIn direction="right" className="space-y-6">
-              <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white">
-                Perjalanan <span className="text-gsb-orange">9 Tahun</span> GSB
+              <h2 className="text-3xl font-heading font-bold text-responsive-maroon">
+                Perjalanan <span className="text-responsive-orange">9 Tahun</span> GSB
               </h2>
               <p className="text-muted-foreground leading-relaxed text-lg">
                 Berdiri sejak <strong>16 Oktober 2016</strong>, GSB bermula sebagai komunitas non-profit
@@ -81,7 +81,7 @@ export default function AboutPage() {
                 untuk menjawab tantangan pendidikan yang seharusnya IMBANG, bukan TIMPANG.
               </p>
               <div className="bg-gsb-orange/5 p-6 rounded-2xl border-l-4 border-gsb-orange">
-                <p className="italic text-gsb-maroon dark:text-white font-medium">
+                <p className="italic text-responsive-maroon font-medium">
                   &quot;From Access to Impact: Education for All&quot;
                 </p>
               </div>
@@ -108,7 +108,7 @@ export default function AboutPage() {
       <section id="makna" className="py-12 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">Filosofi Nama</h2>
+            <h2 className="text-3xl font-heading font-bold text-responsive-maroon mb-4">Filosofi Nama</h2>
             <div className="h-1 w-20 bg-gsb-orange mx-auto rounded-full" />
           </div>
           <div className="grid gap-6 md:grid-cols-3">
@@ -117,7 +117,7 @@ export default function AboutPage() {
                 <div className="mb-4 bg-muted/50 w-14 h-14 rounded-2xl flex items-center justify-center">
                   {item.icon}
                 </div>
-                <h3 className="text-2xl font-heading font-bold text-gsb-maroon dark:text-white mb-3">{item.term}</h3>
+                <h3 className="text-2xl font-heading font-bold text-responsive-maroon mb-3">{item.term}</h3>
                 <p className="text-muted-foreground leading-relaxed">
                   {item.desc}
                 </p>
@@ -174,7 +174,7 @@ export default function AboutPage() {
       <section id="budaya" className="py-12 md:py-16 bg-muted/30">
         <div className="container mx-auto px-4 lg:px-6">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">Budaya Komunitas GSB</h2>
+            <h2 className="text-3xl font-heading font-bold text-responsive-maroon mb-4">Budaya Komunitas GSB</h2>
             <div className="h-1 w-20 bg-gsb-orange mx-auto rounded-full" />
           </div>
 
@@ -197,7 +197,7 @@ export default function AboutPage() {
                   }}
                   className="bg-background p-6 rounded-2xl border border-border hover:border-gsb-orange/50 transition-colors overflow-hidden"
                 >
-                  <h3 className="font-bold text-lg text-gsb-maroon dark:text-white mb-2">{item.title}</h3>
+                  <h3 className="font-bold text-lg text-responsive-maroon mb-2">{item.title}</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
                 </motion.div>
               ))}
@@ -209,7 +209,7 @@ export default function AboutPage() {
               <Button
                 variant="outline"
                 onClick={() => setShowAllBudaya(!showAllBudaya)}
-                className="gap-2 border-gsb-orange/50 text-gsb-orange hover:bg-gsb-orange/10 dark:text-gsb-orange dark:border-gsb-orange/50"
+                className="gap-2 border-gsb-orange/50 text-gsb-orange hover:bg-gsb-orange/10"
               >
                 {showAllBudaya ? (
                   <>

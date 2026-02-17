@@ -24,10 +24,10 @@ export default async function ProfilePage() {
   const user = session.user as ProfileUser;
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8 dark:text-white">
+    <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-            <h1 className="text-3xl font-bold font-heading text-gsb-maroon dark:text-gsb-orange">Profil Saya</h1>
+            <h1 className="text-3xl font-bold font-heading text-responsive-maroon">Profil Saya</h1>
             <p className="text-muted-foreground">Halo, {user.fullName || user.username}. Kelola informasi akun dan target akademik Anda.</p>
         </div>
         <ProfileEditModal user={user} />
@@ -83,7 +83,7 @@ export default async function ProfilePage() {
             <Card className="shadow-sm">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                        <School className="h-5 w-5 text-gsb-maroon" />
+                        <School className="h-5 w-5 text-responsive-maroon" />
                         Data Akademik
                     </CardTitle>
                 </CardHeader>
@@ -104,7 +104,7 @@ export default async function ProfilePage() {
             <Card className="shadow-sm">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
-                        <GraduationCap className="h-5 w-5 text-gsb-orange" />
+                        <GraduationCap className="h-5 w-5 text-responsive-orange" />
                         Target Kampus & Jurusan
                     </CardTitle>
                 </CardHeader>
@@ -114,7 +114,7 @@ export default async function ProfilePage() {
                             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pilihan 1</span>
                         </div>
                         <div className="mt-2">
-                            <p className="text-lg font-bold text-gsb-maroon dark:text-gsb-orange">
+                            <p className="text-lg font-bold text-responsive-maroon">
                                 {user.targetPTN || "Belum ditentukan"}
                             </p>
                             <p className="text-muted-foreground font-medium">

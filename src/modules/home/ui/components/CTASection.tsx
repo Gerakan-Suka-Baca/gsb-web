@@ -15,7 +15,7 @@ export function CTASection() {
                 <FadeIn delay={0.4} direction="up">
                     <div className="rounded-xl bg-background dark:bg-card shadow-2xl border-t-4 border-gsb-orange dark:border-gsb-orange overflow-hidden relative transition-colors duration-300">
                         <div className="p-8 md:p-12 text-center relative z-10">
-                            <h3 className="text-2xl md:text-3xl font-heading font-bold text-gsb-maroon dark:text-white mb-4">
+                            <h3 className="text-2xl md:text-3xl font-heading font-bold text-responsive-maroon mb-4">
                                 Mari Bergabung dalam Gerakan Ini
                             </h3>
 
@@ -31,7 +31,7 @@ export function CTASection() {
 
                                 <Button
                                     onClick={() => setIsDonationModalOpen(true)}
-                                    className="bg-transparent hover:bg-gsb-orange/5 text-gsb-orange border-2 border-gsb-orange font-bold rounded-full px-8 py-6 text-lg shadow-sm hover:scale-105 transition-transform dark:text-white dark:border-white dark:hover:bg-white/10"
+                                    className="bg-transparent hover:bg-gsb-orange/5 text-gsb-orange border-2 border-gsb-orange font-bold rounded-full px-8 py-6 text-lg shadow-sm hover:scale-105 transition-transform"
                                 >
                                     Donasi Sekarang
                                 </Button>

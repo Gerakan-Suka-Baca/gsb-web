@@ -29,8 +29,8 @@ export const TryoutThankYou = ({ plan, onChangePlan }: Props) => {
         🎉
       </motion.div>
 
-      <h1 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-4">
-        {plan === 'paid' ? "Terima Kasih Sudah Mengikuti Tryout GSB!" : "Terima Kasih Sudah Mengikuti Tryout GSB!"}
+      <h1 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mb-4">
+        Terima Kasih Sudah Mengikuti Tryout GSB!
       </h1>
 
       <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">

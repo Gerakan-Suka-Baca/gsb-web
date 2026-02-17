@@ -34,8 +34,8 @@ export default function MingguCerdasPage() {
                         <Users className="w-4 h-4" />
                         <span>Program Unggulan GSB</span>
                      </div>
-                     <h1 className="text-5xl md:text-7xl font-heading font-bold mb-6 leading-tight text-gsb-maroon">
-                        Minggu <span className="text-gsb-orange">Cerdas</span>
+                     <h1 className="text-5xl md:text-7xl font-heading font-bold mb-6 leading-tight text-responsive-maroon">
+                        Minggu <span className="text-responsive-orange">Cerdas</span>
                      </h1>
                      <p className="text-xl text-muted-foreground leading-relaxed max-w-xl mb-8">
                         Program bimbingan belajar gratis setiap hari Minggu untuk membantu anak-anak Indonesia mengejar ketertinggalan dan meraih prestasi.
@@ -57,7 +57,7 @@ export default function MingguCerdasPage() {
                               <BookOpen className="w-6 h-6 text-gsb-orange" />
                            </div>
                            <div>
-                              <p className="font-bold text-xl text-gsb-maroon">Siklus Pembelajaran</p>
+                              <p className="font-bold text-xl text-responsive-maroon">Siklus Pembelajaran</p>
                               <p className="text-muted-foreground">Terstruktur & Menyenangkan</p>
                            </div>
                         </div>
@@ -77,7 +77,7 @@ export default function MingguCerdasPage() {
          <section id="lokasi" className="py-20 lg:py-28">
             <div className="container mx-auto px-4 lg:px-6">
                <div className="text-center mb-16">
-                  <h2 className="text-3xl md:text-5xl font-heading font-bold text-gsb-maroon mb-6">Lokasi Belajar</h2>
+                  <h2 className="text-3xl md:text-5xl font-heading font-bold text-responsive-maroon mb-6">Lokasi Belajar</h2>
                   <p className="text-muted-foreground text-lg max-w-2xl mx-auto">Kami hadir di titik-titik strategis untuk menjangkau mereka yang membutuhkan.</p>
                </div>
 
@@ -109,8 +109,8 @@ export default function MingguCerdasPage() {
                         <div className="mb-6 bg-muted/50 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                            <MapPin className="w-8 h-8 text-foreground" />
                         </div>
-                        <h3 className="text-2xl font-bold text-gsb-maroon mb-2">{loc.place}</h3>
-                        <p className="font-semibold text-gsb-orange mb-4">{loc.city}</p>
+                        <h3 className="text-2xl font-bold text-responsive-maroon mb-2">{loc.place}</h3>
+                        <p className="font-semibold text-responsive-orange mb-4">{loc.city}</p>
 
                         <div className="space-y-2 text-muted-foreground">
                            <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export default function MingguCerdasPage() {
                                  {item.week}
                               </div>
                               <div>
-                                 <h4 className="font-bold text-lg text-gsb-maroon">{item.topic}</h4>
+                                 <h4 className="font-bold text-lg text-responsive-maroon">{item.topic}</h4>
                                  <p className="text-sm text-muted-foreground">{item.desc}</p>
                               </div>
                            </div>
@@ -148,17 +148,17 @@ export default function MingguCerdasPage() {
                   </FadeIn>
 
                   <FadeIn direction="left" className="order-1 lg:order-2 space-y-6">
-                     <span className="text-gsb-orange font-bold tracking-wider uppercase">Kurikulum</span>
-                     <h2 className="text-4xl font-heading font-bold text-gsb-maroon">Belajar yang Relevan & Menyenangkan</h2>
+                     <span className="text-responsive-orange font-bold tracking-wider uppercase">Kurikulum</span>
+                     <h2 className="text-4xl font-heading font-bold text-responsive-maroon">Belajar yang Relevan & Menyenangkan</h2>
                      <p className="text-lg text-muted-foreground leading-relaxed">
                         Kami merancang siklus belajar bulanan yang variatif untuk memastikan siswa tidak bosan dan mendapatkan cakupan materi yang holistik, mulai dari numerasi, sains, bahasa, hingga seni.
                      </p>
                      <div className="pt-6">
-                        <h3 className="font-bold text-lg mb-4 text-gsb-maroon">Pembagian Fase Kelas:</h3>
+                        <h3 className="font-bold text-lg mb-4 text-responsive-maroon">Pembagian Fase Kelas:</h3>
                         <div className="flex flex-wrap gap-2">
                            {phases.map((p) => (
                               <div key={p.name} className="px-4 py-2 bg-background rounded-lg border border-border shadow-sm text-sm hover:border-gsb-orange/50 transition-colors">
-                                 <span className="font-bold text-gsb-maroon mr-2">{p.name}</span>
+                                 <span className="font-bold text-responsive-maroon mr-2">{p.name}</span>
                                  <span className="text-muted-foreground">{p.desc}</span>
                               </div>
                            ))}
