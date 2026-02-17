@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
@@ -11,7 +11,7 @@ import type { TryoutAttempt } from "../../types";
 import { useExamState, type ExamState, type AnswerMap, type FlagMap, type ExamStatus } from "./useExamState";
 import { useExamTimer } from "./useExamTimer";
 import { useNavigationProtection } from "./useNavigationProtection";
-import { useExamSync } from "./useExamSync";
+import { useExamSync, type ServerTimingSyncPayload } from "./useExamSync";
 import { useAttemptRestoration } from "./useAttemptRestoration";
 import { useExamDialogs } from "./useExamDialogs";
 
@@ -60,6 +60,47 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const { state, dispatch } = useExamState();
   const queryClient = useQueryClient();
+  const [subtestStartedAt, setSubtestStartedAt] = useState<string | null>(
+    typeof initialAttempt?.subtestStartedAt === "string"
+      ? initialAttempt.subtestStartedAt
+      : null
+  );
+  const [subtestDeadlineAt, setSubtestDeadlineAt] = useState<string | null>(
+    typeof initialAttempt?.subtestDeadlineAt === "string"
+      ? initialAttempt.subtestDeadlineAt
+      : null
+  );
+  const [serverNow, setServerNow] = useState<string | null>(null);
+
+  const applyServerTiming = useCallback((payload?: ServerTimingSyncPayload | null) => {
+    if (!payload) return;
+    if (typeof payload.subtestStartedAt === "string") {
+      setSubtestStartedAt(payload.subtestStartedAt);
+    }
+    if (typeof payload.subtestDeadlineAt === "string") {
+      setSubtestDeadlineAt(payload.subtestDeadlineAt);
+    }
+    if (typeof payload.serverNow === "string") {
+      setServerNow(payload.serverNow);
+    }
+  }, []);
+
+  const applyServerTimingFromRecord = useCallback(
+    (record: Record<string, unknown>) => {
+      applyServerTiming({
+        subtestStartedAt:
+          typeof record.subtestStartedAt === "string"
+            ? record.subtestStartedAt
+            : undefined,
+        subtestDeadlineAt:
+          typeof record.subtestDeadlineAt === "string"
+            ? record.subtestDeadlineAt
+            : undefined,
+        serverNow: typeof record.serverNow === "string" ? record.serverNow : undefined,
+      });
+    },
+    [applyServerTiming]
+  );
 
   // DEBUG: Trace Subtest ID
   const safeSubtestIndex = useMemo(() => {
@@ -138,6 +179,8 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   const { timeLeft, setTimeLeft, formatTime } = useExamTimer({
     initialSeconds: subtestDuration,
     isRunning: state.status === "running" && subtestDuration > 0,
+    deadlineAt: subtestDeadlineAt,
+    serverNow,
     onTimeUp: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true }), [dispatch]),
   });
 
@@ -145,6 +188,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     attemptId: state.attemptId,
     state,
     timeLeft,
+    onServerTiming: applyServerTiming,
   });
 
   useNavigationProtection({
@@ -160,13 +204,18 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   const startAttemptMutation = useMutation(trpc.tryoutAttempts.startAttempt.mutationOptions({
     onSuccess: async (data) => {
       dispatch({ type: "SET_ATTEMPT", id: data.id, status: "running" });
+      applyServerTimingFromRecord(data as unknown as Record<string, unknown>);
       setTimeLeft((currentSubtest?.duration ?? 0) * 60);
       toast.success("Ujian dimulai!");
       await queryClient.invalidateQueries({
         queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId: tryout.id }, type: "query" }],
       });
     },
-    onError: (err) => toast.error("Gagal memulai: " + err.message),
+    onError: (err) => {
+      toast.error("Gagal memulai: " + err.message);
+      setSubtestStartedAt(null);
+      setSubtestDeadlineAt(null);
+    },
   }));
 
   const submitAttemptMutation = useMutation(trpc.tryoutAttempts.submitAttempt.mutationOptions({
@@ -196,6 +245,13 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
         type: "LOAD_STATE",
         state: nextState,
       });
+      if (restoredState.subtestStartedAt !== undefined) {
+        setSubtestStartedAt(restoredState.subtestStartedAt ?? null);
+      }
+      if (restoredState.subtestDeadlineAt !== undefined) {
+        setSubtestDeadlineAt(restoredState.subtestDeadlineAt ?? null);
+      }
+      setServerNow(new Date().toISOString());
       if (restoredState.timeLeft !== undefined) {
         setTimeLeft(restoredState.timeLeft);
       }
@@ -222,15 +278,21 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     }
   }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, onFinish, submitAttemptMutation, flushEvents, dispatch]);
 
-  const handleNextSubtest = useCallback(() => {
+  const handleNextSubtest = useCallback(async () => {
     const nextIdx = state.currentSubtestIndex + 1;
     const nextDuration = subtests[nextIdx]?.duration ?? 0;
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const nextSeconds = Math.max(0, Math.round(nextDuration * 60));
     
     dispatch({ type: "SET_SUBTEST", index: nextIdx });
     dispatch({ type: "SET_STATUS", status: "running" });
-    setTimeLeft(nextDuration * 60);
+    setSubtestStartedAt(nowIso);
+    setSubtestDeadlineAt(new Date(now.getTime() + nextSeconds * 1000).toISOString());
+    setServerNow(nowIso);
+    setTimeLeft(nextSeconds);
     window.scrollTo({ top: 0, behavior: "smooth" });
-    flushEvents(true);
+    await flushEvents(true);
   }, [state.currentSubtestIndex, subtests, flushEvents, dispatch, setTimeLeft]);
 
   // Consolidates dialog timing logic
@@ -296,6 +358,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     answers: state.answers,
     flags: state.flags,
     timeLeft,
+    subtestStartedAt,
     examState: state.status,
     attemptId: state.attemptId,
     bridgingSeconds: state.bridgingSeconds,

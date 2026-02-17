@@ -2,7 +2,7 @@
 import { z } from "zod";
 import { protectedProcedure, createTRPCRouter } from "@/trpc/init";
 import { TRPCError } from "@trpc/server";
-import type { Question } from "@/payload-types";
+import type { Question, Tryout } from "@/payload-types";
 import { TryoutAttempt } from "../../types";
 import {
   MAX_PROCESSED_BATCHES,
@@ -21,6 +21,176 @@ const eventSchema = z.object({
   revision: z.number(),
   clientTs: z.number(),
 });
+
+const SUBTEST_QUERY_LIMIT = 200;
+
+type TryoutWindowDoc = Pick<Tryout, "id" | "Date Open" | "Date Close">;
+
+type ServerTimerWindow = {
+  subtestStartedAt: string;
+  subtestDeadlineAt: string;
+  secondsRemaining: number;
+};
+
+const parseDateMs = (value: unknown): number | null => {
+  if (typeof value !== "string") return null;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+const getTryoutWindow = async (
+  payload: { findByID: (args: Record<string, unknown>) => Promise<unknown> },
+  tryoutId: string
+): Promise<TryoutWindowDoc> => {
+  return (await payload.findByID({
+    collection: "tryouts",
+    id: tryoutId,
+    depth: 0,
+  })) as unknown as TryoutWindowDoc;
+};
+
+const assertTryoutWindowOpen = (
+  tryout: TryoutWindowDoc,
+  action: string,
+  now: Date
+) => {
+  const openMs = parseDateMs(tryout["Date Open"]);
+  const closeMs = parseDateMs(tryout["Date Close"]);
+  if (openMs === null || closeMs === null) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Tryout schedule is invalid",
+    });
+  }
+
+  const nowMs = now.getTime();
+  if (nowMs < openMs) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Tryout belum dibuka. Tidak bisa ${action}.`,
+    });
+  }
+  if (nowMs > closeMs) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Tryout sudah ditutup. Tidak bisa ${action}.`,
+    });
+  }
+};
+
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const getAttemptSubtestIndex = (attempt: TryoutAttempt): number => {
+  if (!isFiniteNumber(attempt.currentSubtest) || attempt.currentSubtest < 0) {
+    return 0;
+  }
+  return Math.floor(attempt.currentSubtest);
+};
+
+const getSubtestDurationSeconds = async (
+  payload: { find: (args: Record<string, unknown>) => Promise<unknown> },
+  tryoutId: string,
+  subtestIndex: number
+): Promise<number> => {
+  if (!Number.isFinite(subtestIndex) || subtestIndex < 0) return 0;
+  const result = (await payload.find({
+    collection: "questions",
+    where: {
+      tryout: { equals: tryoutId },
+    },
+    limit: SUBTEST_QUERY_LIMIT,
+    sort: "createdAt",
+    depth: 0,
+    select: { duration: true },
+  })) as { docs?: Array<{ duration?: number | null }> };
+
+  const docs = Array.isArray(result.docs) ? result.docs : [];
+  const target = docs[subtestIndex];
+  const durationMinutes = typeof target?.duration === "number" ? target.duration : 0;
+  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return 0;
+  return Math.max(0, Math.round(durationMinutes * 60));
+};
+
+const getSecondsRemainingFromDeadline = (deadlineAt: string, now: Date): number => {
+  const deadlineMs = parseDateMs(deadlineAt);
+  if (deadlineMs === null) return 0;
+  return Math.max(0, Math.ceil((deadlineMs - now.getTime()) / 1000));
+};
+
+const buildServerTimerWindow = async ({
+  payload,
+  attempt,
+  tryoutId,
+  targetSubtest,
+  now,
+  allowLegacySecondsFallback,
+  forceReset,
+}: {
+  payload: {
+    find: (args: Record<string, unknown>) => Promise<unknown>;
+  };
+  attempt: TryoutAttempt;
+  tryoutId: string;
+  targetSubtest: number;
+  now: Date;
+  allowLegacySecondsFallback?: boolean;
+  forceReset?: boolean;
+}): Promise<ServerTimerWindow> => {
+  const attemptSubtest = getAttemptSubtestIndex(attempt);
+  const normalizedSubtest =
+    Number.isFinite(targetSubtest) && targetSubtest >= 0
+      ? Math.floor(targetSubtest)
+      : 0;
+  const sameSubtest = normalizedSubtest === attemptSubtest;
+
+  const hasStartedAt =
+    typeof attempt.subtestStartedAt === "string" &&
+    parseDateMs(attempt.subtestStartedAt) !== null;
+  const hasDeadlineAt =
+    typeof attempt.subtestDeadlineAt === "string" &&
+    parseDateMs(attempt.subtestDeadlineAt) !== null;
+
+  if (!forceReset && sameSubtest && hasStartedAt && hasDeadlineAt) {
+    return {
+      subtestStartedAt: attempt.subtestStartedAt as string,
+      subtestDeadlineAt: attempt.subtestDeadlineAt as string,
+      secondsRemaining: getSecondsRemainingFromDeadline(
+        attempt.subtestDeadlineAt as string,
+        now
+      ),
+    };
+  }
+
+  let durationSeconds = 0;
+  if (
+    allowLegacySecondsFallback &&
+    sameSubtest &&
+    isFiniteNumber(attempt.secondsRemaining) &&
+    attempt.secondsRemaining > 0
+  ) {
+    durationSeconds = Math.max(0, Math.floor(attempt.secondsRemaining));
+  }
+
+  if (durationSeconds === 0) {
+    durationSeconds = await getSubtestDurationSeconds(
+      payload,
+      tryoutId,
+      normalizedSubtest
+    );
+  }
+
+  const subtestStartedAt = now.toISOString();
+  const subtestDeadlineAt = new Date(
+    now.getTime() + durationSeconds * 1000
+  ).toISOString();
+
+  return {
+    subtestStartedAt,
+    subtestDeadlineAt,
+    secondsRemaining: durationSeconds,
+  };
+};
 
 export const tryoutAttemptsRouter = createTRPCRouter({
   getAttempt: protectedProcedure
@@ -48,6 +218,10 @@ export const tryoutAttemptsRouter = createTRPCRouter({
     .input(z.object({ tryoutId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const { db: payload, session } = ctx;
+      const now = new Date();
+      const nowIso = now.toISOString();
+      const tryoutWindow = await getTryoutWindow(payload, input.tryoutId);
+      assertTryoutWindowOpen(tryoutWindow, "memulai tryout", now);
 
       const existing = await payload.find({
         collection: "tryout-attempts",
@@ -68,7 +242,40 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         
         // If it's still running, RESUME it
         if (attempt.status !== "completed") {
-          return attempt;
+          const resumedTimer = await buildServerTimerWindow({
+            payload,
+            attempt,
+            tryoutId: getTryoutId(attempt.tryout),
+            targetSubtest: getAttemptSubtestIndex(attempt),
+            now,
+            allowLegacySecondsFallback: true,
+          });
+          const shouldPersistTimer =
+            attempt.subtestStartedAt !== resumedTimer.subtestStartedAt ||
+            attempt.subtestDeadlineAt !== resumedTimer.subtestDeadlineAt;
+
+          if (!shouldPersistTimer) {
+            return {
+              ...attempt,
+              secondsRemaining: resumedTimer.secondsRemaining,
+              serverNow: nowIso,
+            } as TryoutAttempt;
+          }
+
+          const resumedAttempt = await payload.update({
+            collection: "tryout-attempts",
+            id: attempt.id,
+            data: {
+              subtestStartedAt: resumedTimer.subtestStartedAt,
+              subtestDeadlineAt: resumedTimer.subtestDeadlineAt,
+              secondsRemaining: resumedTimer.secondsRemaining,
+            },
+          });
+
+          return {
+            ...(resumedAttempt as unknown as TryoutAttempt),
+            serverNow: nowIso,
+          } as TryoutAttempt;
         }
 
         // If it's completed, check if it was a valid attempt (has answers)
@@ -83,6 +290,16 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       }
 
       // Create a NEW attempt (First time OR fixing a ghost attempt)
+      const firstSubtestSeconds = await getSubtestDurationSeconds(
+        payload,
+        input.tryoutId,
+        0
+      );
+      const subtestStartedAt = nowIso;
+      const subtestDeadlineAt = new Date(
+        now.getTime() + firstSubtestSeconds * 1000
+      ).toISOString();
+
       const newAttempt = await payload.create({
         collection: "tryout-attempts",
         data: {
@@ -95,10 +312,15 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           currentSubtest: 0,
           currentQuestionIndex: 0,
           examState: "running",
-          secondsRemaining: null, // Let client calculate based on subtest duration
+          subtestStartedAt,
+          subtestDeadlineAt,
+          secondsRemaining: firstSubtestSeconds,
         },
       });
-      return newAttempt as unknown as TryoutAttempt;
+      return {
+        ...(newAttempt as unknown as TryoutAttempt),
+        serverNow: nowIso,
+      } as TryoutAttempt;
     }),
 
   saveProgress: protectedProcedure
@@ -110,18 +332,39 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         currentSubtest: z.number().optional(),
         examState: z.enum(["running", "bridging"]).optional(),
         bridgingExpiry: z.string().optional(),
-        secondsRemaining: z.number().optional(),
         currentQuestionIndex: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { db: payload, session } = ctx;
+      const now = new Date();
+      const nowIso = now.toISOString();
       const attemptRaw = (await payload.findByID({
         collection: "tryout-attempts",
         id: input.attemptId,
       })) as unknown as TryoutAttempt;
 
-      validateTryoutAttempt(attemptRaw, session.user.id);
+      const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
+      const tryoutId = getTryoutId(attempt.tryout);
+      const tryoutWindow = await getTryoutWindow(payload, tryoutId);
+      assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
+      const attemptSubtest = getAttemptSubtestIndex(attempt);
+      const nextSubtest =
+        input.currentSubtest !== undefined &&
+        Number.isFinite(input.currentSubtest) &&
+        input.currentSubtest >= 0
+          ? Math.floor(input.currentSubtest)
+          : attemptSubtest;
+      const timerWindow = await buildServerTimerWindow({
+        payload,
+        attempt,
+        tryoutId,
+        targetSubtest: nextSubtest,
+        now,
+        allowLegacySecondsFallback: true,
+        forceReset:
+          input.currentSubtest !== undefined && nextSubtest !== attemptSubtest,
+      });
 
       await payload.update({
         collection: "tryout-attempts",
@@ -129,22 +372,27 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         data: {
           answers: input.answers,
           flags: input.flags,
-          ...(input.currentSubtest !== undefined && {
-            currentSubtest: input.currentSubtest,
-          }),
+          currentSubtest: nextSubtest,
           ...(input.examState !== undefined && { examState: input.examState }),
           ...(input.bridgingExpiry !== undefined && {
             bridgingExpiry: input.bridgingExpiry,
           }),
-          ...(input.secondsRemaining !== undefined && {
-            secondsRemaining: input.secondsRemaining,
-          }),
+          subtestStartedAt: timerWindow.subtestStartedAt,
+          subtestDeadlineAt: timerWindow.subtestDeadlineAt,
+          secondsRemaining: timerWindow.secondsRemaining,
           ...(input.currentQuestionIndex !== undefined && {
             currentQuestionIndex: input.currentQuestionIndex,
           }),
         },
       });
-      return { success: true };
+      return {
+        success: true,
+        serverNow: nowIso,
+        currentSubtest: nextSubtest,
+        subtestStartedAt: timerWindow.subtestStartedAt,
+        subtestDeadlineAt: timerWindow.subtestDeadlineAt,
+        secondsRemaining: timerWindow.secondsRemaining,
+      };
     }),
 
   saveProgressBatch: protectedProcedure
@@ -156,25 +404,54 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         events: z.array(eventSchema),
         currentSubtest: z.number().optional(),
         examState: z.enum(["running", "bridging"]).optional(),
-        secondsRemaining: z.number().optional(),
         currentQuestionIndex: z.number().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       const { db: payload, session } = ctx;
+      const now = new Date();
+      const nowIso = now.toISOString();
       const attemptRaw = (await payload.findByID({
         collection: "tryout-attempts",
         id: input.attemptId,
       })) as unknown as TryoutAttempt;
 
       const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
+      const tryoutId = getTryoutId(attempt.tryout);
+      const tryoutWindow = await getTryoutWindow(payload, tryoutId);
+      assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
+      const attemptSubtest = getAttemptSubtestIndex(attempt);
+      const nextSubtest =
+        input.currentSubtest !== undefined &&
+        Number.isFinite(input.currentSubtest) &&
+        input.currentSubtest >= 0
+          ? Math.floor(input.currentSubtest)
+          : attemptSubtest;
+      const timerWindow = await buildServerTimerWindow({
+        payload,
+        attempt,
+        tryoutId,
+        targetSubtest: nextSubtest,
+        now,
+        allowLegacySecondsFallback: true,
+        forceReset:
+          input.currentSubtest !== undefined && nextSubtest !== attemptSubtest,
+      });
 
       const processed = Array.isArray(attempt.processedBatchIds)
         ? attempt.processedBatchIds
         : [];
 
       if (processed.includes(input.batchId)) {
-        return { success: true, duplicate: true };
+        return {
+          success: true,
+          duplicate: true,
+          serverNow: nowIso,
+          currentSubtest: nextSubtest,
+          subtestStartedAt: timerWindow.subtestStartedAt,
+          subtestDeadlineAt: timerWindow.subtestDeadlineAt,
+          secondsRemaining: timerWindow.secondsRemaining,
+        };
       }
 
       // Ensure answers and flags are objects
@@ -214,20 +491,26 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           answers: nextAnswers,
           flags: nextFlags,
           processedBatchIds: nextProcessed,
-          ...(input.currentSubtest !== undefined && {
-            currentSubtest: input.currentSubtest,
-          }),
+          currentSubtest: nextSubtest,
           ...(input.examState !== undefined && { examState: input.examState }),
-          ...(input.secondsRemaining !== undefined && {
-            secondsRemaining: input.secondsRemaining,
-          }),
+          subtestStartedAt: timerWindow.subtestStartedAt,
+          subtestDeadlineAt: timerWindow.subtestDeadlineAt,
+          secondsRemaining: timerWindow.secondsRemaining,
           ...(input.currentQuestionIndex !== undefined && {
             currentQuestionIndex: input.currentQuestionIndex,
           }),
         },
       });
 
-      return { success: true, applied: ordered.length };
+      return {
+        success: true,
+        applied: ordered.length,
+        serverNow: nowIso,
+        currentSubtest: nextSubtest,
+        subtestStartedAt: timerWindow.subtestStartedAt,
+        subtestDeadlineAt: timerWindow.subtestDeadlineAt,
+        secondsRemaining: timerWindow.secondsRemaining,
+      };
     }),
 
   submitAttempt: protectedProcedure
@@ -239,6 +522,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { db: payload, session } = ctx;
+      const now = new Date();
       const attemptRaw = (await payload.findByID({
         collection: "tryout-attempts",
         id: input.attemptId,
@@ -257,6 +541,11 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         id: tryoutId,
         depth: 2,
       });
+      assertTryoutWindowOpen(
+        tryout as unknown as TryoutWindowDoc,
+        "submit tryout",
+        now
+      );
 
       const tryoutRecord = tryout as unknown as Record<string, unknown>;
       const subtests = Array.isArray(tryoutRecord.questions)
@@ -284,6 +573,10 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           correctAnswersCount: results.correctCount,
           totalQuestionsCount: results.totalQuestions,
           questionResults: results.questionResults,
+          secondsRemaining:
+            typeof attempt.subtestDeadlineAt === "string"
+              ? getSecondsRemainingFromDeadline(attempt.subtestDeadlineAt, now)
+              : 0,
         },
       });
 

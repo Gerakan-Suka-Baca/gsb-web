@@ -80,6 +80,22 @@ export const TryoutAttempts: CollectionConfig = {
       defaultValue: () => new Date(),
     },
     {
+      name: "subtestStartedAt",
+      type: "date",
+      admin: {
+        description:
+          "Timestamp authoritative server saat subtes aktif mulai berjalan.",
+      },
+    },
+    {
+      name: "subtestDeadlineAt",
+      type: "date",
+      admin: {
+        description:
+          "Deadline authoritative server untuk subtes aktif saat ini.",
+      },
+    },
+    {
       name: "completedAt",
       type: "date",
     },

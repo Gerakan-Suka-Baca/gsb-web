@@ -293,6 +293,14 @@ export interface TryoutAttempt {
     | null;
   status: 'started' | 'completed';
   startedAt?: string | null;
+  /**
+   * Timestamp authoritative server saat subtes aktif mulai berjalan.
+   */
+  subtestStartedAt?: string | null;
+  /**
+   * Deadline authoritative server untuk subtes aktif saat ini.
+   */
+  subtestDeadlineAt?: string | null;
   completedAt?: string | null;
   /**
    * Index subtes yang sedang dikerjakan (0-based).
@@ -576,6 +584,8 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
       };
   status?: T;
   startedAt?: T;
+  subtestStartedAt?: T;
+  subtestDeadlineAt?: T;
   completedAt?: T;
   currentSubtest?: T;
   examState?: T;
