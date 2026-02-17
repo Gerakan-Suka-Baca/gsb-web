@@ -15,6 +15,8 @@ export type TryoutAttempt = {
   examState?: "running" | "bridging" | "paused";
   secondsRemaining?: number;
   bridgingExpiry?: string;
+  subtestStartedAt?: string;
+  subtestDeadlineAt?: string;
   startedAt?: string;
   completedAt?: string;
   createdAt?: string;
@@ -24,6 +26,7 @@ export type TryoutAttempt = {
   totalQuestionsCount?: number;
   questionResults?: unknown[]; 
   resultPlan?: "free" | "paid";
+  serverNow?: string;
   [key: string]: unknown; 
 };
 

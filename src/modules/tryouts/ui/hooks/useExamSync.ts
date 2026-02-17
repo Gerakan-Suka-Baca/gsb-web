@@ -25,14 +25,36 @@ export interface SyncState {
   status: ExamState["status"];
 }
 
-export function useExamSync({ attemptId, state, timeLeft }: { attemptId: string | null, state: SyncState, timeLeft: number }) {
+export interface ServerTimingSyncPayload {
+  currentSubtest?: number;
+  subtestStartedAt?: string;
+  subtestDeadlineAt?: string;
+  serverNow?: string;
+}
+
+export function useExamSync({
+  attemptId,
+  state,
+  timeLeft,
+  onServerTiming,
+}: {
+  attemptId: string | null;
+  state: SyncState;
+  timeLeft: number;
+  onServerTiming?: (payload: ServerTimingSyncPayload) => void;
+}) {
   const stateRef = useRef(state);
   const timeLeftRef = useRef(timeLeft);
+  const onServerTimingRef = useRef(onServerTiming);
   
   useEffect(() => {
     stateRef.current = state;
     timeLeftRef.current = timeLeft;
   }, [state, timeLeft]);
+
+  useEffect(() => {
+    onServerTimingRef.current = onServerTiming;
+  }, [onServerTiming]);
 
   const trpc = useTRPC();
   const [changeToken, setChangeToken] = useState(0);
@@ -41,6 +63,10 @@ export function useExamSync({ attemptId, state, timeLeft }: { attemptId: string 
   const revisionRef = useRef<Record<string, number>>({});
   const lastRetryAtRef = useRef(0);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSyncedStateRef = useRef<{
+    currentSubtestIndex: number;
+    status: ExamState["status"];
+  } | null>(null);
   
   const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
   const flushEventsRef = useRef<(force?: boolean) => void>(() => {});
@@ -83,24 +109,55 @@ export function useExamSync({ attemptId, state, timeLeft }: { attemptId: string 
         let pending: TryoutEvent[] = [];
         try {
           pending = await getPendingEvents(attemptId, 20);
-          if (pending.length === 0) return;
-
           const currentState = stateRef.current;
           const persistedExamState =
             currentState.status === "running" || currentState.status === "bridging"
               ? currentState.status
               : undefined;
+          const lastSynced = lastSyncedStateRef.current;
+          const hasStateChanged =
+            !lastSynced ||
+            lastSynced.currentSubtestIndex !== currentState.currentSubtestIndex ||
+            lastSynced.status !== currentState.status;
+          const shouldSendStateOnly =
+            pending.length === 0 && Boolean(force || hasStateChanged);
 
-          await saveProgressBatchMutation.mutateAsync({
+          if (pending.length === 0 && !shouldSendStateOnly) return;
+
+          const result = await saveProgressBatchMutation.mutateAsync({
             attemptId,
             batchId: createId(),
             clientTime: Date.now(),
             events: pending,
             currentSubtest: currentState.currentSubtestIndex,
             examState: persistedExamState,
-            secondsRemaining: timeLeftRef.current,
             currentQuestionIndex: currentState.currentQuestionIndex,
           });
+          lastSyncedStateRef.current = {
+            currentSubtestIndex: currentState.currentSubtestIndex,
+            status: currentState.status,
+          };
+
+          const resultRecord = result as unknown as Record<string, unknown>;
+          if (onServerTimingRef.current) {
+            const timingPayload: ServerTimingSyncPayload = {};
+            if (typeof resultRecord.currentSubtest === "number") {
+              timingPayload.currentSubtest = resultRecord.currentSubtest;
+            }
+            if (typeof resultRecord.subtestStartedAt === "string") {
+              timingPayload.subtestStartedAt = resultRecord.subtestStartedAt;
+            }
+            if (typeof resultRecord.subtestDeadlineAt === "string") {
+              timingPayload.subtestDeadlineAt = resultRecord.subtestDeadlineAt;
+            }
+            if (typeof resultRecord.serverNow === "string") {
+              timingPayload.serverNow = resultRecord.serverNow;
+            }
+            if (Object.keys(timingPayload).length > 0) {
+              onServerTimingRef.current(timingPayload);
+            }
+          }
+
           await markEventsSent(
             attemptId,
             pending.map((e) => e.id)
@@ -131,8 +188,12 @@ export function useExamSync({ attemptId, state, timeLeft }: { attemptId: string 
           .catch(() => {});
       }
     },
-    [attemptId, createId, saveProgressBatchMutation, scheduleRetry, stateRef, timeLeftRef]
+    [attemptId, createId, saveProgressBatchMutation, scheduleRetry, stateRef]
   );
+
+  useEffect(() => {
+    lastSyncedStateRef.current = null;
+  }, [attemptId]);
 
   useEffect(() => {
     flushEventsRef.current = flushEvents;

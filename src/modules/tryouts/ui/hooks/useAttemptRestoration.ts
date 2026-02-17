@@ -11,7 +11,13 @@ interface UseAttemptRestorationProps {
   isLoading: boolean;
   subtests: Question[];
   currentAttemptId?: string | null;
-  onRestore: (state: Partial<ExamState> & { timeLeft?: number }) => void;
+  onRestore: (
+    state: Partial<ExamState> & {
+      timeLeft?: number;
+      subtestStartedAt?: string;
+      subtestDeadlineAt?: string;
+    }
+  ) => void;
 }
 
 function isValidAttempt(attempt: unknown): attempt is TryoutAttempt {
@@ -21,6 +27,12 @@ function isValidAttempt(attempt: unknown): attempt is TryoutAttempt {
     "id" in attempt &&
     "currentSubtest" in attempt
   );
+}
+
+function parseDateMs(value: unknown): number | null {
+  if (typeof value !== "string") return null;
+  const parsed = Date.parse(value);
+  return Number.isNaN(parsed) ? null : parsed;
 }
 
 export function useAttemptRestoration({
@@ -55,10 +67,26 @@ export function useAttemptRestoration({
       let finalSubtest = typeof serverSubtest === "number" && !isNaN(serverSubtest) ? serverSubtest : 0;
       let finalQuestion = typeof serverQuestion === "number" && !isNaN(serverQuestion) ? serverQuestion : 0;
       let finalSeconds: number | undefined;
+      let finalSubtestStartedAt =
+        typeof data.subtestStartedAt === "string"
+          ? data.subtestStartedAt
+          : undefined;
+      let finalSubtestDeadlineAt =
+        typeof data.subtestDeadlineAt === "string"
+          ? data.subtestDeadlineAt
+          : undefined;
       let finalStatus: ExamStatus =
         data.status === "completed"
           ? "finished"
           : (data.examState as ExamStatus) || "running";
+
+      const serverDeadlineMs = parseDateMs(finalSubtestDeadlineAt);
+      if (serverDeadlineMs !== null) {
+        finalSeconds = Math.max(
+          0,
+          Math.ceil((serverDeadlineMs - Date.now()) / 1000)
+        );
+      }
 
       const mergedAnswers = { ...storedAnswers };
       const mergedFlags = { ...storedFlags };
@@ -82,13 +110,16 @@ export function useAttemptRestoration({
           finalSubtest = backup.currentSubtest;
           finalQuestion = Number.isFinite(backup.currentQuestionIndex) ? backup.currentQuestionIndex ?? 0 : 0;
           finalSeconds = backup.secondsRemaining;
+          finalSubtestStartedAt = undefined;
+          finalSubtestDeadlineAt = undefined;
           if (backup.examState) finalStatus = backup.examState as ExamStatus;
         } else if (backup.currentSubtest === finalSubtest) {
           const backupQ = Number.isFinite(backup.currentQuestionIndex) ? backup.currentQuestionIndex ?? 0 : 0;
           finalQuestion = Math.max(finalQuestion, backupQ);
           if (
             backup.secondsRemaining !== undefined &&
-            backup.updatedAt > (Date.parse(data.updatedAt ?? "") || 0)
+            backup.updatedAt > (Date.parse(data.updatedAt ?? "") || 0) &&
+            finalSubtestDeadlineAt === undefined
           ) {
             finalSeconds = backup.secondsRemaining;
           }
@@ -120,6 +151,8 @@ export function useAttemptRestoration({
         flags: mergedFlags,
         status: normalizedStatus as ExamStatus,
         timeLeft: finalSeconds,
+        subtestStartedAt: finalSubtestStartedAt,
+        subtestDeadlineAt: finalSubtestDeadlineAt,
       });
     };
 
