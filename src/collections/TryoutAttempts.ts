@@ -1,31 +1,13 @@
 import type { CollectionConfig } from "payload";
-
-const hasAdminRole = (user: unknown) => {
-  if (!user || typeof user !== "object") {
-    return false;
-  }
-  const roles = (user as { roles?: unknown }).roles;
-  if (!Array.isArray(roles)) {
-    return false;
-  }
-  return roles.includes("admin") || roles.includes("super-admin");
-};
+import { isAdminOrAbove } from "./accessHelpers";
 
 export const TryoutAttempts: CollectionConfig = {
   slug: "tryout-attempts",
   access: {
-    read: ({ req: { user } }) => {
-      if (hasAdminRole(user)) {
-        return true;
-      }
-      if (user) {
-        return { user: { equals: user.id } };
-      }
-      return false;
-    },
-    create: ({ req: { user } }) => !!user,
-    update: ({ req: { user } }) => !!user,
-    delete: ({ req: { user } }) => hasAdminRole(user),
+    read: ({ req: { user } }) => isAdminOrAbove(user),
+    create: ({ req: { user } }) => isAdminOrAbove(user),
+    update: ({ req: { user } }) => isAdminOrAbove(user),
+    delete: ({ req: { user } }) => isAdminOrAbove(user),
   },
   admin: {
     useAsTitle: "id",

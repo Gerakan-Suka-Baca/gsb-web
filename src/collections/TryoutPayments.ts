@@ -1,15 +1,5 @@
 import type { CollectionConfig } from "payload";
-
-const hasAdminRole = (user: unknown) => {
-  if (!user || typeof user !== "object") {
-    return false;
-  }
-  const roles = (user as { roles?: unknown }).roles;
-  if (!Array.isArray(roles)) {
-    return false;
-  }
-  return roles.includes("admin") || roles.includes("super-admin");
-};
+import { isAdminOrAbove } from "./accessHelpers";
 
 export const TryoutPayments: CollectionConfig = {
   slug: "tryout-payments",
@@ -19,15 +9,10 @@ export const TryoutPayments: CollectionConfig = {
     description: "List user yang sudah melakukan pembayaran manual (untuk verifikasi).",
   },
   access: {
-    read: ({ req: { user } }) => {
-      if (hasAdminRole(user)) {
-        return true;
-      }
-      return { user: { equals: user?.id } };
-    },
-    create: () => true, 
-    update: ({ req: { user } }) => hasAdminRole(user),
-    delete: ({ req: { user } }) => hasAdminRole(user),
+    read: ({ req: { user } }) => isAdminOrAbove(user),
+    create: ({ req: { user } }) => isAdminOrAbove(user),
+    update: ({ req: { user } }) => isAdminOrAbove(user),
+    delete: ({ req: { user } }) => isAdminOrAbove(user),
   },
   fields: [
     {

@@ -125,11 +125,21 @@ export interface AdminAuthOperations {
   };
 }
 /**
+ * Login ke panel Payload. Pilih User yang sudah ada agar email admin sama dengan email di Users (satu integrasi). Role: volunteer = hanya Media, Soal, Tryouts.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "admins".
  */
 export interface Admin {
   id: string;
+  /**
+   * Volunteer: hanya bisa upload media, buat/edit Soal & Tryouts. Admin/Super Admin: akses penuh.
+   */
+  role: 'super-admin' | 'admin' | 'volunteer';
+  /**
+   * Pilih user dari koleksi Users. Email login admin akan disamakan dengan email user ini. Lebih baik pilih user yang sudah punya role Admin/Super Admin.
+   */
+  linkedUser?: (string | null) | User;
   name?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -151,6 +161,8 @@ export interface Admin {
   collection: 'admins';
 }
 /**
+ * User aplikasi (login via Clerk). Role Admin/Super Admin = akses fitur admin di app. Untuk bisa login ke panel Payload (/admin), buat record di koleksi Admins dan pilih user ini di field "User" agar email sama.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -483,6 +495,8 @@ export interface PayloadMigration {
  * via the `definition` "admins_select".
  */
 export interface AdminsSelect<T extends boolean = true> {
+  role?: T;
+  linkedUser?: T;
   name?: T;
   updatedAt?: T;
   createdAt?: T;

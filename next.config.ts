@@ -1,8 +1,23 @@
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
 import { withPayload } from "@payloadcms/next/withPayload";
 import type { NextConfig } from "next";
 
+// Load NEXT_SERVER_ACTIONS_ENCRYPTION_KEY
+const envPath = join(process.cwd(), ".env");
+if (existsSync(envPath) && !process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY) {
+  const content = readFileSync(envPath, "utf-8");
+  const match = content.match(/^NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=(.+)$/m);
+  if (match) process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY = match[1].trim().replace(/^['"]|['"]$/g, "");
+}
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "2mb",
+    },
+  },
   images: {
     remotePatterns: [
       {

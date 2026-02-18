@@ -1,11 +1,18 @@
 import type { CollectionConfig } from "payload";
 import { TryoutQuestion } from "../blocks/tryoutQuestion";
+import { isVolunteerOrAbove } from "./accessHelpers";
 
 export const Questions: CollectionConfig = {
+  slug: "questions",
   admin: {
     useAsTitle: "title",
   },
-  slug: "questions",
+  access: {
+    read: ({ req: { user } }) => isVolunteerOrAbove(user),
+    create: ({ req: { user } }) => isVolunteerOrAbove(user),
+    update: ({ req: { user } }) => isVolunteerOrAbove(user),
+    delete: ({ req: { user } }) => isVolunteerOrAbove(user),
+  },
   fields: [
     {
       name: "duration",
