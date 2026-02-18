@@ -1,16 +1,18 @@
 import type { CollectionConfig } from "payload";
+import { isAdminOrAbove } from "./accessHelpers";
 
 export const Users: CollectionConfig = {
   slug: "users",
   admin: {
     useAsTitle: "email",
+    description:
+      "User aplikasi (login via Clerk). Role Admin/Super Admin = akses fitur admin di app. Untuk bisa login ke panel Payload (/admin), buat record di koleksi Admins dan pilih user ini di field \"User\" agar email sama.",
   },
-
   access: {
-    admin: ({ req: { user } }) => Boolean(user),
-    create: () => true,
-    read: () => true,
-    update: ({ req: { user } }) => Boolean(user),
+    admin: ({ req: { user } }) => isAdminOrAbove(user),
+    create: ({ req: { user } }) => isAdminOrAbove(user),
+    read: ({ req: { user } }) => isAdminOrAbove(user),
+    update: ({ req: { user } }) => isAdminOrAbove(user),
   },
   fields: [
     {
