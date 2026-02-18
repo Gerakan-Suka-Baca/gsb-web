@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { isSuperAdmin } from "./accessHelpers";
+import { isAdminOrAbove, isSuperAdmin } from "./accessHelpers";
 
 export const Admins: CollectionConfig = {
   slug: "admins",
@@ -11,7 +11,7 @@ export const Admins: CollectionConfig = {
       "Login ke panel Payload. Pilih User yang sudah ada agar email admin sama dengan email di Users (satu integrasi). Role: volunteer = hanya Media, Soal, Tryouts.",
   },
   access: {
-    read: ({ req: { user } }) => isSuperAdmin(user),
+    read: ({ req: { user } }) => isAdminOrAbove(user),
     create: ({ req: { user } }) => isSuperAdmin(user),
     update: ({ req: { user } }) => isSuperAdmin(user),
     delete: ({ req: { user } }) => isSuperAdmin(user),
