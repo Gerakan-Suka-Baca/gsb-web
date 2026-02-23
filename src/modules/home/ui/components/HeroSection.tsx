@@ -117,6 +117,7 @@ export function HeroSection() {
                           }}
                           fill
                           priority={index === 0}
+                          fetchPriority={index === 0 ? 'high' : 'auto'}
                           sizes="(max-width: 1024px) 100vw, 50vw"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
@@ -152,9 +153,9 @@ export function HeroSection() {
                     onClick={() => api?.scrollTo(index)}
                     aria-label={`Go to slide ${index + 1}`}
                   >
-                    <span className={`block h-2 rounded-full transition-all duration-300 ${index === current
-                      ? 'w-8 bg-gsb-yellow'
-                      : 'w-2 bg-white/50 group-hover:bg-white/80'
+                    <span className={`block h-2 w-8 rounded-full transition-[transform,background-color] duration-300 origin-center ${index === current
+                      ? 'scale-x-100 bg-gsb-yellow'
+                      : 'scale-x-[0.25] bg-white/50 group-hover:bg-white/80'
                       }`} />
                   </button>
                 ))}

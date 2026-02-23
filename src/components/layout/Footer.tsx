@@ -15,7 +15,7 @@ export function Footer() {
   ];
 
   return (
-    <footer id="kontak" className="bg-[#1a1a1a] text-white">
+    <footer id="kontak" className="bg-[#1a1a1a] text-white min-h-[280px]">
       <div className="container mx-auto px-4 lg:px-6 py-5 md:py-8">
 
         {/* Main grid */}
@@ -75,7 +75,7 @@ export function Footer() {
                 <h3 className="font-heading font-semibold text-sm mb-2 md:mb-3">Ikuti Kami</h3>
                 <div className="flex flex-wrap gap-2 mb-3 md:mb-4">
                   {socialMedia.map((s) => (
-                    <a key={s.label} href={s.href} aria-label={s.label} target="_blank" rel="noopener noreferrer" className="bg-white/10 hover:bg-gsb-tosca p-2 rounded-md transition-colors">
+                    <a key={s.label} href={s.href} aria-label={s.label} target="_blank" rel="noopener noreferrer" className="bg-white/10 hover:bg-gsb-tosca p-2.5 rounded-md transition-colors inline-flex items-center justify-center min-w-[44px] min-h-[44px]">
                       <s.icon className="h-4 w-4" />
                     </a>
                   ))}
@@ -96,8 +96,8 @@ export function Footer() {
         <div className="border-t border-white/10 pt-3 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-400">
           <p>© 2026 Gerakan Suka Baca. Hak Cipta Dilindungi.</p>
           <div className="flex gap-4">
-            <Link href="#" className="hover:text-white transition-colors">Kebijakan Privasi</Link>
-            <Link href="#" className="hover:text-white transition-colors">Syarat dan Ketentuan</Link>
+            <Link href="/privacy" aria-label="Kebijakan Privasi" className="hover:text-white transition-colors">Kebijakan Privasi</Link>
+            <Link href="/terms" aria-label="Syarat dan Ketentuan" className="hover:text-white transition-colors">Syarat dan Ketentuan</Link>
           </div>
         </div>
       </div>

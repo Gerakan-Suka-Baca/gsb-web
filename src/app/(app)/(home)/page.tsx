@@ -8,6 +8,12 @@ import { CTASection } from '@/modules/home/ui/components/CTASection';
 export default function HomePage() {
   return (
     <>
+      <link
+        rel="preload"
+        href="/home/top/gambar1.jpg"
+        as="image"
+        fetchPriority="high"
+      />
       <HeroSection />
       <AboutSection />
       <ProgramSection />
