@@ -23,6 +23,7 @@ export interface SyncState {
   currentSubtestIndex: number;
   currentQuestionIndex: number;
   status: ExamState["status"];
+  subtestDurations: Record<string, number>;
 }
 
 export interface ServerTimingSyncPayload {
@@ -79,10 +80,7 @@ export function useExamSync({
   );
 
   const createId = useCallback(() => {
-    if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-      return crypto.randomUUID();
-    }
-    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    return Math.random().toString(36).substring(2, 10);
   }, []);
 
   const scheduleRetry = useCallback((failCount: number) => {
@@ -248,6 +246,7 @@ export function useExamSync({
           currentQuestionIndex: stateRef.current.currentQuestionIndex,
           examState: stateRef.current.status,
           secondsRemaining: timeLeftRef.current,
+          subtestDurations: stateRef.current.subtestDurations,
         });
         flushEvents(true);
       }
@@ -262,6 +261,7 @@ export function useExamSync({
         currentQuestionIndex: s.currentQuestionIndex,
         examState: s.status,
         secondsRemaining: timeLeftRef.current,
+        subtestDurations: s.subtestDurations,
       });
       flushEvents(true);
     };
@@ -290,6 +290,7 @@ export function useExamSync({
         currentQuestionIndex: s.currentQuestionIndex,
         examState: s.status,
         secondsRemaining: timeLeftRef.current,
+        subtestDurations: s.subtestDurations,
       });
     }, 1000);
     return () => clearTimeout(handler);

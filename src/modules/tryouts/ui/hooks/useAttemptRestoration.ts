@@ -16,6 +16,7 @@ interface UseAttemptRestorationProps {
       timeLeft?: number;
       subtestStartedAt?: string;
       subtestDeadlineAt?: string;
+      subtestDurations?: Record<string, number>;
     }
   ) => void;
 }
@@ -90,6 +91,7 @@ export function useAttemptRestoration({
 
       const mergedAnswers = { ...storedAnswers };
       const mergedFlags = { ...storedFlags };
+      const mergedDurations = { ...((data.subtestDurations as Record<string, number> | undefined) || {}) };
 
       const backup = await loadBackup(data.id);
       if (backup) {
@@ -104,6 +106,9 @@ export function useAttemptRestoration({
             ...(mergedFlags[sId] || {}),
             ...backup.flags[sId],
           };
+        });
+        Object.keys(backup.subtestDurations || {}).forEach((sId) => {
+          mergedDurations[sId] = backup.subtestDurations[sId];
         });
 
         if (Number.isFinite(backup.currentSubtest) && backup.currentSubtest > finalSubtest) {
@@ -153,6 +158,7 @@ export function useAttemptRestoration({
         timeLeft: finalSeconds,
         subtestStartedAt: finalSubtestStartedAt,
         subtestDeadlineAt: finalSubtestDeadlineAt,
+        subtestDurations: mergedDurations,
       });
     };
 

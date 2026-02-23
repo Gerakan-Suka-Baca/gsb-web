@@ -24,7 +24,7 @@ const eventSchema = z.object({
 
 const SUBTEST_QUERY_LIMIT = 200;
 
-type TryoutWindowDoc = Pick<Tryout, "id" | "Date Open" | "Date Close">;
+type TryoutWindowDoc = Pick<Tryout, "id" | "dateOpen" | "dateClose">;
 
 type ServerTimerWindow = {
   subtestStartedAt: string;
@@ -67,8 +67,8 @@ const assertTryoutWindowOpen = (
   action: string,
   now: Date
 ) => {
-  const openMs = parseDateMs(tryout["Date Open"]);
-  const closeMs = parseDateMs(tryout["Date Close"]);
+  const openMs = parseDateMs(tryout.dateOpen);
+  const closeMs = parseDateMs(tryout.dateClose);
   if (openMs === null || closeMs === null) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
@@ -518,6 +518,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       z.object({
         attemptId: z.string(),
         answers: z.record(z.string(), z.record(z.string(), z.string())),
+        subtestDurations: z.record(z.string(), z.number()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -546,15 +547,18 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         now
       );
 
-      const tryoutRecord = tryout as unknown as Record<string, unknown>;
-      const subtests = Array.isArray(tryoutRecord.questions)
-        ? (tryoutRecord.questions as Question[])
-        : [];
+      const questionsResult = await payload.find({
+        collection: "questions",
+        where: { tryout: { equals: tryoutId } },
+        pagination: false,
+        depth: 2,
+      });
+      const subtests = (questionsResult.docs || []) as unknown as Question[];
 
-      if (!Array.isArray(subtests)) {
+      if (subtests.length === 0) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Tryout data invalid: questions not populated",
+          message: "Tryout data invalid: questions not found",
         });
       }
 
@@ -571,6 +575,7 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           correctAnswersCount: results.correctCount,
           totalQuestionsCount: results.totalQuestions,
           questionResults: results.questionResults,
+          subtestDurations: input.subtestDurations,
           secondsRemaining:
             typeof attempt.subtestDeadlineAt === "string"
               ? getSecondsRemainingFromDeadline(attempt.subtestDeadlineAt, now)

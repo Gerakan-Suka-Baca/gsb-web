@@ -159,6 +159,7 @@ export function ActivitySlider() {
                                             href={podcastSpotifyUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
+                                            aria-label="Dengarkan podcast di Spotify"
                                         >
                                             <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 cursor-pointer mx-auto shadow-xl ring-4 ring-white/10">
                                                 <Play className="h-10 w-10 text-white fill-current ml-1" />

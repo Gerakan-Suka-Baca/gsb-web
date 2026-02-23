@@ -44,6 +44,7 @@ type SubmissionResult = {
     selectedLetter: string | null;
     correctLetter: string | null;
     isCorrect: boolean;
+    id: string;
   }[];
 };
 
@@ -104,6 +105,7 @@ export const calculateSubmissionResults = (
         selectedLetter,
         correctLetter,
         isCorrect,
+        id: Math.random().toString(36).substring(2, 10)
       });
     }
   }

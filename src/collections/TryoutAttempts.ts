@@ -11,6 +11,7 @@ export const TryoutAttempts: CollectionConfig = {
   },
   admin: {
     useAsTitle: "id",
+    group: "Tryout",
     defaultColumns: ["user", "tryout", "status", "resultPlan", "score", "correctAnswersCount", "totalQuestionsCount", "createdAt"],
   },
   fields: [
@@ -73,7 +74,7 @@ export const TryoutAttempts: CollectionConfig = {
       type: "date",
       admin: {
         description:
-          "Timestamp authoritative server saat subtes aktif mulai berjalan.",
+          "Authoritative server timestamp when the active subtest started.",
       },
     },
     {
@@ -81,7 +82,7 @@ export const TryoutAttempts: CollectionConfig = {
       type: "date",
       admin: {
         description:
-          "Deadline authoritative server untuk subtes aktif saat ini.",
+          "Authoritative server deadline for the current active subtest.",
       },
     },
     {
@@ -92,7 +93,7 @@ export const TryoutAttempts: CollectionConfig = {
       name: "currentSubtest",
       type: "number",
       defaultValue: 0,
-      admin: { description: "Index subtes yang sedang dikerjakan (0-based)." },
+      admin: { description: "Index of the currently active subtest (0-based)." },
     },
     {
       name: "examState",
@@ -102,23 +103,23 @@ export const TryoutAttempts: CollectionConfig = {
         { label: "Bridging", value: "bridging" },
       ],
       defaultValue: "running",
-      admin: { description: "State internal ujian (pengerjaan vs istirahat antar subtes)." },
+      admin: { description: "Internal exam state (running vs bridging)." },
     },
     {
       name: "bridgingExpiry",
       type: "date",
-      admin: { description: "Waktu berakhirnya bridging (jika sedang bridging)." },
+      admin: { description: "Bridging expiry time (if currently bridging)." },
     },
     {
       name: "secondsRemaining",
       type: "number",
-      admin: { description: "Sisa waktu (detik) saat penyimpanan terakhir." },
+      admin: { description: "Remaining seconds at last backup." },
     },
     {
       name: "score",
       type: "number",
       label: "Skor (%)",
-      admin: { description: "Persentase jawaban benar." },
+      admin: { description: "Percentage of correct answers." },
     },
     {
       name: "correctAnswersCount",
@@ -134,7 +135,7 @@ export const TryoutAttempts: CollectionConfig = {
       name: "currentQuestionIndex",
       type: "number",
       defaultValue: 0,
-      admin: { description: "Index soal yang sedang dikerjakan di subtes saat ini (0-based)." },
+      admin: { description: "Index of the current question in the active subtest (0-based)." },
     },
     {
       name: "processedBatchIds",
@@ -151,7 +152,13 @@ export const TryoutAttempts: CollectionConfig = {
         { label: "Berbayar", value: "paid" },
       ],
       defaultValue: "none",
-      admin: { description: "Paket hasil tryout yang dipilih peserta." },
+      admin: { description: "Selected tryout result plan." },
+    },
+    {
+      name: "subtestDurations",
+      type: "json",
+      defaultValue: {},
+      admin: { description: "Elapsed time (seconds) per subtest, mapped by subtestId." }
     },
   ],
 };

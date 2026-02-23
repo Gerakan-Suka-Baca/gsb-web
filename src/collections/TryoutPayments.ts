@@ -5,6 +5,7 @@ export const TryoutPayments: CollectionConfig = {
   slug: "tryout-payments",
   admin: {
     useAsTitle: "id",
+    group: "Tryout",
     defaultColumns: ["user", "tryout", "status", "amount", "program", "createdAt"],
     description: "List user yang sudah melakukan pembayaran manual (untuk verifikasi).",
   },

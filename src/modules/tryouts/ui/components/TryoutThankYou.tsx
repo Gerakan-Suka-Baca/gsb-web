@@ -3,15 +3,38 @@
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, BarChart3, Clock } from "lucide-react";
+import { useTRPC } from "@/trpc/client";
+import { useQuery } from "@tanstack/react-query";
 
 interface Props {
+  tryoutId: string;
   plan: "free" | "paid";
   onChangePlan: () => void;
+  onViewScores: () => void;
 }
 
-export const TryoutThankYou = ({ plan, onChangePlan }: Props) => {
+export const TryoutThankYou = ({ tryoutId, plan, onChangePlan, onViewScores }: Props) => {
   const router = useRouter();
+  const trpc = useTRPC();
+
+  // Prefetch score results — used to conditionally show "Lihat Skor"
+  const { data: scoreData, isLoading: isScoreLoading } = useQuery(
+    trpc.tryouts.getScoreResults.queryOptions({ tryoutId })
+  );
+
+  const hasScores = scoreData?.released === true && scoreData.scores !== null;
+  const isNotReleased = !scoreData?.released;
+  const releaseDate = scoreData?.releaseDate
+    ? new Date(scoreData.releaseDate).toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Asia/Jakarta",
+      })
+    : null;
 
   return (
     <motion.div
@@ -33,21 +56,48 @@ export const TryoutThankYou = ({ plan, onChangePlan }: Props) => {
         Terima Kasih Sudah Mengikuti Tryout GSB!
       </h1>
 
-      <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto leading-relaxed">
+      <p className="text-lg text-muted-foreground mb-6 max-w-xl mx-auto leading-relaxed">
         {plan === "paid" ? (
           <>
-            Pembayaran Anda sedang diverifikasi. Silakan menunggu <span className="font-bold text-foreground">hasil dan pembahasan</span> yang akan disediakan setelah verifikasi selesai.
+            Pembayaran Anda sedang diverifikasi. Silakan menunggu{" "}
+            <span className="font-bold text-foreground">hasil dan pembahasan</span>{" "}
+            yang akan disediakan setelah verifikasi selesai.
           </>
         ) : (
-          "Nilai akan muncul H+7 setelah periode tryout berakhir. Silahkan cek berkala di halaman Dashboard Tryout ini."
+          "Nilai akan muncul setelah periode tryout berakhir. Silahkan cek berkala di halaman Dashboard Tryout."
         )}
       </p>
 
+      {/* Score status indicator */}
+      {!isScoreLoading && isNotReleased && releaseDate && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex items-center justify-center gap-2 text-sm text-gsb-orange bg-gsb-orange/10 px-5 py-3 rounded-full border border-gsb-orange/20 mx-auto mb-6 w-fit"
+        >
+          <Clock className="w-4 h-4" />
+          <span>Skor dirilis: <span className="font-bold">{releaseDate} WIB</span></span>
+        </motion.div>
+      )}
+
       <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        {/* "Lihat Skor" — hanya muncul kalau released + ada skor */}
+        {hasScores && (
+          <Button
+            onClick={onViewScores}
+            className="bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold h-12 px-8 rounded-full shadow-md gap-2"
+            size="lg"
+          >
+            <BarChart3 className="w-5 h-5" />
+            Lihat Skor
+          </Button>
+        )}
+
         <Button
           onClick={() => router.push("/tryout")}
-          className="bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold h-12 px-8 rounded-full shadow-md gap-2"
-          size="lg"
+          variant="outline"
+          className="font-semibold gap-2 rounded-full h-12 px-6"
         >
           <ArrowLeft className="w-5 h-5" />
           Kembali ke Dashboard Tryout

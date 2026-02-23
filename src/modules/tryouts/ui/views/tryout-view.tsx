@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { TryoutIntro } from "../components/TryoutIntro";
 import { TryoutExam } from "../components/TryoutExam";
 import { TryoutResultGate } from "../components/TryoutResultGate";
+import { ScoreDashboard } from "../components/ScoreDashboard";
 import { TryoutThankYou } from "../components/TryoutThankYou";
 import { Tryout } from "@/payload-types";
 import type { TryoutAttempt } from "../../types";
@@ -29,7 +30,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId }, { retry: false })
   );
 
-  const [view, setView] = useState<"loading" | "intro" | "exam" | "result" | "thankyou">("loading");
+  const [view, setView] = useState<"loading" | "intro" | "exam" | "result" | "thankyou" | "scores">("loading");
   const [holdResult, setHoldResult] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const tryout = data as unknown as Tryout;
@@ -60,6 +61,9 @@ export const TryoutView = ({ tryoutId }: Props) => {
       if (isUpgrading && view === "result" && plan === "free") {
          return;
       }
+
+      // Don't reset "scores" view — user explicitly navigated there
+      if (view === "scores") return;
 
       if (view !== target) setView(target);
     } else if (existingAttempt?.status === "started") {
@@ -133,13 +137,19 @@ export const TryoutView = ({ tryoutId }: Props) => {
     const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
     return (
       <TryoutThankYou
+        tryoutId={tryoutId}
         plan={(plan as "free" | "paid") ?? "free"}
         onChangePlan={() => {
             setIsUpgrading(true);
             setView("result");
         }}
+        onViewScores={() => setView("scores")}
       />
     );
+  }
+
+  if (view === "scores") {
+    return <ScoreDashboard tryoutId={tryoutId} />;
   }
 
   return null;

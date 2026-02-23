@@ -74,6 +74,7 @@ export interface Config {
     questions: Question;
     'tryout-attempts': TryoutAttempt;
     'tryout-payments': TryoutPayment;
+    'tryout-scores': TryoutScore;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -88,6 +89,7 @@ export interface Config {
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
     'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
+    'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -125,21 +127,12 @@ export interface AdminAuthOperations {
   };
 }
 /**
- * Login ke panel Payload. Pilih User yang sudah ada agar email admin sama dengan email di Users (satu integrasi). Role: volunteer = hanya Media, Soal, Tryouts.
- *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "admins".
  */
 export interface Admin {
   id: string;
-  /**
-   * Volunteer: hanya bisa upload media, buat/edit Soal & Tryouts. Admin/Super Admin: akses penuh.
-   */
   role: 'super-admin' | 'admin' | 'volunteer';
-  /**
-   * Pilih user dari koleksi Users. Email login admin akan disamakan dengan email user ini. Lebih baik pilih user yang sudah punya role Admin/Super Admin.
-   */
-  linkedUser?: (string | null) | User;
   name?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -161,8 +154,6 @@ export interface Admin {
   collection: 'admins';
 }
 /**
- * User aplikasi (login via Clerk). Role Admin/Super Admin = akses fitur admin di app. Untuk bisa login ke panel Payload (/admin), buat record di koleksi Admins dan pilih user ini di field "User" agar email sama.
- *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
@@ -214,10 +205,18 @@ export interface Media {
 export interface Tryout {
   id: string;
   title: string;
-  'Date Open': string;
-  'Date Open_tz': SupportedTimezones;
-  'Date Close': string;
-  'Date Close_tz': SupportedTimezones;
+  /**
+   * WIB (GMT+7)
+   */
+  dateOpen: string;
+  /**
+   * WIB (GMT+7)
+   */
+  dateClose: string;
+  /**
+   * When scores become visible to students. WIB (GMT+7)
+   */
+  scoreReleaseDate?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -227,9 +226,6 @@ export interface Tryout {
  */
 export interface Question {
   id: string;
-  /**
-   * Waktu pengerjaan untuk subtes ini dalam menit.
-   */
   duration: number;
   subtest?: ('PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM') | null;
   tryout: string | Tryout;
@@ -368,6 +364,18 @@ export interface TryoutAttempt {
    * Paket hasil tryout yang dipilih peserta.
    */
   resultPlan?: ('none' | 'free' | 'paid') | null;
+  /**
+   * Waktu yang dihabiskan (detik) per subtes (key: subtestId).
+   */
+  subtestDurations?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -393,6 +401,46 @@ export interface TryoutPayment {
   amount?: number | null;
   paymentDate?: string | null;
   notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-scores".
+ */
+export interface TryoutScore {
+  id: string;
+  user: string | User;
+  tryout: string | Tryout;
+  /**
+   * PU
+   */
+  score_PU?: number | null;
+  /**
+   * PK
+   */
+  score_PK?: number | null;
+  /**
+   * PM
+   */
+  score_PM?: number | null;
+  /**
+   * LBE
+   */
+  score_LBE?: number | null;
+  /**
+   * LBI
+   */
+  score_LBI?: number | null;
+  /**
+   * PPU
+   */
+  score_PPU?: number | null;
+  /**
+   * KMBM
+   */
+  score_KMBM?: number | null;
+  finalScore: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -447,6 +495,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tryout-payments';
         value: string | TryoutPayment;
+      } | null)
+    | ({
+        relationTo: 'tryout-scores';
+        value: string | TryoutScore;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -496,7 +548,6 @@ export interface PayloadMigration {
  */
 export interface AdminsSelect<T extends boolean = true> {
   role?: T;
-  linkedUser?: T;
   name?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -564,10 +615,9 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface TryoutsSelect<T extends boolean = true> {
   title?: T;
-  'Date Open'?: T;
-  'Date Open_tz'?: T;
-  'Date Close'?: T;
-  'Date Close_tz'?: T;
+  dateOpen?: T;
+  dateClose?: T;
+  scoreReleaseDate?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -642,6 +692,7 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
   currentQuestionIndex?: T;
   processedBatchIds?: T;
   resultPlan?: T;
+  subtestDurations?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -658,6 +709,24 @@ export interface TryoutPaymentsSelect<T extends boolean = true> {
   amount?: T;
   paymentDate?: T;
   notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-scores_select".
+ */
+export interface TryoutScoresSelect<T extends boolean = true> {
+  user?: T;
+  tryout?: T;
+  score_PU?: T;
+  score_PK?: T;
+  score_PM?: T;
+  score_LBE?: T;
+  score_LBI?: T;
+  score_PPU?: T;
+  score_KMBM?: T;
+  finalScore?: T;
   updatedAt?: T;
   createdAt?: T;
 }
