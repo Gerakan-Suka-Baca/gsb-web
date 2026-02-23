@@ -18,6 +18,7 @@ export interface ExamState {
   answers: Record<string, AnswerMap>;
   flags: Record<string, FlagMap>;
   bridgingSeconds: number;
+  subtestDurations: Record<string, number>;
   dialogs: {
     confirmFinish: boolean;
     exit: boolean;
@@ -37,6 +38,7 @@ export type ExamAction =
   | { type: "PREV_QUESTION" }
   | { type: "SET_BRIDGING_SECONDS"; seconds: number }
   | { type: "SET_DIALOG"; dialog: keyof ExamState["dialogs"]; open: boolean }
+  | { type: "SET_SUBTEST_DURATION"; subtestId: string; elapsedSeconds: number }
   | {
       type: "LOAD_STATE";
       state: Partial<ExamState>;
@@ -50,6 +52,7 @@ const initialState: ExamState = {
   answers: {},
   flags: {},
   bridgingSeconds: 60,
+  subtestDurations: {},
   dialogs: {
     confirmFinish: false,
     exit: false,
@@ -109,6 +112,14 @@ function examReducer(state: ExamState, action: ExamAction): ExamState {
       };
     case "LOAD_STATE":
       return { ...state, ...action.state };
+    case "SET_SUBTEST_DURATION":
+      return {
+        ...state,
+        subtestDurations: {
+          ...state.subtestDurations,
+          [action.subtestId]: action.elapsedSeconds,
+        },
+      };
     default:
       return state;
   }

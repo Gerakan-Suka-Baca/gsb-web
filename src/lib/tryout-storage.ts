@@ -26,6 +26,7 @@ export interface TryoutBackup {
   currentQuestionIndex: number;
   secondsRemaining: number;
   examState: "loading" | "ready" | "running" | "bridging" | "finished";
+  subtestDurations: Record<string, number>;
   updatedAt: number;
   version: number; 
 }
@@ -50,7 +51,7 @@ export async function saveBackup(
   const payload: TryoutBackup = {
     ...data,
     updatedAt: Date.now(),
-    version: 1,
+    version: 2,
   };
   await store.setItem(key(attemptId), payload);
 }

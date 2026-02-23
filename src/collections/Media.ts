@@ -3,6 +3,9 @@ import { isAdminOrAbove } from './accessHelpers'
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  admin: {
+    group: 'Users',
+  },
   access: {
     read: () => true,
     create: ({ req: { user } }) => isAdminOrAbove(user),

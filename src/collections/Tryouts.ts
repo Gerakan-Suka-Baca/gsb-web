@@ -6,6 +6,11 @@ export const Tryouts: CollectionConfig = {
   admin: {
     listSearchableFields: ["title"],
     useAsTitle: "title",
+    group: "Tryout",
+  },
+  labels: {
+    singular: "Batch Tryout",
+    plural: "Batch Tryout",
   },
   access: {
     read: ({ req: { user } }) => isVolunteerOrAbove(user),
@@ -20,27 +25,42 @@ export const Tryouts: CollectionConfig = {
       required: true,
     },
     {
-      name: "Date Open",
+      name: "dateOpen",
       type: "date",
+      label: "Date Open",
       required: true,
-      timezone: true,
       admin: {
         date: {
           pickerAppearance: "dayAndTime",
-          displayFormat: "d MMM yyy h:mm:ss a",
+          displayFormat: "d MMM yyy HH:mm",
         },
+        description: "WIB (GMT+7)",
       },
     },
     {
-      name: "Date Close",
+      name: "dateClose",
       type: "date",
+      label: "Date Close",
       required: true,
-      timezone: true,
       admin: {
         date: {
           pickerAppearance: "dayAndTime",
-          displayFormat: "d MMM yyy h:mm:ss a",
+          displayFormat: "d MMM yyy HH:mm",
         },
+        description: "WIB (GMT+7)",
+      },
+    },
+    {
+      name: "scoreReleaseDate",
+      type: "date",
+      label: "Score Release Date",
+      admin: {
+        date: {
+          pickerAppearance: "dayAndTime",
+          displayFormat: "d MMM yyy HH:mm",
+        },
+        description: "When scores become visible to students. WIB (GMT+7)",
+        position: "sidebar",
       },
     },
   ],

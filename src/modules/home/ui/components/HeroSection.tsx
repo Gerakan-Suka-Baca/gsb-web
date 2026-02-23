@@ -52,7 +52,7 @@ export function HeroSection() {
       <div className="container mx-auto px-4 lg:px-6 py-8 md:py-16 relative z-10">
         <div className="flex flex-col-reverse lg:grid lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           <div className="space-y-8 md:space-y-10 text-center lg:text-left">
-            <FadeIn direction="right" delay={0.1} className="space-y-6">
+            <div className="space-y-6">
               <h1 className="text-4xl md:text-5xl lg:text-7xl font-heading font-bold leading-tight text-responsive-maroon">
                 Pendidikan Itu Harusnya{' '}
                 <span className="text-gsb-orange relative inline-block">
@@ -66,7 +66,7 @@ export function HeroSection() {
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0">
                 Bergerak Berdampak bersama GSB untuk mewujudkan akses pendidikan yang setara bagi seluruh anak Indonesia.
               </p>
-            </FadeIn>
+            </div>
 
             <FadeIn direction="up" delay={0.3} className="flex flex-wrap gap-4 justify-center lg:justify-start">
               <Button
@@ -118,6 +118,7 @@ export function HeroSection() {
                           fill
                           priority={index === 0}
                           fetchPriority={index === 0 ? 'high' : 'auto'}
+                          quality={60}
                           sizes="(max-width: 1024px) 100vw, 50vw"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />

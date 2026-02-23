@@ -247,19 +247,32 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     if (submitAttemptMutation.isPending) return;
     dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: false });
 
+    const initialSeconds = currentSubtest?.duration ? currentSubtest.duration * 60 : 0;
+    const elapsedSeconds = Math.max(0, initialSeconds - timeLeft);
+    if (currentSubtestId) {
+      dispatch({ type: "SET_SUBTEST_DURATION", subtestId: currentSubtestId, elapsedSeconds });
+    }
+
     if (state.currentSubtestIndex < subtests.length - 1) {
       dispatch({ type: "SET_STATUS", status: "bridging" });
     } else {
       if (state.attemptId) {
         await flushEvents(true);
         const safeAnswers = state.answers || {};
-        await submitAttemptMutation.mutateAsync({ attemptId: state.attemptId, answers: safeAnswers });
+        const safeDurations = { ...state.subtestDurations };
+        if (currentSubtestId) safeDurations[currentSubtestId] = elapsedSeconds;
+        
+        await submitAttemptMutation.mutateAsync({ 
+          attemptId: state.attemptId, 
+          answers: safeAnswers,
+          subtestDurations: safeDurations
+        });
       } else {
         dispatch({ type: "SET_STATUS", status: "finished" });
         onFinish(state.answers || {});
       }
     }
-  }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, onFinish, submitAttemptMutation, flushEvents, dispatch]);
+  }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, state.subtestDurations, onFinish, submitAttemptMutation, flushEvents, dispatch, currentSubtest?.duration, currentSubtestId, timeLeft]);
 
   const handleNextSubtest = useCallback(async () => {
     const nextIdx = state.currentSubtestIndex + 1;

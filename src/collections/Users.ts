@@ -4,7 +4,9 @@ import { isAdminOrAbove } from "./accessHelpers";
 export const Users: CollectionConfig = {
   slug: "users",
   admin: {
-    useAsTitle: "email",
+    useAsTitle: "fullName",
+    group: "Users",
+    listSearchableFields: ["fullName", "email", "username"],
   },
   access: {
     admin: ({ req: { user } }) => isAdminOrAbove(user),

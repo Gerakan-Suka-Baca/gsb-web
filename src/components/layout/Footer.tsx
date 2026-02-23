@@ -48,7 +48,7 @@ export function Footer() {
                 { href: "/programs", label: "Program" },
                 { href: "/volunteer", label: "Relawan" },
               ].map((link) => (
-                <Link key={link.href} href={link.href} className="text-gray-400 hover:text-white transition-colors">{link.label}</Link>
+                <Link key={link.href} href={link.href} className="text-gray-400 hover:text-white transition-colors py-2 inline-block">{link.label}</Link>
               ))}
             </div>
           </div>
@@ -63,7 +63,7 @@ export function Footer() {
                 { href: "/programs#beasiswa", label: "Beasiswa" },
                 { href: "/programs#careducation", label: "Careducation" },
               ].map((p) => (
-                <Link key={p.label} href={p.href} className="text-gray-400 hover:text-white transition-colors">{p.label}</Link>
+                <Link key={p.label} href={p.href} className="text-gray-400 hover:text-white transition-colors py-2 inline-block">{p.label}</Link>
               ))}
             </div>
           </div>

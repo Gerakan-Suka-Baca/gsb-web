@@ -98,7 +98,7 @@ export const TryoutsList = () => {
       currentTryouts.push({ tryout, attempt });
     } else if (attempt?.status === "completed") {
       registeredTryouts.push({ tryout, attempt });
-    } else if (isOpenNow(tryout["Date Open"], tryout["Date Close"])) {
+    } else if (isOpenNow(tryout.dateOpen, tryout.dateClose)) {
       availableTryouts.push(tryout);
     }
   }
@@ -138,7 +138,7 @@ export const TryoutsList = () => {
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
-                <span>{formatDate(tryout["Date Open"])}</span>
+                <span>{formatDate(tryout.dateOpen)}</span>
               </div>
               {subtitle && (
                 <div className="flex items-center gap-1.5">
