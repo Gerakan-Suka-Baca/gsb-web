@@ -20,6 +20,7 @@ const dirname = path.dirname(filename)
 import { TryoutAttempts } from './collections/TryoutAttempts'
 import { TryoutPayments } from './collections/TryoutPayments'
 import { TryoutScores } from './collections/TryoutScores'
+import { TryoutExplanations } from './collections/TryoutExplanations'
 
 export default buildConfig({
   admin: {
@@ -28,7 +29,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Admins, Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments, TryoutScores],
+  collections: [Admins, Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments, TryoutScores, TryoutExplanations],
   // @ts-expect-error: rateLimit type definition missing
   rateLimit: {
     trustProxy: true,
