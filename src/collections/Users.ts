@@ -5,8 +5,6 @@ export const Users: CollectionConfig = {
   slug: "users",
   admin: {
     useAsTitle: "email",
-    description:
-      "User aplikasi (login via Clerk). Role Admin/Super Admin = akses fitur admin di app. Untuk bisa login ke panel Payload (/admin), buat record di koleksi Admins dan pilih user ini di field \"User\" agar email sama.",
   },
   access: {
     admin: ({ req: { user } }) => isAdminOrAbove(user),
