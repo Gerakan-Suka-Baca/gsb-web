@@ -9,9 +9,9 @@ import { TryoutResultGate } from "../components/TryoutResultGate";
 import { ScoreDashboard } from "../components/ScoreDashboard";
 import { TryoutThankYou } from "../components/TryoutThankYou";
 import { Tryout } from "@/payload-types";
-import type { TryoutAttempt } from "../../types";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 interface Props {
   tryoutId: string;
@@ -20,6 +20,7 @@ interface Props {
 export const TryoutView = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const router = useRouter();
   
   const { data, isLoading: isMetadataLoading, isError: isMetadataError } = useQuery(
     trpc.tryouts.getMetadata.queryOptions({ tryoutId }, { retry: false })
@@ -61,9 +62,6 @@ export const TryoutView = ({ tryoutId }: Props) => {
       if (isUpgrading && view === "result" && plan === "free") {
          return;
       }
-
-      // Don't reset "scores" view — user explicitly navigated there
-      if (view === "scores") return;
 
       if (view !== target) setView(target);
     } else if (existingAttempt?.status === "started") {
@@ -143,13 +141,9 @@ export const TryoutView = ({ tryoutId }: Props) => {
             setIsUpgrading(true);
             setView("result");
         }}
-        onViewScores={() => setView("scores")}
+        onViewScores={() => router.push(`/tryout/${tryoutId}/results`)}
       />
     );
-  }
-
-  if (view === "scores") {
-    return <ScoreDashboard tryoutId={tryoutId} />;
   }
 
   return null;
