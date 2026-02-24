@@ -42,7 +42,7 @@ export function MajorSelect({
       setLoading(true);
       try {
         const results = await searchMajors(debouncedValue, universityName);
-        const options = results.map((major) => ({
+        const options = results.map((major: any) => ({
           value: major.name,
           label: major.name,
         }));

@@ -9,6 +9,7 @@ import { TryoutResultGate } from "../components/TryoutResultGate";
 import { ScoreDashboard } from "../components/ScoreDashboard";
 import { TryoutThankYou } from "../components/TryoutThankYou";
 import { Tryout } from "@/payload-types";
+import { TryoutAttempt } from "../../types";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -100,7 +101,7 @@ export const TryoutView = ({ tryoutId }: Props) => {
     return (
       <TryoutExam
         tryout={tryout}
-        initialAttempt={existingAttempt as TryoutAttempt}
+        initialAttempt={existingAttempt as unknown as TryoutAttempt}
         onFinish={async () => {
           setHoldResult(true);
           setView("result");

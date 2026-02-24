@@ -3,9 +3,9 @@ import { CollectionConfig } from 'payload'
 export const StudyPrograms: CollectionConfig = {
   slug: 'studyPrograms',
   admin: {
-    group: "Universities",
+    group: 'Universities',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'university', 'category', 'level'],
+    defaultColumns: ['name', 'status', 'accreditation'],
   },
   access: {
     read: () => true,
@@ -15,29 +15,27 @@ export const StudyPrograms: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
-      label: 'Nama Program Studi',
+      label: 'Nama Universitas',
     },
     {
-      name: 'university',
-      type: 'relationship',
-      relationTo: 'universities',
-      required: true,
-      label: 'Universitas',
-    },
-    {
-      name: 'level',
+      name: 'abbreviation',
       type: 'text',
-      label: 'Jenjang (Contoh: S1, D4, dll)',
+      label: 'Singkatan',
     },
     {
-      name: 'category',
+      name: 'npsn',
+      type: 'text',
+      label: 'NPSN',
+    },
+    {
+      name: 'status',
       type: 'select',
       options: [
-        { label: 'SNBP', value: 'snbp' },
-        { label: 'SNBT', value: 'snbt' },
-        { label: 'Mandiri', value: 'mandiri' },
+        { label: 'Negeri', value: 'negeri' },
+        { label: 'Swasta', value: 'swasta' },
+        { label: 'PTK', value: 'ptk' },
       ],
-      label: 'Kategori Penerimaan',
+      label: 'Status Perguruan Tinggi',
     },
     {
       name: 'accreditation',
@@ -45,60 +43,118 @@ export const StudyPrograms: CollectionConfig = {
       label: 'Akreditasi',
     },
     {
-      name: 'capacity',
-      type: 'number',
-      label: 'Daya Tampung Saat Ini',
+      name: 'address',
+      type: 'textarea',
+      label: 'Alamat',
     },
     {
-      name: 'applicantsPreviousYear',
-      type: 'number',
-      label: 'Pendaftar Tahun Sebelumnya',
-    },
-    {
-      name: 'baseValue',
-      type: 'number',
-      label: 'Base Value (Keketatan)',
-    },
-    {
-      name: 'predictedApplicants',
-      type: 'number',
-      label: 'Prediksi Pendaftar',
-    },
-    {
-      name: 'avgUkt',
+      name: 'website',
       type: 'text',
-      label: 'Rata-rata UKT',
-    },
-    {
-      name: 'maxUkt',
-      type: 'text',
-      label: 'UKT Maksimal',
-    },
-    {
-      name: 'admissionMetric',
-      type: 'text',
-      label: 'Metrik Kelulusan',
-      admin: {
-        description: 'Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT',
-      },
-    },
-    {
-      name: 'passingPercentage',
-      type: 'text',
-      label: 'Persentase Kelulusan',
-    },
-    {
-      name: 'history',
-      type: 'json',
-      label: 'Data Historis Daya Tampung & Pendaftar',
+      label: 'Website',
     },
     {
       name: 'pddiktiId',
       type: 'text',
-      label: 'ID PDDikti (id_prodi/id_sms)',
-      admin: {
-        description: 'Internal ID used for PDDikti synchronisation',
-      },
+      label: 'ID PDDikti (id_sp)',
+    },
+    {
+      name: 'programs',
+      type: 'array',
+      label: 'Daftar Program Studi',
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          required: true,
+          label: 'Nama Program Studi',
+        },
+        {
+          name: 'level',
+          type: 'text',
+          label: 'Jenjang (Contoh: S1, D4, dll)',
+        },
+        {
+          name: 'category',
+          type: 'select',
+          options: [
+            { label: 'SNBP', value: 'snbp' },
+            { label: 'SNBT', value: 'snbt' },
+            { label: 'Mandiri', value: 'mandiri' },
+          ],
+          label: 'Kategori Penerimaan',
+        },
+        {
+          name: 'accreditation',
+          type: 'text',
+          label: 'Akreditasi',
+        },
+        {
+          name: 'capacity',
+          type: 'number',
+          label: 'Daya Tampung Saat Ini',
+        },
+        {
+          name: 'applicantsPreviousYear',
+          type: 'number',
+          label: 'Pendaftar Tahun Sebelumnya',
+        },
+        {
+          name: 'baseValue',
+          type: 'number',
+          label: 'Base Value (Keketatan)',
+        },
+        {
+          name: 'predictedApplicants',
+          type: 'number',
+          label: 'Prediksi Pendaftar',
+        },
+        {
+          name: 'avgUkt',
+          type: 'text',
+          label: 'Rata-rata UKT',
+        },
+        {
+          name: 'maxUkt',
+          type: 'text',
+          label: 'UKT Maksimal',
+        },
+        {
+          name: 'admissionMetric',
+          type: 'text',
+          label: 'Metrik Kelulusan',
+          admin: {
+            description: 'Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT',
+          },
+        },
+        {
+          name: 'passingPercentage',
+          type: 'text',
+          label: 'Persentase Kelulusan',
+        },
+        {
+          name: 'history',
+          type: 'json',
+          label: 'Data Historis Daya Tampung & Pendaftar',
+        },
+        {
+          name: 'pddiktiId',
+          type: 'text',
+          label: 'ID PDDikti (id_prodi/id_sms)',
+          admin: {
+            description: 'Internal ID used for PDDikti synchronisation',
+          },
+        },
+        {
+          name: 'description',
+          type: 'richText',
+          label: 'Deskripsi Program Studi',
+        },
+        {
+          name: 'courses',
+          type: 'richText',
+          label: 'Mata Kuliah yang Diriwayatkan',
+        }
+      ]
     }
   ],
 }
