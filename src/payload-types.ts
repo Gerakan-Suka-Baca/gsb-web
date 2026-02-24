@@ -487,6 +487,70 @@ export interface University {
   address?: string | null;
   website?: string | null;
   pddiktiId?: string | null;
+  image?: (string | null) | Media;
+  programs?:
+    | {
+        name: string;
+        level?: string | null;
+        category?: ('snbp' | 'snbt' | 'mandiri') | null;
+        accreditation?: string | null;
+        capacity?: number | null;
+        applicantsPreviousYear?: number | null;
+        baseValue?: number | null;
+        predictedApplicants?: number | null;
+        avgUkt?: string | null;
+        maxUkt?: string | null;
+        /**
+         * Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT
+         */
+        admissionMetric?: string | null;
+        passingPercentage?: string | null;
+        history?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * Internal ID used for PDDikti synchronisation
+         */
+        pddiktiId?: string | null;
+        description?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        courses?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -497,34 +561,76 @@ export interface University {
 export interface StudyProgram {
   id: string;
   name: string;
-  university: string | University;
-  level?: string | null;
-  category?: ('snbp' | 'snbt' | 'mandiri') | null;
+  abbreviation?: string | null;
+  npsn?: string | null;
+  status?: ('negeri' | 'swasta' | 'ptk') | null;
   accreditation?: string | null;
-  capacity?: number | null;
-  applicantsPreviousYear?: number | null;
-  baseValue?: number | null;
-  predictedApplicants?: number | null;
-  avgUkt?: string | null;
-  maxUkt?: string | null;
-  /**
-   * Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT
-   */
-  admissionMetric?: string | null;
-  passingPercentage?: string | null;
-  history?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Internal ID used for PDDikti synchronisation
-   */
+  address?: string | null;
+  website?: string | null;
   pddiktiId?: string | null;
+  programs?:
+    | {
+        name: string;
+        level?: string | null;
+        category?: ('snbp' | 'snbt' | 'mandiri') | null;
+        accreditation?: string | null;
+        capacity?: number | null;
+        applicantsPreviousYear?: number | null;
+        baseValue?: number | null;
+        predictedApplicants?: number | null;
+        avgUkt?: string | null;
+        maxUkt?: string | null;
+        /**
+         * Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT
+         */
+        admissionMetric?: string | null;
+        passingPercentage?: string | null;
+        history?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * Internal ID used for PDDikti synchronisation
+         */
+        pddiktiId?: string | null;
+        description?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        courses?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -850,6 +956,28 @@ export interface UniversitiesSelect<T extends boolean = true> {
   address?: T;
   website?: T;
   pddiktiId?: T;
+  image?: T;
+  programs?:
+    | T
+    | {
+        name?: T;
+        level?: T;
+        category?: T;
+        accreditation?: T;
+        capacity?: T;
+        applicantsPreviousYear?: T;
+        baseValue?: T;
+        predictedApplicants?: T;
+        avgUkt?: T;
+        maxUkt?: T;
+        admissionMetric?: T;
+        passingPercentage?: T;
+        history?: T;
+        pddiktiId?: T;
+        description?: T;
+        courses?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -859,20 +987,34 @@ export interface UniversitiesSelect<T extends boolean = true> {
  */
 export interface StudyProgramsSelect<T extends boolean = true> {
   name?: T;
-  university?: T;
-  level?: T;
-  category?: T;
+  abbreviation?: T;
+  npsn?: T;
+  status?: T;
   accreditation?: T;
-  capacity?: T;
-  applicantsPreviousYear?: T;
-  baseValue?: T;
-  predictedApplicants?: T;
-  avgUkt?: T;
-  maxUkt?: T;
-  admissionMetric?: T;
-  passingPercentage?: T;
-  history?: T;
+  address?: T;
+  website?: T;
   pddiktiId?: T;
+  programs?:
+    | T
+    | {
+        name?: T;
+        level?: T;
+        category?: T;
+        accreditation?: T;
+        capacity?: T;
+        applicantsPreviousYear?: T;
+        baseValue?: T;
+        predictedApplicants?: T;
+        avgUkt?: T;
+        maxUkt?: T;
+        admissionMetric?: T;
+        passingPercentage?: T;
+        history?: T;
+        pddiktiId?: T;
+        description?: T;
+        courses?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

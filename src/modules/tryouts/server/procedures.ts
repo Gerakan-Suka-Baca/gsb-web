@@ -1,4 +1,5 @@
 import z from "zod";
+import mongoose from "mongoose";
 
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { Question } from "@/payload-types";
@@ -297,33 +298,31 @@ export const tryoutsRouter = createTRPCRouter({
       const finalScore = (scoreDoc?.finalScore as number) ?? 0;
 
       // Function to search MongoDB for a program
-      const searchProgram = async (univName: string, majorName: string) => {
-        if (!univName || !majorName) return null;
-        
-        // Exact matching or partial matching can be tricky due to casing/accents
-        // We will try a "contains" search for robustness. Payload supports 'like' or 'contains'.
-        const results = await ctx.db.find({
-          collection: "studyPrograms",
-          where: {
-            and: [
-              { name: { contains: majorName } },
-              { category: { equals: "snbt" } }
-            ]
-          },
-          depth: 1,
-          limit: 100,
-        });
-
-        // Filter by user's university string (case insensitive)
-        const match = results.docs.find((doc: any) => {
-          const uName = doc.university?.name || "";
-          return uName.toLowerCase().includes(univName.toLowerCase()) || univName.toLowerCase().includes(uName.toLowerCase());
-        }) as any;
-
-        if (!match) return null;
+        const searchProgram = async (univName: string, majorName: string) => {
+          if (!univName || !majorName) return null;
+          
+          // Use MongoDB Aggregation directly via Mongoose model
+          const results = await ctx.db.find({
+            collection: "studyPrograms",
+            where: {
+              and: [
+                { name: { contains: univName } },
+                { "programs.name": { contains: majorName } },
+                { "programs.category": { equals: "snbt" } }
+              ]
+            },
+            limit: 1,
+            depth: 0,
+          });
+  
+          if (results.docs.length === 0) return null;
+          const matchDoc = results.docs[0];
+          const match = (matchDoc.programs as any[])?.find(p => p.name.toLowerCase().includes(majorName.toLowerCase()) && p.category === "snbt");
+          
+          if (!match) return null;
 
         const passingGrade = parseFloat(match.admissionMetric) || 0;
-        if (!passingGrade) return { found: true, passingGrade: 0, targetPTN: univName, targetMajor: majorName, name: match.name, universityName: match.university?.name };
+        if (!passingGrade) return { found: true, passingGrade: 0, targetPTN: univName, targetMajor: majorName, name: match.name, universityName: matchDoc.name };
 
         // Statistical Logistic Function for Chance Calculation
         // Formula: P(x) = 1 / (1 + e^(-k(x - x0)))
@@ -346,7 +345,7 @@ export const tryoutsRouter = createTRPCRouter({
           found: true,
           targetPTN: univName,
           targetMajor: majorName,
-          dbUnivName: match.university?.name,
+          dbUnivName: matchDoc.name,
           dbMajorName: match.name,
           level,
           color,
@@ -411,45 +410,124 @@ export const tryoutsRouter = createTRPCRouter({
         return { finalScore, recommendations: [] };
       }
 
-      // Query broad matches
+      // Query broad matches through native Payload find (Array dot notation)
       const rawProms = await ctx.db.find({
         collection: "studyPrograms",
         where: {
           and: [
+            { "programs.category": { equals: "snbt" } },
             {
-              or: allKws.map(kw => ({ name: { contains: kw } }))
-            },
-            { category: { equals: "snbt" } }
+              or: allKws.map(kw => ({ "programs.name": { contains: kw } }))
+            }
           ]
         },
-        depth: 1,
-        limit: 300,
+        limit: 150,
+        depth: 0,
       });
 
-      const recs = rawProms.docs.map((doc: any) => {
-        const passingGrade = parseFloat(doc.admissionMetric) || 0;
+      const allMatches: any[] = [];
+      rawProms.docs.forEach((doc: any) => {
+         const progs = doc.programs || [];
+         progs.forEach((prog: any) => {
+            // Apply strict memory-level keyword filtration since parent doc match may pull all nested items
+            if (prog.category === "snbt" && allKws.some(kw => prog.name.toLowerCase().includes(kw.toLowerCase()))) {
+               allMatches.push({ prog, doc });
+            }
+         });
+      });
+
+      const recs = allMatches.map(({ prog, doc }) => {
+        const passingGrade = parseFloat(prog.admissionMetric) || 0;
         
         const k = 0.05;
         const rawChance = 100 / (1 + Math.exp(-k * (finalScore - passingGrade)));
         const chance = Math.max(5, Math.min(95, Math.round(rawChance)));
 
         return {
-          id: doc.id,
-          name: doc.name,
-          universityName: doc.university?.name || "Unknown",
+          id: prog.id,
+          name: prog.name,
+          universityName: doc.name || "Unknown",
           passingGrade,
           chance, 
-          capacity: doc.capacity || 0,
-          avgUkt: doc.avgUkt,
-          maxUkt: doc.maxUkt
+          capacity: prog.capacity || 0,
+          avgUkt: prog.avgUkt,
+          maxUkt: prog.maxUkt
         };
-      }).filter(r => r.chance >= 70) 
+      }).filter((r: any) => r.chance >= 70) 
       // strict filter: only recommend universities where statistical chance >= 70%
       
       // Sort by chance descending
-      recs.sort((a, b) => b.chance - a.chance);
+      recs.sort((a: any, b: any) => b.chance - a.chance);
 
       // Return top 20 safe choices
       return { finalScore, recommendations: recs.slice(0, 20) };
+    }),
+
+  getProgramStudyDetail: protectedProcedure
+    .input(z.object({ programId: z.string(), tryoutId: z.string().optional() }))
+    .query(async ({ ctx, input }) => {
+      const results = await ctx.db.find({
+        collection: "studyPrograms",
+        where: { "programs.id": { equals: input.programId } },
+        limit: 1,
+        depth: 0,
+      });
+
+      if (results.docs.length === 0) {
+        // Fallback: the id field could be mapped as _id if they pushed raw JSON from Compass instead of through Payload.
+        // It's safer to filter memory for safety since there are only 139 documents.
+        throw new Error("Program Studi tidak ditemukan");
+      }
+      
+      const parentDoc = results.docs[0];
+      const prog = (parentDoc.programs as any[])?.find(p => String(p.id) === input.programId || String(p._id) === input.programId);
+      
+      if (!prog) {
+        throw new Error("Program Studi dalam Universitas tidak cocok");
+      }
+
+      let finalScore = 0;
+      if (input.tryoutId && ctx.session?.user?.id) {
+        const [scoreResult] = await ctx.db.find({
+          collection: "tryout-scores" as any,
+          where: {
+            and: [
+              { user: { equals: ctx.session.user.id } },
+              { tryout: { equals: input.tryoutId } },
+            ],
+          },
+          limit: 1,
+          depth: 0,
+        }).then(res => res.docs);
+        finalScore = ((scoreResult as any)?.finalScore as number) ?? 0;
+      }
+
+      // Hide sensitive backend-only variables like 'baseValue' / 'ptn_id' from the frontend
+      return {
+        id: prog.id || (prog._id ? prog._id.toString() : null),
+        name: prog.name,
+        level: prog.level,
+        category: prog.category,
+        accreditation: prog.accreditation,
+        capacity: prog.capacity,
+        applicantsPreviousYear: prog.applicantsPreviousYear,
+        predictedApplicants: prog.predictedApplicants,
+        passingPercentage: prog.passingPercentage,
+        avgUkt: prog.avgUkt,
+        maxUkt: prog.maxUkt,
+        description: prog.description,
+        courses: prog.courses,
+        history: prog.history, 
+        passingGrade: parseFloat(prog.admissionMetric) || 0,
+        finalScore,
+        university: {
+          name: parentDoc.name,
+          abbreviation: parentDoc.abbreviation,
+          status: parentDoc.status,
+          accreditation: parentDoc.accreditation,
+          website: parentDoc.website,
+          image: null,
+        }
+      };
     }),
 });
