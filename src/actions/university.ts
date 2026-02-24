@@ -27,7 +27,7 @@ export const searchUniversities = async (query: string): Promise<University[]> =
     const response = await fetch(
       `https://use.api.co.id/regional/indonesia/universities?name=${encodeURIComponent(
         query
-      )}&size=20`,
+      )}&group=PTN&size=20`,
       {
         headers: {
           "x-api-co-id": apiKey,

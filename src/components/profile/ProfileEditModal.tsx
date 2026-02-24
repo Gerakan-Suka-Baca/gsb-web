@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { UniversitySelect } from "@/components/ui/university-select";
+import { MajorSelect } from "@/components/ui/major-select";
 import {
   Select,
   SelectContent,
@@ -122,7 +123,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
           Edit Profil
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw]">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto w-[95vw]">
         <DialogHeader>
           <DialogTitle>Edit Profil</DialogTitle>
           <DialogDescription>
@@ -309,7 +310,11 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                         <FormItem>
                           <FormLabel>Target Jurusan (Pilihan 1)</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <MajorSelect 
+                              value={field.value} 
+                              onValueChange={field.onChange}
+                              universityName={form.watch("targetPTN")}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -341,7 +346,11 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                         <FormItem>
                           <FormLabel>Target Jurusan (Pilihan 2)</FormLabel>
                           <FormControl>
-                            <Input {...field} value={field.value || ""} />
+                            <MajorSelect 
+                              value={field.value || ""} 
+                              onValueChange={field.onChange}
+                              universityName={form.watch("targetPTN2")}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

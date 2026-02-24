@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, XCircle, MinusCircle, Loader2, Clock, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SUBTEST_OPTIONS } from "@/collections/subtestOptions";
+import { AdmissionAnalysis } from "./AdmissionAnalysis";
 
 interface Props {
   tryoutId: string;
@@ -183,6 +184,8 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
           <p className="text-sm text-muted-foreground font-medium mt-1">Kosong</p>
         </Card>
       </div>
+
+      <AdmissionAnalysis tryoutId={tryoutId} />
 
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-4 px-1 text-foreground">Rekap Hasil Tryout</h2>
