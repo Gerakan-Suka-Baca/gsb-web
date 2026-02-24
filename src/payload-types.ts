@@ -75,6 +75,9 @@ export interface Config {
     'tryout-attempts': TryoutAttempt;
     'tryout-payments': TryoutPayment;
     'tryout-scores': TryoutScore;
+    'tryout-explanations': TryoutExplanation;
+    universities: University;
+    studyPrograms: StudyProgram;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +93,9 @@ export interface Config {
     'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
     'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
     'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
+    'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
+    universities: UniversitiesSelect<false> | UniversitiesSelect<true>;
+    studyPrograms: StudyProgramsSelect<false> | StudyProgramsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -317,38 +323,38 @@ export interface TryoutAttempt {
   status: 'started' | 'completed';
   startedAt?: string | null;
   /**
-   * Timestamp authoritative server saat subtes aktif mulai berjalan.
+   * Authoritative server timestamp when the active subtest started.
    */
   subtestStartedAt?: string | null;
   /**
-   * Deadline authoritative server untuk subtes aktif saat ini.
+   * Authoritative server deadline for the current active subtest.
    */
   subtestDeadlineAt?: string | null;
   completedAt?: string | null;
   /**
-   * Index subtes yang sedang dikerjakan (0-based).
+   * Index of the currently active subtest (0-based).
    */
   currentSubtest?: number | null;
   /**
-   * State internal ujian (pengerjaan vs istirahat antar subtes).
+   * Internal exam state (running vs bridging).
    */
   examState?: ('running' | 'bridging') | null;
   /**
-   * Waktu berakhirnya bridging (jika sedang bridging).
+   * Bridging expiry time (if currently bridging).
    */
   bridgingExpiry?: string | null;
   /**
-   * Sisa waktu (detik) saat penyimpanan terakhir.
+   * Remaining seconds at last backup.
    */
   secondsRemaining?: number | null;
   /**
-   * Persentase jawaban benar.
+   * Percentage of correct answers.
    */
   score?: number | null;
   correctAnswersCount?: number | null;
   totalQuestionsCount?: number | null;
   /**
-   * Index soal yang sedang dikerjakan di subtes saat ini (0-based).
+   * Index of the current question in the active subtest (0-based).
    */
   currentQuestionIndex?: number | null;
   processedBatchIds?:
@@ -361,11 +367,11 @@ export interface TryoutAttempt {
     | boolean
     | null;
   /**
-   * Paket hasil tryout yang dipilih peserta.
+   * Selected tryout result plan.
    */
   resultPlan?: ('none' | 'free' | 'paid') | null;
   /**
-   * Waktu yang dihabiskan (detik) per subtes (key: subtestId).
+   * Elapsed time (seconds) per subtest, mapped by subtestId.
    */
   subtestDurations?:
     | {
@@ -445,6 +451,84 @@ export interface TryoutScore {
   createdAt: string;
 }
 /**
+ * Pembahasan Tryout dalam bentuk file PDF.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-explanations".
+ */
+export interface TryoutExplanation {
+  id: string;
+  /**
+   * Name of the explanation document.
+   */
+  title: string;
+  /**
+   * Select the Tryout batch this explanation belongs to.
+   */
+  tryout: string | Tryout;
+  /**
+   * Upload the PDF file containing the explanations.
+   */
+  pdf: string | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "universities".
+ */
+export interface University {
+  id: string;
+  name: string;
+  abbreviation?: string | null;
+  npsn?: string | null;
+  status?: ('negeri' | 'swasta' | 'ptk') | null;
+  accreditation?: string | null;
+  address?: string | null;
+  website?: string | null;
+  pddiktiId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studyPrograms".
+ */
+export interface StudyProgram {
+  id: string;
+  name: string;
+  university: string | University;
+  level?: string | null;
+  category?: ('snbp' | 'snbt' | 'mandiri') | null;
+  accreditation?: string | null;
+  capacity?: number | null;
+  applicantsPreviousYear?: number | null;
+  baseValue?: number | null;
+  predictedApplicants?: number | null;
+  avgUkt?: string | null;
+  maxUkt?: string | null;
+  /**
+   * Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT
+   */
+  admissionMetric?: string | null;
+  passingPercentage?: string | null;
+  history?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Internal ID used for PDDikti synchronisation
+   */
+  pddiktiId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -499,6 +583,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tryout-scores';
         value: string | TryoutScore;
+      } | null)
+    | ({
+        relationTo: 'tryout-explanations';
+        value: string | TryoutExplanation;
+      } | null)
+    | ({
+        relationTo: 'universities';
+        value: string | University;
+      } | null)
+    | ({
+        relationTo: 'studyPrograms';
+        value: string | StudyProgram;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -727,6 +823,56 @@ export interface TryoutScoresSelect<T extends boolean = true> {
   score_PPU?: T;
   score_KMBM?: T;
   finalScore?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-explanations_select".
+ */
+export interface TryoutExplanationsSelect<T extends boolean = true> {
+  title?: T;
+  tryout?: T;
+  pdf?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "universities_select".
+ */
+export interface UniversitiesSelect<T extends boolean = true> {
+  name?: T;
+  abbreviation?: T;
+  npsn?: T;
+  status?: T;
+  accreditation?: T;
+  address?: T;
+  website?: T;
+  pddiktiId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studyPrograms_select".
+ */
+export interface StudyProgramsSelect<T extends boolean = true> {
+  name?: T;
+  university?: T;
+  level?: T;
+  category?: T;
+  accreditation?: T;
+  capacity?: T;
+  applicantsPreviousYear?: T;
+  baseValue?: T;
+  predictedApplicants?: T;
+  avgUkt?: T;
+  maxUkt?: T;
+  admissionMetric?: T;
+  passingPercentage?: T;
+  history?: T;
+  pddiktiId?: T;
   updatedAt?: T;
   createdAt?: T;
 }

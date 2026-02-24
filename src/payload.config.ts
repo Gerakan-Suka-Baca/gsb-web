@@ -21,6 +21,8 @@ import { TryoutAttempts } from './collections/TryoutAttempts'
 import { TryoutPayments } from './collections/TryoutPayments'
 import { TryoutScores } from './collections/TryoutScores'
 import { TryoutExplanations } from './collections/TryoutExplanations'
+import { Universities } from './collections/Universities'
+import { StudyPrograms } from './collections/StudyPrograms'
 
 export default buildConfig({
   admin: {
@@ -29,7 +31,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Admins, Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments, TryoutScores, TryoutExplanations],
+  collections: [Admins, Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments, TryoutScores, TryoutExplanations, Universities, StudyPrograms],
   // @ts-expect-error: rateLimit type definition missing
   rateLimit: {
     trustProxy: true,
