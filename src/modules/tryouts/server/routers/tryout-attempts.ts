@@ -33,6 +33,7 @@ type ServerTimerWindow = {
 };
 
 const parseDateMs = (value: unknown): number | null => {
+  if (value instanceof Date) return value.getTime();
   if (typeof value !== "string") return null;
   const parsed = Date.parse(value);
   return Number.isNaN(parsed) ? null : parsed;
@@ -207,9 +208,9 @@ export const tryoutAttemptsRouter = createTRPCRouter({
   getAttempt: optionalUserProcedure
     .input(z.object({ tryoutId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const session = ctx.session as { user: { id: string } } | null;
-      if (!session) return null;
+      if (!ctx.session) return null;
       const { db: payload } = ctx;
+      const session = ctx.session!;
       const attempts = await payload.find({
         collection: "tryout-attempts",
         where: {
@@ -518,7 +519,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
       z.object({
         attemptId: z.string(),
         answers: z.record(z.string(), z.record(z.string(), z.string())),
-        subtestDurations: z.record(z.string(), z.number()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -547,18 +547,15 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         now
       );
 
-      const questionsResult = await payload.find({
-        collection: "questions",
-        where: { tryout: { equals: tryoutId } },
-        pagination: false,
-        depth: 2,
-      });
-      const subtests = (questionsResult.docs || []) as unknown as Question[];
+      const tryoutRecord = tryout as unknown as Record<string, unknown>;
+      const subtests = Array.isArray(tryoutRecord.questions)
+        ? (tryoutRecord.questions as Question[])
+        : [];
 
-      if (subtests.length === 0) {
+      if (!Array.isArray(subtests)) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Tryout data invalid: questions not found",
+          message: "Tryout data invalid: questions not populated",
         });
       }
 
@@ -575,7 +572,6 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           correctAnswersCount: results.correctCount,
           totalQuestionsCount: results.totalQuestions,
           questionResults: results.questionResults,
-          subtestDurations: input.subtestDurations,
           secondsRemaining:
             typeof attempt.subtestDeadlineAt === "string"
               ? getSecondsRemainingFromDeadline(attempt.subtestDeadlineAt, now)
@@ -587,9 +583,9 @@ export const tryoutAttemptsRouter = createTRPCRouter({
     }),
 
   getMyAttempts: optionalUserProcedure.query(async ({ ctx }) => {
-    const session = ctx.session as { user: { id: string } } | null;
-    if (!session) return [];
+    if (!ctx.session) return [];
     const { db: payload } = ctx;
+    const session = ctx.session!;
     const attempts = await payload.find({
       collection: "tryout-attempts",
       where: { user: { equals: session.user.id } },

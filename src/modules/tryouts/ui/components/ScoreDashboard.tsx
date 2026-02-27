@@ -8,11 +8,41 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, XCircle, MinusCircle, Loader2, Clock, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SUBTEST_OPTIONS } from "@/collections/subtestOptions";
-import { AdmissionAnalysis } from "./AdmissionAnalysis";
+import { AdmissionAnalysis } from "@/modules/universitas/ui/components/AdmissionAnalysis";
 
 interface Props {
   tryoutId: string;
 }
+
+type SubtestStat = {
+  subtestId: string;
+  correct: number;
+  wrong: number;
+  empty: number;
+  total: number;
+};
+
+type ScoreMap = {
+  score_PU?: number | null;
+  score_PK?: number | null;
+  score_PM?: number | null;
+  score_LBE?: number | null;
+  score_LBI?: number | null;
+  score_PPU?: number | null;
+  score_KMBM?: number | null;
+};
+
+type ScoreResults = {
+  released: boolean;
+  releaseDate?: string | null;
+  scores?: ScoreMap | null;
+  subtestStats: SubtestStat[];
+  finalScore?: number | null;
+  tryoutTitle?: string;
+  totalCorrect?: number;
+  totalQuestions?: number;
+  subtestDurations?: Record<string, number>;
+};
 
 const TPS_CODES = ["PU", "PPU", "PK", "KMBM"];
 const LIT_CODES = ["LBI", "LBE", "PM"];
@@ -48,6 +78,7 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
   const { data, isLoading } = useQuery(
     trpc.tryouts.getScoreResults.queryOptions({ tryoutId })
   );
+  const result = data as ScoreResults | undefined;
 
   if (isLoading) {
     return (
@@ -57,9 +88,9 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
     );
   }
 
-  if (!data?.released) {
-    const releaseDate = data?.releaseDate
-      ? new Date(data.releaseDate).toLocaleDateString("id-ID", {
+  if (!result?.released) {
+    const releaseDate = result?.releaseDate
+      ? new Date(result.releaseDate).toLocaleDateString("id-ID", {
           day: "numeric", month: "long", year: "numeric",
           hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
         })
@@ -94,7 +125,7 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
     );
   }
 
-  if (!data.scores) {
+  if (!result.scores) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -119,18 +150,21 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
     );
   }
 
-  const scores = data.scores;
-  const statsMap = new Map(data.subtestStats.map((s) => [s.subtestId, s]));
-  const totalCorrect = data.totalCorrect ?? 0;
-  const totalQuestions = data.totalQuestions ?? 0;
-  const totalWrong = totalQuestions - totalCorrect - data.subtestStats.reduce((acc, s) => acc + s.empty, 0);
-  const totalEmpty = data.subtestStats.reduce((acc, s) => acc + s.empty, 0);
+  const scores = result.scores;
+  const statsMap = new Map(result.subtestStats.map((s) => [s.subtestId, s]));
+  const totalCorrect = result.totalCorrect ?? 0;
+  const totalQuestions = result.totalQuestions ?? 0;
+  const totalWrong = totalQuestions - totalCorrect - result.subtestStats.reduce((acc, s) => acc + s.empty, 0);
+  const totalEmpty = result.subtestStats.reduce((acc, s) => acc + s.empty, 0);
 
   const entries = SUBTEST_OPTIONS.map((opt) => {
-    const scoreKey = `score_${opt.value}` as keyof typeof scores;
-    const score = scores[scoreKey] as number | null;
-    const stats = statsMap.get(opt.value) || data.subtestStats.find(s => s.subtestId.includes(opt.value)) || null;
-    const duration = data.subtestDurations?.[opt.value] || 0;
+    const scoreKey = `score_${opt.value}` as keyof ScoreMap;
+    const score = scores[scoreKey] ?? null;
+    const stats =
+      statsMap.get(opt.value) ||
+      result.subtestStats.find((s) => s.subtestId.includes(opt.value)) ||
+      null;
+    const duration = result.subtestDurations?.[opt.value] || 0;
 
     return {
       code: opt.value,
@@ -163,12 +197,12 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
         <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
           Hasil Tryout
         </h1>
-        <p className="text-muted-foreground text-lg">{data.tryoutTitle}</p>
+        <p className="text-muted-foreground text-lg">{result.tryoutTitle}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         <Card className="p-4 text-center bg-primary/5 border-primary/20 dark:bg-primary/10 dark:border-primary/20">
-          <p className="text-3xl font-bold text-primary">{data.finalScore ?? "—"}</p>
+          <p className="text-3xl font-bold text-primary">{result.finalScore ?? "—"}</p>
           <p className="text-sm text-muted-foreground font-medium mt-1">Skor Akhir</p>
         </Card>
         <Card className="p-4 text-center dark:bg-card">
@@ -233,7 +267,15 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
   );
 };
 
-function SubtestRow({ entry }: { entry: any }) {
+type ScoreEntry = {
+  code: string;
+  label: string;
+  score: number | null;
+  stats: SubtestStat | null;
+  duration: number;
+};
+
+function SubtestRow({ entry }: { entry: ScoreEntry }) {
   const colors = SUBTEST_COLORS[entry.code] || DEFAULT_COLOR;
   const pct = entry.score ? Math.min((entry.score / 1000) * 100, 100) : 0;
 

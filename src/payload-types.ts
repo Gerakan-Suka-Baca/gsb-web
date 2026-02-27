@@ -70,6 +70,7 @@ export interface Config {
     admins: Admin;
     users: User;
     media: Media;
+    'university-media': UniversityMedia;
     tryouts: Tryout;
     questions: Question;
     'tryout-attempts': TryoutAttempt;
@@ -77,17 +78,22 @@ export interface Config {
     'tryout-scores': TryoutScore;
     'tryout-explanations': TryoutExplanation;
     universities: University;
-    studyPrograms: StudyProgram;
+    'university-programs': UniversityProgram;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    universities: {
+      programList: 'university-programs';
+    };
+  };
   collectionsSelect: {
     admins: AdminsSelect<false> | AdminsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'university-media': UniversityMediaSelect<false> | UniversityMediaSelect<true>;
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
@@ -95,7 +101,7 @@ export interface Config {
     'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
     'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
     universities: UniversitiesSelect<false> | UniversitiesSelect<true>;
-    studyPrograms: StudyProgramsSelect<false> | StudyProgramsSelect<true>;
+    'university-programs': UniversityProgramsSelect<false> | UniversityProgramsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -177,6 +183,8 @@ export interface User {
   targetMajor?: string | null;
   targetPTN2?: string | null;
   targetMajor2?: string | null;
+  targetPTN3?: string | null;
+  targetMajor3?: string | null;
   paid?: boolean | null;
   payment?: (string | null) | Media;
   roles?: ('super-admin' | 'admin' | 'user')[] | null;
@@ -191,6 +199,18 @@ export interface User {
 export interface Media {
   id: string;
   alt: string;
+  /**
+   * Terkait dengan Batch Tryout (Opsional)
+   */
+  relatedTryout?: (string | null) | Tryout;
+  /**
+   * ID atau Nama Subtest Terkait (Opsional)
+   */
+  relatedSubtest?: string | null;
+  /**
+   * Nomor Soal Terkait (Opsional)
+   */
+  relatedQuestionNumber?: number | null;
   _key?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -203,6 +223,35 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      _key?: string | null;
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      _key?: string | null;
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    tablet?: {
+      _key?: string | null;
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -211,6 +260,10 @@ export interface Media {
 export interface Tryout {
   id: string;
   title: string;
+  /**
+   * Auto-generated from title if empty
+   */
+  slugField?: string | null;
   /**
    * WIB (GMT+7)
    */
@@ -225,6 +278,29 @@ export interface Tryout {
   scoreReleaseDate?: string | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-media".
+ */
+export interface UniversityMedia {
+  id: string;
+  /**
+   * Teks alternatif untuk aksesibilitas dan SEO.
+   */
+  alt: string;
+  _key?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -480,157 +556,104 @@ export interface TryoutExplanation {
 export interface University {
   id: string;
   name: string;
+  /**
+   * Otomatis di-generate dari nama. Bisa diedit manual.
+   */
+  slugField?: string | null;
   abbreviation?: string | null;
   npsn?: string | null;
   status?: ('negeri' | 'swasta' | 'ptk') | null;
   accreditation?: string | null;
   address?: string | null;
+  district?: string | null;
+  city?: string | null;
+  province?: string | null;
   website?: string | null;
   pddiktiId?: string | null;
-  image?: (string | null) | Media;
-  programs?:
-    | {
-        name: string;
-        level?: string | null;
-        category?: ('snbp' | 'snbt' | 'mandiri') | null;
-        accreditation?: string | null;
-        capacity?: number | null;
-        applicantsPreviousYear?: number | null;
-        baseValue?: number | null;
-        predictedApplicants?: number | null;
-        avgUkt?: string | null;
-        maxUkt?: string | null;
-        /**
-         * Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT
-         */
-        admissionMetric?: string | null;
-        passingPercentage?: string | null;
-        history?:
-          | {
-              [k: string]: unknown;
-            }
-          | unknown[]
-          | string
-          | number
-          | boolean
-          | null;
-        /**
-         * Internal ID used for PDDikti synchronisation
-         */
-        pddiktiId?: string | null;
-        description?: {
-          root: {
-            type: string;
-            children: {
-              type: any;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        courses?: {
-          root: {
-            type: string;
-            children: {
-              type: any;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        id?: string | null;
-      }[]
-    | null;
+  image?: (string | null) | UniversityMedia;
+  coverImage?: (string | null) | UniversityMedia;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  visionMission?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  programCount?: number | null;
+  programsWithMetricsCount?: number | null;
+  completenessScore?: number | null;
+  /**
+   * Program studi yang terhubung dengan universitas ini (dari koleksi University Programs).
+   */
+  programList?: {
+    docs?: (string | UniversityProgram)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
 }
 /**
+ * Program studi per-universitas. Data ini di-generate dari field `programs` lama untuk meringankan dokumen universitas.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "studyPrograms".
+ * via the `definition` "university-programs".
  */
-export interface StudyProgram {
+export interface UniversityProgram {
   id: string;
-  name: string;
+  university: string | University;
+  universityName?: string | null;
   abbreviation?: string | null;
-  npsn?: string | null;
-  status?: ('negeri' | 'swasta' | 'ptk') | null;
+  status?: string | null;
+  universityAccreditation?: string | null;
+  name: string;
+  faculty?: string | null;
+  level?: string | null;
+  category?: ('snbt' | 'snbp' | 'mandiri') | null;
   accreditation?: string | null;
-  address?: string | null;
-  website?: string | null;
-  pddiktiId?: string | null;
-  programs?:
+  /**
+   * Diisi otomatis dari data scraping. Boleh dikosongkan untuk input manual.
+   */
+  metrics?:
     | {
-        name: string;
-        level?: string | null;
-        category?: ('snbp' | 'snbt' | 'mandiri') | null;
-        accreditation?: string | null;
+        year?: string | null;
         capacity?: number | null;
-        applicantsPreviousYear?: number | null;
-        baseValue?: number | null;
+        applicants?: number | null;
+        passingPercentage?: string | null;
         predictedApplicants?: number | null;
+        admissionMetric?: string | null;
         avgUkt?: string | null;
         maxUkt?: string | null;
-        /**
-         * Nilai Rapor untuk SNBP, atau Survey/Prediksi UTBK untuk SNBT
-         */
-        admissionMetric?: string | null;
-        passingPercentage?: string | null;
-        history?:
-          | {
-              [k: string]: unknown;
-            }
-          | unknown[]
-          | string
-          | number
-          | boolean
-          | null;
-        /**
-         * Internal ID used for PDDikti synchronisation
-         */
-        pddiktiId?: string | null;
-        description?: {
-          root: {
-            type: string;
-            children: {
-              type: any;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
-        courses?: {
-          root: {
-            type: string;
-            children: {
-              type: any;
-              version: number;
-              [k: string]: unknown;
-            }[];
-            direction: ('ltr' | 'rtl') | null;
-            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-            indent: number;
-            version: number;
-          };
-          [k: string]: unknown;
-        } | null;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Dipakai untuk migrasi dan menjaga referensi dari data lama.
+   */
+  legacyProgramId?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -671,6 +694,10 @@ export interface PayloadLockedDocument {
         value: string | Media;
       } | null)
     | ({
+        relationTo: 'university-media';
+        value: string | UniversityMedia;
+      } | null)
+    | ({
         relationTo: 'tryouts';
         value: string | Tryout;
       } | null)
@@ -699,8 +726,8 @@ export interface PayloadLockedDocument {
         value: string | University;
       } | null)
     | ({
-        relationTo: 'studyPrograms';
-        value: string | StudyProgram;
+        relationTo: 'university-programs';
+        value: string | UniversityProgram;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -785,6 +812,8 @@ export interface UsersSelect<T extends boolean = true> {
   targetMajor?: T;
   targetPTN2?: T;
   targetMajor2?: T;
+  targetPTN3?: T;
+  targetMajor3?: T;
   paid?: T;
   payment?: T;
   roles?: T;
@@ -797,6 +826,65 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  relatedTryout?: T;
+  relatedSubtest?: T;
+  relatedQuestionNumber?: T;
+  _key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              _key?: T;
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        card?:
+          | T
+          | {
+              _key?: T;
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        tablet?:
+          | T
+          | {
+              _key?: T;
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-media_select".
+ */
+export interface UniversityMediaSelect<T extends boolean = true> {
   alt?: T;
   _key?: T;
   updatedAt?: T;
@@ -817,6 +905,7 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface TryoutsSelect<T extends boolean = true> {
   title?: T;
+  slugField?: T;
   dateOpen?: T;
   dateClose?: T;
   scoreReleaseDate?: T;
@@ -949,72 +1038,57 @@ export interface TryoutExplanationsSelect<T extends boolean = true> {
  */
 export interface UniversitiesSelect<T extends boolean = true> {
   name?: T;
+  slugField?: T;
   abbreviation?: T;
   npsn?: T;
   status?: T;
   accreditation?: T;
   address?: T;
+  district?: T;
+  city?: T;
+  province?: T;
   website?: T;
   pddiktiId?: T;
   image?: T;
-  programs?:
-    | T
-    | {
-        name?: T;
-        level?: T;
-        category?: T;
-        accreditation?: T;
-        capacity?: T;
-        applicantsPreviousYear?: T;
-        baseValue?: T;
-        predictedApplicants?: T;
-        avgUkt?: T;
-        maxUkt?: T;
-        admissionMetric?: T;
-        passingPercentage?: T;
-        history?: T;
-        pddiktiId?: T;
-        description?: T;
-        courses?: T;
-        id?: T;
-      };
+  coverImage?: T;
+  description?: T;
+  visionMission?: T;
+  programCount?: T;
+  programsWithMetricsCount?: T;
+  completenessScore?: T;
+  programList?: T;
   updatedAt?: T;
   createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "studyPrograms_select".
+ * via the `definition` "university-programs_select".
  */
-export interface StudyProgramsSelect<T extends boolean = true> {
-  name?: T;
+export interface UniversityProgramsSelect<T extends boolean = true> {
+  university?: T;
+  universityName?: T;
   abbreviation?: T;
-  npsn?: T;
   status?: T;
+  universityAccreditation?: T;
+  name?: T;
+  faculty?: T;
+  level?: T;
+  category?: T;
   accreditation?: T;
-  address?: T;
-  website?: T;
-  pddiktiId?: T;
-  programs?:
+  metrics?:
     | T
     | {
-        name?: T;
-        level?: T;
-        category?: T;
-        accreditation?: T;
+        year?: T;
         capacity?: T;
-        applicantsPreviousYear?: T;
-        baseValue?: T;
+        applicants?: T;
+        passingPercentage?: T;
         predictedApplicants?: T;
+        admissionMetric?: T;
         avgUkt?: T;
         maxUkt?: T;
-        admissionMetric?: T;
-        passingPercentage?: T;
-        history?: T;
-        pddiktiId?: T;
-        description?: T;
-        courses?: T;
         id?: T;
       };
+  legacyProgramId?: T;
   updatedAt?: T;
   createdAt?: T;
 }

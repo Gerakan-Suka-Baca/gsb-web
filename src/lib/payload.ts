@@ -1,14 +1,19 @@
 import { getPayload } from "payload";
 import config from "@payload-config";
+import { setServers } from "node:dns/promises";
 
-let payloadPromise: ReturnType<typeof getPayload> | null = null;
+type PayloadCache = {
+  promise: ReturnType<typeof getPayload> | null;
+};
 
-/**
- * Reuses a single Payload instance per process. Avoids reconnecting to DB
- */
+const globalPayload = globalThis as { payload?: PayloadCache };
+const cached = globalPayload.payload ?? { promise: null };
+globalPayload.payload = cached;
+
 export async function getPayloadCached(): Promise<Awaited<ReturnType<typeof getPayload>>> {
-  if (!payloadPromise) {
-    payloadPromise = getPayload({ config });
+  if (!cached.promise) {
+    setServers(["1.1.1.1", "8.8.8.8"]);
+    cached.promise = getPayload({ config });
   }
-  return payloadPromise;
+  return cached.promise;
 }

@@ -90,6 +90,16 @@ export const Users: CollectionConfig = {
       label: "Target Jurusan (Pilihan 2)",
       type: "text",
     },
+    {
+      name: "targetPTN3",
+      label: "Target PTN (Pilihan 3)",
+      type: "text",
+    },
+    {
+      name: "targetMajor3",
+      label: "Target Jurusan (Pilihan 3)",
+      type: "text",
+    },
     { name: "paid", type: "checkbox", defaultValue: false },
     { name: "payment", type: "relationship", relationTo: "media" },
     {

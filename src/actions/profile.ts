@@ -14,6 +14,8 @@ interface UpdateProfileInput {
   targetMajor: string;
   targetPTN2?: string;
   targetMajor2?: string;
+  targetPTN3?: string;
+  targetMajor3?: string;
   dateOfBirth?: Date;
 }
 
@@ -61,6 +63,8 @@ export const updateProfile = async (data: UpdateProfileInput) => {
       targetMajor: data.targetMajor,
       targetPTN2: data.targetPTN2,
       targetMajor2: data.targetMajor2,
+      targetPTN3: data.targetPTN3,
+      targetMajor3: data.targetMajor3,
       dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString() : null,
     };
 

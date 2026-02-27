@@ -6,17 +6,64 @@ import { Card } from "@/components/ui/card";
 import { AlertCircle, Target, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Link from "next/link";
 
 interface Props {
   tryoutId: string;
 }
 
+type TargetChoice = {
+  found?: boolean;
+  targetPTN?: string | null;
+  targetMajor?: string | null;
+  dbUnivName?: string;
+  dbMajorName?: string;
+  level?: string;
+  chance?: number;
+  color?: string;
+  programId?: string | null;
+  universityId?: string | null;
+};
+
+type TargetAnalysisResponse = {
+  finalScore: number;
+  choice1: TargetChoice;
+  choice2: TargetChoice;
+  choice3: TargetChoice;
+} | null;
+
 export const AdmissionAnalysis = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
-  const { data, isLoading } = useQuery(
-    trpc.tryouts.getTargetAnalysis.queryOptions({ tryoutId })
-  );
+  const cacheKey = `admission-analysis:${tryoutId}`;
+  const readCache = (key: string): { data: TargetAnalysisResponse; ts: number } | null => {
+    if (typeof window === "undefined") return null;
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as { data: TargetAnalysisResponse; ts: number };
+      if (!parsed?.data || !parsed.ts) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+  const cached = readCache(cacheKey);
+  const queryOptions = trpc.tryouts.getTargetAnalysis.queryOptions({ tryoutId });
+  const { data, isLoading } = useQuery({
+    ...queryOptions,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    initialData: cached?.data ?? undefined,
+    initialDataUpdatedAt: cached?.ts,
+  });
+
+  useEffect(() => {
+    if (!data || typeof window === "undefined") return;
+    window.localStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+  }, [cacheKey, data]);
 
   if (isLoading) {
     return (
@@ -32,7 +79,10 @@ export const AdmissionAnalysis = ({ tryoutId }: Props) => {
 
   if (!data) return null;
 
-  const renderChoice = (choice: any, title: string) => {
+  const result = data as TargetAnalysisResponse;
+  if (!result) return null;
+
+  const renderChoice = (choice: TargetChoice, title: string) => {
     if (!choice.targetPTN || !choice.targetMajor) {
       return (
         <Card className="p-5 border-dashed border-2 flex flex-col items-center justify-center text-center h-full min-h-[160px]">
@@ -58,7 +108,8 @@ export const AdmissionAnalysis = ({ tryoutId }: Props) => {
       );
     }
 
-    const { dbUnivName, dbMajorName, level, chance, color, passingGrade } = choice;
+    const { dbUnivName, dbMajorName, level, color } = choice;
+    const chance = choice.chance ?? 0;
 
     const colorClasses: Record<string, { bg: string, text: string, bar: string, ring: string }> = {
       green: { bg: "bg-green-50 dark:bg-green-500/10", text: "text-green-600 dark:text-green-400", bar: "bg-green-500 dark:bg-green-400", ring: "ring-green-500/20" },
@@ -66,7 +117,10 @@ export const AdmissionAnalysis = ({ tryoutId }: Props) => {
       red: { bg: "bg-rose-50 dark:bg-rose-500/10", text: "text-rose-600 dark:text-rose-400", bar: "bg-rose-500 dark:bg-rose-400", ring: "ring-rose-500/20" }
     };
     
-    const cc = colorClasses[color] || colorClasses.yellow;
+    const cc = (color && colorClasses[color]) || colorClasses.yellow;
+
+    const programLink = choice.programId ? `/program-studi/${choice.programId}` : null;
+    const universityLink = choice.universityId ? `/universitas/${choice.universityId}` : null;
 
     return (
       <Card className={`p-5 h-full min-h-[160px] border border-border shadow-sm hover:shadow-md transition-shadow duration-200 bg-card relative overflow-hidden flex flex-col`}>
@@ -76,8 +130,20 @@ export const AdmissionAnalysis = ({ tryoutId }: Props) => {
               <Target className="w-3 h-3" />
               {title}
             </h3>
-            <p className="font-bold text-base leading-tight truncate" title={dbMajorName}>{dbMajorName}</p>
-            <p className="text-sm text-foreground/70 mt-0.5 truncate" title={dbUnivName}>{dbUnivName}</p>
+            {programLink ? (
+              <Link href={programLink} className="block font-bold text-base md:text-lg leading-tight truncate hover:underline" title={dbMajorName}>
+                {dbMajorName}
+              </Link>
+            ) : (
+              <p className="block font-bold text-base md:text-lg leading-tight truncate" title={dbMajorName}>{dbMajorName}</p>
+            )}
+            {universityLink ? (
+              <Link href={universityLink} className="block text-sm text-foreground/70 mt-1 truncate hover:underline" title={dbUnivName}>
+                {dbUnivName}
+              </Link>
+            ) : (
+              <p className="block text-sm text-foreground/70 mt-1 truncate" title={dbUnivName}>{dbUnivName}</p>
+            )}
           </div>
           <div className="flex flex-col items-end shrink-0 bg-muted/50 rounded-lg px-3 py-1.5">
             <span className={`text-2xl font-black tracking-tight ${cc.text}`}>{chance}%</span>
@@ -114,9 +180,14 @@ export const AdmissionAnalysis = ({ tryoutId }: Props) => {
         </div>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-        {renderChoice(data.choice1, "Pilihan 1")}
-        {renderChoice(data.choice2, "Pilihan 2")}
+      <div className="flex flex-col gap-4 mb-5">
+        <div className="w-full">
+          {renderChoice(result.choice1, "Pilihan 1")}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {renderChoice(result.choice2, "Pilihan 2")}
+          {renderChoice(result.choice3, "Pilihan 3")}
+        </div>
       </div>
       
       <div className="w-full">

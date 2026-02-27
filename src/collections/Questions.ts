@@ -40,6 +40,7 @@ export const Questions: CollectionConfig = {
       type: "relationship",
       relationTo: "tryouts",
       required: true,
+      index: true,
       admin: {
         position: "sidebar",
       },

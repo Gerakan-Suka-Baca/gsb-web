@@ -1,6 +1,13 @@
 import type { CollectionConfig } from "payload";
 import { isVolunteerOrAbove } from "./accessHelpers";
 
+const toSlug = (val: string): string =>
+  val
+    .toLowerCase()
+    .replace(/[()]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
 export const Tryouts: CollectionConfig = {
   slug: "tryouts",
   admin: {
@@ -18,11 +25,31 @@ export const Tryouts: CollectionConfig = {
     update: ({ req: { user } }) => isVolunteerOrAbove(user),
     delete: ({ req: { user } }) => isVolunteerOrAbove(user),
   },
+  hooks: {
+    beforeChange: [
+      ({ data, originalDoc }) => {
+        const nextData = data ?? {};
+        const merged = { ...(originalDoc ?? {}), ...(nextData ?? {}) };
+        if (merged?.title && !merged.slugField) {
+          nextData.slugField = toSlug(merged.title);
+        }
+        return nextData;
+      },
+    ],
+  },
   fields: [
     {
       name: "title",
       type: "text",
       required: true,
+    },
+    {
+      name: "slugField",
+      type: "text",
+      admin: {
+        position: "sidebar",
+        description: "Auto-generated from title if empty",
+      },
     },
     {
       name: "dateOpen",

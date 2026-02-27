@@ -1,22 +1,23 @@
 import { initTRPC, TRPCError } from "@trpc/server";
+import { getPayloadCached } from "@/lib/payload";
 import superjson from "superjson";
 import { auth as clerkAuth } from "@clerk/nextjs/server";
 import type { User } from "@/payload-types";
-import { getPayloadCached } from "@/lib/payload";
 
 import { cache } from "react";
 
-export type TRPCContext = {
-  userId: string | null;
-  db: Awaited<ReturnType<typeof getPayloadCached>>;
-  session?: { user: User; clerkUserId: string } | null;
+type SessionContext = {
+  user: User;
+  clerkUserId: string;
 };
 
-/** One Payload + one Clerk auth per request (parallel). */
-export const createTRPCContext = cache(async (): Promise<TRPCContext> => {
-  const [db, { userId }] = await Promise.all([getPayloadCached(), clerkAuth()]);
-  return { userId: userId ?? null, db };
+export const createTRPCContext = cache(async () => {
+  const { userId } = await clerkAuth();
+  const db = await getPayloadCached();
+  return { userId: userId ?? null, db, session: null as SessionContext | null };
 });
+
+type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;
 // Avoid exporting the entire t-object
 // since it's not very descriptive.
 // For instance, the use of a t variable
@@ -33,7 +34,9 @@ export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 
 export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
-  if (!ctx.userId) {
+  const { userId } = await clerkAuth();
+
+  if (!userId) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "User not logged in",
@@ -43,7 +46,7 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   // Look up user in DB by clerkUserId
   const existingUsers = await ctx.db.find({
     collection: "users",
-    where: { clerkUserId: { equals: ctx.userId } },
+    where: { clerkUserId: { equals: userId } },
     limit: 1,
   });
 
@@ -61,7 +64,7 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
       ...ctx,
       session: {
         user: dbUser,
-        clerkUserId: ctx.userId,
+        clerkUserId: userId,
       },
     },
   });
@@ -69,22 +72,23 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
 
 /** Like protectedProcedure but does not throw when user not in DB; ctx.session is null then. */
 export const optionalUserProcedure = baseProcedure.use(async ({ ctx, next }) => {
-  if (!ctx.userId) {
-    return next({ ctx: { ...ctx, session: null } });
+  const { userId } = await clerkAuth();
+  if (!userId) {
+    return next({ ctx: { ...ctx, session: null as SessionContext | null } });
   }
   const existingUsers = await ctx.db.find({
     collection: "users",
-    where: { clerkUserId: { equals: ctx.userId } },
+    where: { clerkUserId: { equals: userId } },
     limit: 1,
   });
   const dbUser = existingUsers.docs[0] ?? null;
   if (!dbUser) {
-    return next({ ctx: { ...ctx, session: null } });
+    return next({ ctx: { ...ctx, session: null as SessionContext | null } });
   }
   return next({
     ctx: {
       ...ctx,
-      session: { user: dbUser, clerkUserId: ctx.userId },
+      session: { user: dbUser as User, clerkUserId: userId } as SessionContext | null,
     },
   });
 });

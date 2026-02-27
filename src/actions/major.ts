@@ -1,6 +1,7 @@
 "use server";
 
 import { getPayloadCached } from "@/lib/payload";
+import type { Where } from "payload";
 
 export const searchMajors = async (query: string, universityName?: string) => {
   if (!query && !universityName) return [];
@@ -8,30 +9,35 @@ export const searchMajors = async (query: string, universityName?: string) => {
 
   try {
     const payload = await getPayloadCached();
-    
-    const payloadDB = (payload.db as any).collections['studyPrograms'];
-    const pipeline: any[] = [];
+
+    const where: Where = {
+      category: { equals: "snbt" },
+    };
 
     if (universityName) {
-       pipeline.push({ $match: { name: { $regex: new RegExp(universityName, 'i') } } });
+      where["universityName"] = { contains: universityName };
     }
 
-    pipeline.push({ $unwind: "$programs" });
-
-    const programMatch: any = { "programs.category": "snbt" };
     if (query && query.length >= 3) {
-       programMatch["programs.name"] = { $regex: new RegExp(query, 'i') };
+      where["name"] = { contains: query };
     }
-    
-    pipeline.push({ $match: programMatch });
-    pipeline.push({ $limit: 30 });
 
-    const results = await payloadDB.aggregate(pipeline);
+    const results = await payload.find({
+      collection: "university-programs",
+      where,
+      limit: 30,
+      depth: 0,
+      pagination: false,
+    });
 
-    return results.map((doc: any) => ({
-      id: doc.programs._id.toString(),
-      name: doc.programs.name,
-    }));
+    return results.docs
+      .map((doc) => {
+        const id = String(doc.id);
+        const name = (doc as { name?: string }).name;
+        if (!id || !name) return null;
+        return { id, name };
+      })
+      .filter((item): item is { id: string; name: string } => Boolean(item));
   } catch (error) {
     console.error("Error searching majors:", error);
     return [];

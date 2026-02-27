@@ -51,28 +51,28 @@ export const TryoutScores: CollectionConfig = {
     {
       type: "row",
       fields: [
-        subtestFields[0], // PU
-        subtestFields[1], // PK
+        subtestFields[0],
+        subtestFields[1],
       ],
     },
     {
       type: "row",
       fields: [
-        subtestFields[2], // PM
-        subtestFields[3], // LBE
+        subtestFields[2],
+        subtestFields[3],
       ],
     },
     {
       type: "row",
       fields: [
-        subtestFields[4], // LBI
-        subtestFields[5], // PPU
+        subtestFields[4],
+        subtestFields[5],
       ],
     },
     {
       type: "row",
       fields: [
-        subtestFields[6], // KMBM
+        subtestFields[6],
       ],
     },
     {
@@ -97,7 +97,7 @@ export const TryoutScores: CollectionConfig = {
         const tryoutId = typeof data.tryout === "object" ? data.tryout.id : data.tryout;
 
         const existing = await req.payload.find({
-          collection: "tryout-scores" as any,
+          collection: "tryout-scores",
           where: {
             and: [
               { user: { equals: userId } },

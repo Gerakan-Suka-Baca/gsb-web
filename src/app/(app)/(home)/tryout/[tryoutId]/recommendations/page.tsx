@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { Recommendations } from "@/modules/tryouts/ui/components/Recommendations";
+import { Recommendations } from "@/modules/universitas/ui/components/Recommendations";
 
 export default function RecommendationsPage({ params }: { params: Promise<{ tryoutId: string }> }) {
   const unwrappedParams = use(params);

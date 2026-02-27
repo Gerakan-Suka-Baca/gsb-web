@@ -22,7 +22,9 @@ import { TryoutPayments } from './collections/TryoutPayments'
 import { TryoutScores } from './collections/TryoutScores'
 import { TryoutExplanations } from './collections/TryoutExplanations'
 import { Universities } from './collections/Universities'
-import { StudyPrograms } from './collections/StudyPrograms'
+import { UniversityPrograms } from './collections/UniversityPrograms'
+
+import { UniversityMedia } from './collections/UniversityMedia'
 
 export default buildConfig({
   admin: {
@@ -31,7 +33,21 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Admins, Users, Media, Tryouts, Questions, TryoutAttempts, TryoutPayments, TryoutScores, TryoutExplanations, Universities, StudyPrograms],
+  defaultDepth: 0,
+  collections: [
+    Admins,
+    Users,
+    Media,
+    UniversityMedia,
+    Tryouts,
+    Questions,
+    TryoutAttempts,
+    TryoutPayments,
+    TryoutScores,
+    TryoutExplanations,
+    Universities,
+    UniversityPrograms,
+  ],
   // @ts-expect-error: rateLimit type definition missing
   rateLimit: {
     trustProxy: true,
@@ -47,12 +63,14 @@ export default buildConfig({
     url: process.env.DATABASE_URI || "",
     connectOptions: {
       family: 4,
-      maxPoolSize: 20,
-      minPoolSize: 2,
+      maxPoolSize: 100,
+      minPoolSize: 0,
+      maxConnecting: 2,
       maxIdleTimeMS: 30000,
       serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      socketTimeoutMS: 0,
       connectTimeoutMS: 10000,
+      waitQueueTimeoutMS: 0,
     },
   }),
   sharp,
@@ -61,6 +79,7 @@ export default buildConfig({
     uploadthingStorage({
       collections: {
         media: true,
+        "university-media": true,
       },
       options: {
         token: process.env.UPLOADTHING_TOKEN,
