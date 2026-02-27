@@ -79,7 +79,7 @@ export const SignInView = () => {
                         footer: "hidden",
                       },
                     }}
-                    forceRedirectUrl="/"
+                    fallbackRedirectUrl="/"
                   />
                 </div>
 

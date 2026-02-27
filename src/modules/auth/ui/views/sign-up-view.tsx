@@ -85,7 +85,7 @@ export const SignUpView = () => {
                     footer: "hidden",
                   },
                 }}
-                forceRedirectUrl="/complete-profile"
+                fallbackRedirectUrl="/complete-profile"
               />
             </div>
 
