@@ -1,5 +1,4 @@
 import escapeHTML from 'escape-html';
-import { Text } from 'slate';
 
 interface CustomText {
   text: string;
@@ -22,9 +21,13 @@ type RichTextNode = {
   code?: boolean;
 };
 
+// Simple check equivalent to Slate's Text.isText() — avoids needing the full slate package
+const isTextNode = (node: RichTextNode): node is CustomText =>
+  typeof node.text === 'string' && !node.type;
+
 export const serializeRichText = (children: RichTextNode[]): React.ReactNode[] =>
   children.map((node, i) => {
-    if (Text.isText(node)) {
+    if (isTextNode(node)) {
       const customNode = node as CustomText;
       let text = <span dangerouslySetInnerHTML={{ __html: escapeHTML(customNode.text) }} />;
 
