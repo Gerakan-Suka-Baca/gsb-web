@@ -120,14 +120,31 @@ export function MajorSelect({
             {loading && (
               <div className="flex items-center justify-center gap-2 py-4 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Mencari...
+                Searching...
               </div>
             )}
 
             {!loading && items.length === 0 && (
-              <div className="py-4 text-center text-sm text-muted-foreground">
-                {!universityName && debouncedValue.length < 3 
-                  ? "Ketik minimal 3 huruf untuk mencari." : "Program Studi tidak ditemukan."}
+              <div className="py-3 px-3 text-center space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {!universityName && debouncedValue.length < 3
+                    ? "Ketik min. 3 huruf untuk mencari."
+                    : "Program tidak ditemukan."}
+                </p>
+                {(universityName || debouncedValue.length >= 3) && inputValue.trim().length >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onValueChange(inputValue.trim());
+                      setOpen(false);
+                      setInputValue("");
+                    }}
+                    className="w-full text-left px-3 py-2 text-sm rounded-md bg-muted/50 hover:bg-muted transition-colors flex items-center gap-2"
+                  >
+                    <span className="text-xs font-semibold text-gsb-orange">+</span>
+                    <span>Use &quot;<span className="font-medium">{inputValue.trim()}</span>&quot;</span>
+                  </button>
+                )}
               </div>
             )}
 
