@@ -22,8 +22,14 @@ const nextConfig: NextConfig = {
     config.ignoreWarnings = [
       { module: /node_modules\/node-fetch\/lib\/index\.js/ },
       { module: /node_modules\/punycode\/punycode\.js/ },
-      /Serializing big strings.+impacts deserialization performance/,
     ];
+    
+    // Silence PackFileCacheStrategy warning
+    config.infrastructureLogging = {
+      ...config.infrastructureLogging,
+      level: 'error',
+    };
+    
     return config;
   },
   images: {
