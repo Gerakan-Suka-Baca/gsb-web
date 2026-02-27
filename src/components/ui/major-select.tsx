@@ -28,6 +28,9 @@ export function MajorSelect({
   const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
   const [loading, setLoading] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const listboxId = React.useId();
+
+  type MajorResult = { id: string; name: string };
 
   React.useEffect(() => {
     if (!value) return;
@@ -42,7 +45,7 @@ export function MajorSelect({
       setLoading(true);
       try {
         const results = await searchMajors(debouncedValue, universityName);
-        const options = results.map((major: any) => ({
+        const options = (results as MajorResult[]).map((major) => ({
           value: major.name,
           label: major.name,
         }));
@@ -75,6 +78,7 @@ export function MajorSelect({
         type="button"
         role="combobox"
         aria-expanded={open}
+        aria-controls={listboxId}
         disabled={disabled || (!universityName && universityName !== undefined)}
         onClick={() => setOpen(!open)}
         className={cn(
@@ -128,7 +132,7 @@ export function MajorSelect({
             )}
 
             {!loading && items.length > 0 && (
-              <ul className="py-1" role="listbox">
+              <ul className="py-1" role="listbox" id={listboxId}>
                 {items.map((item) => (
                   <li
                     key={item.value}

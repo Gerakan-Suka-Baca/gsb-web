@@ -80,9 +80,10 @@ export default async function HomeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [authResult, payload] = await Promise.all([auth(), getPayloadCached()]);
+  const authResult = await auth();
   const { userId } = authResult;
   if (userId) {
+    const payload = await getPayloadCached();
     const user = await ensureUserRecord(payload, userId);
     if (user && !user.profileCompleted) redirect("/complete-profile");
   }

@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
 type ProfileUser = User & {
   targetPTN2?: string | null;
   targetMajor2?: string | null;
+  targetPTN3?: string | null;
+  targetMajor3?: string | null;
   dateOfBirth?: string | null;
 };
 
@@ -151,7 +153,23 @@ export default async function ProfilePage() {
                         </div>
                     )}
                     
-                    {!user.targetPTN && !user.targetPTN2 && (
+                    {(user.targetPTN3 || user.targetMajor3) && (
+                        <div className="bg-muted/50 p-4 rounded-lg border">
+                             <div className="mb-1">
+                                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Pilihan 3</span>
+                            </div>
+                            <div className="mt-2">
+                                <p className="text-lg font-bold text-foreground">
+                                    {user.targetPTN3}
+                                </p>
+                                <p className="text-muted-foreground font-medium">
+                                    {user.targetMajor3}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {!user.targetPTN && !user.targetPTN2 && !user.targetPTN3 && (
                          <div className="text-center py-4 bg-muted/30 border border-dashed rounded-lg text-muted-foreground text-sm">
                             Anda belum menentukan target kampus. <br/> Yuk edit profil untuk menambahkan target impianmu!
                         </div>

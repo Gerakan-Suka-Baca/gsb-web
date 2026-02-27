@@ -62,12 +62,16 @@ const profileSchema = z.object({
   targetMajor: z.string().min(3, "Minimal 3 karakter"),
   targetPTN2: z.string().optional(),
   targetMajor2: z.string().optional(),
+  targetPTN3: z.string().optional(),
+  targetMajor3: z.string().optional(),
   dateOfBirth: z.date().optional(),
 });
 
 type ProfileUser = PayloadUser & {
   targetPTN2?: string | null;
   targetMajor2?: string | null;
+  targetPTN3?: string | null;
+  targetMajor3?: string | null;
   dateOfBirth?: string | Date | null;
 };
 
@@ -91,6 +95,8 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
       targetMajor: user.targetMajor || "",
       targetPTN2: user.targetPTN2 || "",
       targetMajor2: user.targetMajor2 || "",
+      targetPTN3: user.targetPTN3 || "",
+      targetMajor3: user.targetMajor3 || "",
       dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth) : undefined,
     },
   });
@@ -350,6 +356,42 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                               value={field.value || ""} 
                               onValueChange={field.onChange}
                               universityName={form.watch("targetPTN2")}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                    <FormField
+                      control={form.control}
+                      name="targetPTN3"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Target PTN (Pilihan 3)</FormLabel>
+                          <FormControl>
+                            <UniversitySelect 
+                                value={field.value || ""} 
+                                onValueChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="targetMajor3"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Target Jurusan (Pilihan 3)</FormLabel>
+                          <FormControl>
+                            <MajorSelect 
+                              value={field.value || ""} 
+                              onValueChange={field.onChange}
+                              universityName={form.watch("targetPTN3")}
                             />
                           </FormControl>
                           <FormMessage />

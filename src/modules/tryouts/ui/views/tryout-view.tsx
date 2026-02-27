@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import { TryoutIntro } from "../components/TryoutIntro";
 import { TryoutExam } from "../components/TryoutExam";
 import { TryoutResultGate } from "../components/TryoutResultGate";
-import { ScoreDashboard } from "../components/ScoreDashboard";
 import { TryoutThankYou } from "../components/TryoutThankYou";
 import { Tryout } from "@/payload-types";
 import { TryoutAttempt } from "../../types";

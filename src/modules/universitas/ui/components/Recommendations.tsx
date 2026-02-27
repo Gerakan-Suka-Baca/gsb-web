@@ -8,18 +8,49 @@ import { ArrowLeft, Loader2, Sparkles, Building2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useEffect } from "react";
 
 interface Props {
   tryoutId: string;
 }
 
+type RecommendationsResponse = {
+  finalScore: number;
+  recommendations: unknown[];
+} | null;
+
 export const Recommendations = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
+  const cacheKey = `recommendations:${tryoutId}`;
+  const readCache = (key: string): { data: RecommendationsResponse; ts: number } | null => {
+    if (typeof window === "undefined") return null;
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as { data: RecommendationsResponse; ts: number };
+      if (!parsed?.data || !parsed.ts) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  };
+  const cached = readCache(cacheKey);
   
-  const { data, isLoading } = useQuery(
-    trpc.tryouts.getRecommendations.queryOptions({ tryoutId })
-  );
+  const queryOptions = trpc.tryouts.getRecommendations.queryOptions({ tryoutId });
+  const { data, isLoading } = useQuery({
+    ...queryOptions,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    initialData: cached?.data ?? undefined,
+    initialDataUpdatedAt: cached?.ts,
+  });
+
+  useEffect(() => {
+    if (!data || typeof window === "undefined") return;
+    window.localStorage.setItem(cacheKey, JSON.stringify({ data, ts: Date.now() }));
+  }, [cacheKey, data]);
 
   if (isLoading) {
     return (
@@ -30,6 +61,17 @@ export const Recommendations = ({ tryoutId }: Props) => {
   }
 
   if (!data) return null;
+
+  type Recommendation = {
+    id?: string;
+    name?: string;
+    universityName?: string;
+    avgUkt?: string;
+    capacity?: number;
+    chance?: number;
+  };
+
+  const recommendations = (data.recommendations as Recommendation[]) ?? [];
 
   return (
     <motion.div
@@ -62,7 +104,7 @@ export const Recommendations = ({ tryoutId }: Props) => {
         </p>
       </div>
 
-      {data.recommendations.length === 0 ? (
+      {recommendations.length === 0 ? (
         <Card className="p-10 text-center border-dashed border-2">
           <Building2 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
           <h3 className="text-xl font-bold mb-2">Belum ada rekomendasi yang sesuai</h3>
@@ -72,23 +114,24 @@ export const Recommendations = ({ tryoutId }: Props) => {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.recommendations.map((rec: any, idx: number) => {
+          {recommendations.map((rec, idx) => {
+            const chance = rec.chance ?? 0;
             let level = "Sangat Sulit";
             let colorClass = "text-red-600 bg-red-50 rounded px-2 py-0.5";
 
-            if (rec.chance >= 85) { 
+            if (chance >= 85) { 
                level = "Sangat Aman"; 
                colorClass = "text-green-600 bg-green-50 rounded px-2 py-0.5";
             }
-            else if (rec.chance >= 70) { 
+            else if (chance >= 70) { 
                level = "Aman";
                colorClass = "text-green-600 bg-green-50 rounded px-2 py-0.5";
             }
-            else if (rec.chance >= 50) { 
+            else if (chance >= 50) { 
                level = "Kompetitif"; 
                colorClass = "text-amber-600 bg-amber-50 rounded px-2 py-0.5";
             }
-            else if (rec.chance >= 30) {
+            else if (chance >= 30) {
                level = "Risiko";
                colorClass = "text-rose-600 bg-rose-50 rounded px-2 py-0.5";
             }
@@ -121,7 +164,7 @@ export const Recommendations = ({ tryoutId }: Props) => {
                        <p className={`text-sm font-bold ${colorClass}`}>{level}</p>
                      </div>
                      <div className="text-right">
-                       <span className={`text-2xl font-black ${rec.chance >= 70 ? 'text-green-600 dark:text-green-500' : 'text-amber-600 dark:text-amber-500'}`}>{rec.chance}%</span>
+                       <span className={`text-2xl font-black ${chance >= 70 ? 'text-green-600 dark:text-green-500' : 'text-amber-600 dark:text-amber-500'}`}>{chance}%</span>
                      </div>
                   </div>
                 </Card>

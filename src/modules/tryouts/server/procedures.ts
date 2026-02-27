@@ -1,8 +1,89 @@
 import z from "zod";
-import mongoose from "mongoose";
-
+import { TRPCError } from "@trpc/server";
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { Question } from "@/payload-types";
+
+const extractId = (val: unknown): string | null => {
+  if (!val) return null;
+  if (typeof val === "string") return val;
+  if (typeof val === "object") {
+    const obj = val as Record<string, unknown>;
+    if (typeof obj.$oid === "string") return obj.$oid;
+    if (typeof obj.toString === "function") {
+      const s = obj.toString();
+      if (s !== "[object Object]") return s;
+    }
+  }
+  return String(val);
+};
+
+type ProgramMetric = {
+  admissionMetric?: string;
+  capacity?: number;
+  applicants?: number;
+  predictedApplicants?: number;
+  passingPercentage?: string;
+  avgUkt?: string;
+  maxUkt?: string;
+};
+
+type UniversityProgramDoc = {
+  id?: string;
+  name?: string;
+  category?: string;
+  metrics?: ProgramMetric[];
+  capacity?: number;
+  avgUkt?: string;
+  maxUkt?: string;
+  admissionMetric?: string;
+  applicantsPreviousYear?: number;
+  predictedApplicants?: number;
+  passingPercentage?: string;
+  level?: string;
+  accreditation?: string;
+  description?: unknown;
+  courses?: unknown;
+  history?: unknown;
+  faculty?: string;
+  university?: string | { id?: string };
+  universityName?: string;
+  abbreviation?: string;
+  status?: string;
+  universityAccreditation?: string;
+  website?: string;
+};
+
+type TryoutScoreDoc = {
+  finalScore?: number;
+  score_PU?: number;
+  score_PK?: number;
+  score_PM?: number;
+  score_LBE?: number;
+  score_LBI?: number;
+  score_PPU?: number;
+  score_KMBM?: number;
+};
+
+type CacheEntry<T> = {
+  expires: number;
+  value: T;
+};
+
+const cacheStore = new Map<string, CacheEntry<unknown>>();
+
+const getCacheValue = <T,>(key: string): T | null => {
+  const hit = cacheStore.get(key);
+  if (!hit) return null;
+  if (hit.expires < Date.now()) {
+    cacheStore.delete(key);
+    return null;
+  }
+  return hit.value as T;
+};
+
+const setCacheValue = <T,>(key: string, value: T, ttlMs: number) => {
+  cacheStore.set(key, { value, expires: Date.now() + ttlMs });
+};
 
 const stripAnswerKeyFromSubtest = (subtest: Question): Question => {
   const tryoutQuestions = Array.isArray(subtest.tryoutQuestions)
@@ -181,7 +262,7 @@ export const tryoutsRouter = createTRPCRouter({
 
       const [scoreResult, attemptResult] = await Promise.all([
         ctx.db.find({
-          collection: "tryout-scores" as any,
+          collection: "tryout-scores",
           where: {
             and: [
               { user: { equals: userId } },
@@ -205,7 +286,7 @@ export const tryoutsRouter = createTRPCRouter({
         }),
       ]);
 
-      const scoreDoc = (scoreResult.docs[0] ?? undefined) as Record<string, unknown> | undefined;
+      const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
       const attemptDoc = (attemptResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
 
       const questionResults = Array.isArray(attemptDoc?.questionResults) ? attemptDoc.questionResults : [];
@@ -229,7 +310,7 @@ export const tryoutsRouter = createTRPCRouter({
 
       for (const qr of questionResults as QR[]) {
         const rawId = qr.subtestId || "unknown";
-        const sid = subtestIdToCode.get(rawId) || rawId; // Map to "PU" or fallback to raw
+        const sid = subtestIdToCode.get(rawId) || rawId;
         if (!statsMap.has(sid)) statsMap.set(sid, { correct: 0, wrong: 0, empty: 0, total: 0 });
         const s = statsMap.get(sid)!;
         s.total++;
@@ -271,6 +352,13 @@ export const tryoutsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session?.user?.id;
       if (!userId) return null;
+      const cachedTarget = getCacheValue<{
+        finalScore: number;
+        choice1: unknown;
+        choice2: unknown;
+        choice3: unknown;
+      }>(`target:${userId}:${input.tryoutId}`);
+      if (cachedTarget) return cachedTarget;
 
       const user = await ctx.db.findByID({
         collection: "users",
@@ -282,7 +370,7 @@ export const tryoutsRouter = createTRPCRouter({
 
       const [scoreResult] = await Promise.all([
         ctx.db.find({
-          collection: "tryout-scores" as any,
+          collection: "tryout-scores",
           where: {
             and: [
               { user: { equals: userId } },
@@ -294,43 +382,51 @@ export const tryoutsRouter = createTRPCRouter({
         })
       ]);
 
-      const scoreDoc = (scoreResult.docs[0] ?? undefined) as Record<string, unknown> | undefined;
+      const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
       const finalScore = (scoreDoc?.finalScore as number) ?? 0;
 
-      // Function to search MongoDB for a program
-        const searchProgram = async (univName: string, majorName: string) => {
-          if (!univName || !majorName) return null;
-          
-          // Use MongoDB Aggregation directly via Mongoose model
-          const results = await ctx.db.find({
-            collection: "studyPrograms",
-            where: {
-              and: [
-                { name: { contains: univName } },
-                { "programs.name": { contains: majorName } },
-                { "programs.category": { equals: "snbt" } }
-              ]
-            },
-            limit: 1,
-            depth: 0,
-          });
-  
-          if (results.docs.length === 0) return null;
-          const matchDoc = results.docs[0];
-          const match = (matchDoc.programs as any[])?.find(p => p.name.toLowerCase().includes(majorName.toLowerCase()) && p.category === "snbt");
-          
-          if (!match) return null;
+      const searchProgram = async (univName: string, majorName: string) => {
+        if (!univName || !majorName) return null;
 
-        const passingGrade = parseFloat(match.admissionMetric) || 0;
-        if (!passingGrade) return { found: true, passingGrade: 0, targetPTN: univName, targetMajor: majorName, name: match.name, universityName: matchDoc.name };
+        const results = await ctx.db.find({
+          collection: "university-programs",
+          where: {
+            and: [
+              { category: { equals: "snbt" } },
+              { universityName: { contains: univName } },
+              { name: { contains: majorName } },
+            ],
+          },
+          limit: 1,
+          depth: 0,
+        });
 
-        // Statistical Logistic Function for Chance Calculation
-        // Formula: P(x) = 1 / (1 + e^(-k(x - x0)))
-        // Where x = user score, x0 = passing grade, k = steepness curve
-        const k = 0.05; // Curve steepness
+        if (results.docs.length === 0) return null;
+        const match = results.docs[0] as UniversityProgramDoc;
+
+        const latestMetric = (match.metrics?.[0] ?? {}) as ProgramMetric;
+        const passingGrade = parseFloat(latestMetric.admissionMetric || match.admissionMetric || "0") || 0;
+        const programIdValue = extractId(match.id);
+        const universityIdValue = extractId(
+          (match.university as { id?: unknown } | undefined)?.id ?? (match.university as string | undefined)
+        );
+
+        if (!passingGrade) {
+          return {
+            found: true,
+            passingGrade: 0,
+            targetPTN: univName,
+            targetMajor: majorName,
+            name: match.name,
+            universityName: match.universityName,
+            programId: programIdValue,
+            universityId: universityIdValue,
+          };
+        }
+
+        const k = 0.05;
         const rawChance = 100 / (1 + Math.exp(-k * (finalScore - passingGrade)));
         
-        // Clamp chance between 5% and 95% for realistic probabilistic outputs
         const chance = Math.max(5, Math.min(95, Math.round(rawChance)));
 
         let level = "Sangat Sulit";
@@ -345,23 +441,37 @@ export const tryoutsRouter = createTRPCRouter({
           found: true,
           targetPTN: univName,
           targetMajor: majorName,
-          dbUnivName: matchDoc.name,
+          dbUnivName: match.universityName,
           dbMajorName: match.name,
           level,
           color,
           chance,
           passingGrade,
+          programId: programIdValue,
+          universityId: universityIdValue,
         };
       };
 
-      const choice1 = await searchProgram(user.targetPTN as string, user.targetMajor as string);
-      const choice2 = await searchProgram(user.targetPTN2 as string, user.targetMajor2 as string);
-
-      return {
-        finalScore,
-        choice1: choice1 || { found: false, targetPTN: user.targetPTN, targetMajor: user.targetMajor },
-        choice2: choice2 || { found: false, targetPTN: user.targetPTN2, targetMajor: user.targetMajor2 },
+      const userData = user as {
+        targetPTN?: string;
+        targetMajor?: string;
+        targetPTN2?: string;
+        targetMajor2?: string;
+        targetPTN3?: string;
+        targetMajor3?: string;
       };
+      const choice1 = await searchProgram(userData.targetPTN ?? "", userData.targetMajor ?? "");
+      const choice2 = await searchProgram(userData.targetPTN2 ?? "", userData.targetMajor2 ?? "");
+      const choice3 = await searchProgram(userData.targetPTN3 ?? "", userData.targetMajor3 ?? "");
+
+      const payload = {
+        finalScore,
+        choice1: choice1 || { found: false, targetPTN: userData.targetPTN, targetMajor: userData.targetMajor },
+        choice2: choice2 || { found: false, targetPTN: userData.targetPTN2, targetMajor: userData.targetMajor2 },
+        choice3: choice3 || { found: false, targetPTN: userData.targetPTN3, targetMajor: userData.targetMajor3 },
+      };
+      setCacheValue(`target:${userId}:${input.tryoutId}`, payload, 3 * 60 * 1000);
+      return payload;
     }),
 
   getRecommendations: protectedProcedure
@@ -369,6 +479,10 @@ export const tryoutsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session?.user?.id;
       if (!userId) return null;
+      const cachedRecs = getCacheValue<{ finalScore: number; recommendations: unknown[] }>(
+        `recs:${userId}:${input.tryoutId}`
+      );
+      if (cachedRecs) return cachedRecs;
 
       const user = await ctx.db.findByID({
         collection: "users",
@@ -379,7 +493,7 @@ export const tryoutsRouter = createTRPCRouter({
       if (!user) return null;
 
       const [scoreResult] = await ctx.db.find({
-        collection: "tryout-scores" as any,
+        collection: "tryout-scores",
         where: {
           and: [
             { user: { equals: userId } },
@@ -390,106 +504,112 @@ export const tryoutsRouter = createTRPCRouter({
         depth: 0,
       }).then(res => res.docs);
 
-      const finalScore = ((scoreResult as any)?.finalScore as number) ?? 0;
+      const finalScore = (scoreResult as TryoutScoreDoc | undefined)?.finalScore ?? 0;
 
-      // Extract raw user major intents loosely
       const getKeywords = (major: string | undefined | null) => {
         if (!major) return [];
-        // very naïve extraction of core subject: "Teknik Informatika" -> "Informatika"
         const lower = major.toLowerCase();
         const blacklist = ["teknik", "pendidikan", "ilmu", "sistem", "manajemen", "studi"];
         const words = lower.split(" ").filter(w => w.length > 3 && !blacklist.includes(w));
         return words.length > 0 ? words : [major.split(" ")[0]];
       };
 
-      const kw1 = getKeywords(user.targetMajor as string);
-      const kw2 = getKeywords(user.targetMajor2 as string);
+      const userProfile = user as {
+        targetMajor?: string;
+        targetMajor2?: string;
+      };
+      const kw1 = getKeywords(userProfile.targetMajor ?? "");
+      const kw2 = getKeywords(userProfile.targetMajor2 ?? "");
       const allKws = Array.from(new Set([...kw1, ...kw2])).filter(Boolean);
 
       if (allKws.length === 0) {
         return { finalScore, recommendations: [] };
       }
 
-      // Query broad matches through native Payload find (Array dot notation)
-      const rawProms = await ctx.db.find({
-        collection: "studyPrograms",
+      const rawPrograms = await ctx.db.find({
+        collection: "university-programs",
         where: {
           and: [
-            { "programs.category": { equals: "snbt" } },
+            { category: { equals: "snbt" } },
             {
-              or: allKws.map(kw => ({ "programs.name": { contains: kw } }))
-            }
-          ]
+              or: allKws.map((kw) => ({
+                name: { contains: kw },
+              })),
+            },
+          ],
         },
-        limit: 150,
+        limit: 300,
         depth: 0,
       });
 
-      const allMatches: any[] = [];
-      rawProms.docs.forEach((doc: any) => {
-         const progs = doc.programs || [];
-         progs.forEach((prog: any) => {
-            // Apply strict memory-level keyword filtration since parent doc match may pull all nested items
-            if (prog.category === "snbt" && allKws.some(kw => prog.name.toLowerCase().includes(kw.toLowerCase()))) {
-               allMatches.push({ prog, doc });
-            }
-         });
-      });
+      const allMatches = rawPrograms.docs as UniversityProgramDoc[];
 
-      const recs = allMatches.map(({ prog, doc }) => {
-        const passingGrade = parseFloat(prog.admissionMetric) || 0;
+      const recs = allMatches.map((prog) => {
+        const latestMetric = (prog.metrics?.[0] ?? {}) as ProgramMetric;
+        const passingGrade = parseFloat(latestMetric.admissionMetric || prog.admissionMetric || "0") || 0;
         
         const k = 0.05;
         const rawChance = 100 / (1 + Math.exp(-k * (finalScore - passingGrade)));
         const chance = Math.max(5, Math.min(95, Math.round(rawChance)));
 
         return {
-          id: prog.id,
+          id: extractId(prog.id),
           name: prog.name,
-          universityName: doc.name || "Unknown",
+          universityName: prog.universityName || "Unknown",
           passingGrade,
           chance, 
-          capacity: prog.capacity || 0,
-          avgUkt: prog.avgUkt,
-          maxUkt: prog.maxUkt
+          capacity: latestMetric.capacity || prog.capacity || 0,
+          avgUkt: latestMetric.avgUkt || prog.avgUkt,
+          maxUkt: latestMetric.maxUkt || prog.maxUkt
         };
-      }).filter((r: any) => r.chance >= 70) 
-      // strict filter: only recommend universities where statistical chance >= 70%
+      }).filter((r) => r.chance >= 70) 
       
-      // Sort by chance descending
-      recs.sort((a: any, b: any) => b.chance - a.chance);
+      recs.sort((a, b) => b.chance - a.chance);
 
-      // Return top 20 safe choices
-      return { finalScore, recommendations: recs.slice(0, 20) };
+      const payload = { finalScore, recommendations: recs.slice(0, 20) };
+      setCacheValue(`recs:${userId}:${input.tryoutId}`, payload, 5 * 60 * 1000);
+      return payload;
     }),
 
   getProgramStudyDetail: protectedProcedure
     .input(z.object({ programId: z.string(), tryoutId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const results = await ctx.db.find({
-        collection: "studyPrograms",
-        where: { "programs.id": { equals: input.programId } },
-        limit: 1,
-        depth: 0,
+      const cachedProgram = getCacheValue<Record<string, unknown>>(
+        `program:${input.programId}:${input.tryoutId ?? ""}`
+      );
+      if (cachedProgram) return cachedProgram;
+
+      const progResult = await ctx.db.findByID({
+        collection: "university-programs",
+        id: input.programId,
+        depth: 1,
       });
 
-      if (results.docs.length === 0) {
-        // Fallback: the id field could be mapped as _id if they pushed raw JSON from Compass instead of through Payload.
-        // It's safer to filter memory for safety since there are only 139 documents.
-        throw new Error("Program Studi tidak ditemukan");
-      }
-      
-      const parentDoc = results.docs[0];
-      const prog = (parentDoc.programs as any[])?.find(p => String(p.id) === input.programId || String(p._id) === input.programId);
-      
+      const prog = progResult as UniversityProgramDoc;
       if (!prog) {
-        throw new Error("Program Studi dalam Universitas tidak cocok");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Program Studi tidak ditemukan" });
+      }
+
+      const universityId = extractId(
+        (prog.university as { id?: unknown } | undefined)?.id ?? (prog.university as string | undefined)
+      );
+      let universityDoc: Record<string, unknown> | null = null;
+      if (universityId) {
+        try {
+          universityDoc = (await ctx.db.findByID({
+            collection: "universities",
+            id: universityId,
+            depth: 1,
+          })) as unknown as Record<string, unknown>;
+        } catch {
+          universityDoc = null;
+        }
       }
 
       let finalScore = 0;
       if (input.tryoutId && ctx.session?.user?.id) {
         const [scoreResult] = await ctx.db.find({
-          collection: "tryout-scores" as any,
+          collection: "tryout-scores",
           where: {
             and: [
               { user: { equals: ctx.session.user.id } },
@@ -499,35 +619,50 @@ export const tryoutsRouter = createTRPCRouter({
           limit: 1,
           depth: 0,
         }).then(res => res.docs);
-        finalScore = ((scoreResult as any)?.finalScore as number) ?? 0;
+        finalScore = (scoreResult as TryoutScoreDoc | undefined)?.finalScore ?? 0;
       }
 
-      // Hide sensitive backend-only variables like 'baseValue' / 'ptn_id' from the frontend
-      return {
-        id: prog.id || (prog._id ? prog._id.toString() : null),
+      const latestMetric = (prog.metrics?.[0] ?? {}) as ProgramMetric;
+
+      let imageUrl: string | null = null;
+      const rawImage = universityDoc?.image;
+      if (rawImage && typeof rawImage === "object" && "url" in rawImage) {
+        imageUrl = (rawImage as { url?: string }).url ?? null;
+      } else if (typeof rawImage === "string") {
+        const media = await ctx.db.findByID({ collection: "media", id: rawImage, depth: 0 });
+        imageUrl = (media as { url?: string }).url ?? null;
+      }
+
+      const payload = {
+        id: extractId(prog.id),
         name: prog.name,
         level: prog.level,
         category: prog.category,
         accreditation: prog.accreditation,
-        capacity: prog.capacity,
-        applicantsPreviousYear: prog.applicantsPreviousYear,
-        predictedApplicants: prog.predictedApplicants,
-        passingPercentage: prog.passingPercentage,
-        avgUkt: prog.avgUkt,
-        maxUkt: prog.maxUkt,
+        faculty: prog.faculty,
+        metrics: prog.metrics || [],
+        capacity: latestMetric.capacity || prog.capacity,
+        applicantsPreviousYear: latestMetric.applicants || prog.applicantsPreviousYear,
+        predictedApplicants: latestMetric.predictedApplicants || prog.predictedApplicants,
+        passingPercentage: latestMetric.passingPercentage || prog.passingPercentage,
+        avgUkt: latestMetric.avgUkt || prog.avgUkt,
+        maxUkt: latestMetric.maxUkt || prog.maxUkt,
         description: prog.description,
         courses: prog.courses,
-        history: prog.history, 
-        passingGrade: parseFloat(prog.admissionMetric) || 0,
+        history: prog.history,
+        passingGrade: parseFloat(latestMetric.admissionMetric || prog.admissionMetric || "0") || 0,
         finalScore,
         university: {
-          name: parentDoc.name,
-          abbreviation: parentDoc.abbreviation,
-          status: parentDoc.status,
-          accreditation: parentDoc.accreditation,
-          website: parentDoc.website,
-          image: null,
-        }
+          id: universityId,
+          name: (universityDoc?.name as string | undefined) ?? prog.universityName,
+          abbreviation: (universityDoc?.abbreviation as string | undefined) ?? prog.abbreviation,
+          status: (universityDoc?.status as string | undefined) ?? prog.status,
+          accreditation: (universityDoc?.accreditation as string | undefined) ?? prog.universityAccreditation,
+          website: (universityDoc?.website as string | undefined) ?? null,
+          image: imageUrl,
+        },
       };
+      setCacheValue(`program:${input.programId}:${input.tryoutId ?? ""}`, payload, 10 * 60 * 1000);
+      return payload;
     }),
 });

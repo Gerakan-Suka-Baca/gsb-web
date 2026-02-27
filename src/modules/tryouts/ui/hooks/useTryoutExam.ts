@@ -264,8 +264,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
         
         await submitAttemptMutation.mutateAsync({ 
           attemptId: state.attemptId, 
-          answers: safeAnswers,
-          subtestDurations: safeDurations
+          answers: safeAnswers
         });
       } else {
         dispatch({ type: "SET_STATUS", status: "finished" });

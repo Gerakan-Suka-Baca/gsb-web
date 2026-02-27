@@ -1,7 +1,7 @@
 "use client";
 
 import { use } from "react";
-import { ProgramStudiDetail } from "@/modules/tryouts/ui/components/ProgramStudiDetail";
+import { ProgramStudiDetail } from "@/modules/universitas/ui/components/ProgramStudiDetail";
 
 export default function ProgramStudiPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);

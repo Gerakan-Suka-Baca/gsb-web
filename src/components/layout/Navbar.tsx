@@ -74,6 +74,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   { title: "Learning Path", url: "/learning-path" },
+  { title: "Universitas", url: "/universitas" },
 ]
 
 const ease: Easing = [0.0, 0.0, 0.2, 1]
