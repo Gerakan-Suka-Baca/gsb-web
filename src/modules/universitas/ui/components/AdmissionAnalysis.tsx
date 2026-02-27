@@ -100,9 +100,11 @@ export const AdmissionAnalysis = ({ tryoutId }: Props) => {
           </div>
           <p className="font-bold text-lg leading-tight mb-1 line-clamp-2">{choice.targetMajor}</p>
           <p className="text-sm text-foreground/70 mb-4 line-clamp-1">{choice.targetPTN}</p>
-          <div className="mt-auto flex items-center gap-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 px-3 py-2.5 rounded-lg text-xs font-semibold w-full">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>Data Prediksi skor tidak tersedia</span>
+          <div className="mt-auto flex flex-col gap-2">
+            <div className="flex items-start gap-2 bg-amber-50 dark:bg-amber-500/10 text-amber-600 px-3 py-2.5 rounded-lg text-xs font-semibold w-full">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>Maaf, kami tidak memiliki data untuk program Anda. Cek rekomendasi universitas lainnya yang sesuai dengan kriteria Anda di bawah ini.</span>
+            </div>
           </div>
         </Card>
       );

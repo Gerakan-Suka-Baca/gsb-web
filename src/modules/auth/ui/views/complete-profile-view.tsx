@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UniversitySelect } from "@/components/ui/university-select";
+import { MajorSelect } from "@/components/ui/major-select";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -263,7 +264,12 @@ export const CompleteProfileView = () => {
                         <FormItem>
                             <FormLabel>Target Jurusan (Pilihan 1)</FormLabel>
                             <FormControl>
-                            <Input placeholder="Contoh: Kedokteran, Informatika" {...field} />
+                              <MajorSelect
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                universityName={form.watch("targetPTN")}
+                                placeholder="Pilih jurusan..."
+                              />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -294,7 +300,12 @@ export const CompleteProfileView = () => {
                         <FormItem>
                             <FormLabel>Target Jurusan (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                             <FormControl>
-                            <Input placeholder="Contoh: Kedokteran, Informatika" {...field} />
+                              <MajorSelect
+                                value={field.value ?? ""}
+                                onValueChange={field.onChange}
+                                universityName={form.watch("targetPTN2")}
+                                placeholder="Pilih jurusan (opsional)..."
+                              />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
