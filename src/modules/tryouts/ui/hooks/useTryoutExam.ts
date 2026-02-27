@@ -254,18 +254,23 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     }
 
     if (state.currentSubtestIndex < subtests.length - 1) {
+      await flushEvents(true);
       dispatch({ type: "SET_STATUS", status: "bridging" });
     } else {
       if (state.attemptId) {
-        await flushEvents(true);
-        const safeAnswers = state.answers || {};
-        const safeDurations = { ...state.subtestDurations };
-        if (currentSubtestId) safeDurations[currentSubtestId] = elapsedSeconds;
-        
-        await submitAttemptMutation.mutateAsync({ 
-          attemptId: state.attemptId, 
-          answers: safeAnswers
-        });
+        try {
+          await flushEvents(true);
+          const safeAnswers = state.answers || {};
+          const safeDurations = { ...state.subtestDurations };
+          if (currentSubtestId) safeDurations[currentSubtestId] = elapsedSeconds;
+          
+          await submitAttemptMutation.mutateAsync({ 
+            attemptId: state.attemptId, 
+            answers: safeAnswers
+          });
+        } catch (error) {
+          toast.error("Terjadi kesalahan saat finalisasi ujian. Pastikan koneksi stabil lalu coba lagi.");
+        }
       } else {
         dispatch({ type: "SET_STATUS", status: "finished" });
         onFinish(state.answers || {});
