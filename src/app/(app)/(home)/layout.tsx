@@ -4,6 +4,7 @@ import { ExamNavbarProvider } from "@/components/layout/exam-navbar-context";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { getPayloadCached } from "@/lib/payload";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -85,7 +86,20 @@ export default async function HomeLayout({
   if (userId) {
     const payload = await getPayloadCached();
     const user = await ensureUserRecord(payload, userId);
-    if (user && !user.profileCompleted) redirect("/complete-profile");
+
+    // Check current pathname to avoid infinite redirect loop
+    // (/complete-profile is inside this layout's route group)
+    if (user && !user.profileCompleted) {
+      const headersList = await headers();
+      const pathname =
+        headersList.get("x-nextjs-page") ||
+        headersList.get("x-matched-path") ||
+        headersList.get("x-invoke-path") ||
+        "";
+      if (!pathname.includes("complete-profile")) {
+        redirect("/complete-profile");
+      }
+    }
   }
   return (
     <ExamNavbarProvider>
