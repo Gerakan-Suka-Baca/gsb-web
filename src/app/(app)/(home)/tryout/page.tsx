@@ -1,6 +1,10 @@
-// import { TryoutListView } from "@/modules/tryouts/ui/views/tryout-list-view";
+import { TryoutListView } from "@/modules/tryouts/ui/views/TryoutListView";
 import { getQueryClient, trpc } from "@/trpc/server";
-// import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { redirect } from "next/navigation";
+import { auth } from "@clerk/nextjs/server";
+
+export const dynamic = "force-dynamic";
 
 // export const metadata = {
 //   title: "About Sema FTD",
@@ -31,15 +35,19 @@ import { getQueryClient, trpc } from "@/trpc/server";
 
 const Page = async () => {
   const queryClient = getQueryClient();
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect(`/sign-in?callbackUrl=${encodeURIComponent("/tryout")}`);
+  }
+
   void queryClient.prefetchQuery(trpc.tryouts.getMany.queryOptions({}));
+  void queryClient.prefetchQuery(trpc.tryoutAttempts.getMyAttempts.queryOptions());
 
   return (
-    // <HydrationBoundary state={dehydrate(queryClient)}>
-    //   <TryoutListView />
-    // </HydrationBoundary>
-    <div>
-      Tryout page is disabled for now.
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <TryoutListView />
+    </HydrationBoundary>
   );
 };
 

@@ -63,24 +63,46 @@ export type SupportedTimezones =
 
 export interface Config {
   auth: {
-    users: UserAuthOperations;
+    admins: AdminAuthOperations;
   };
   blocks: {};
   collections: {
+    admins: Admin;
     users: User;
     media: Media;
+    'university-media': UniversityMedia;
     tryouts: Tryout;
     questions: Question;
+    'tryout-attempts': TryoutAttempt;
+    'tryout-payments': TryoutPayment;
+    'tryout-scores': TryoutScore;
+    'tryout-explanations': TryoutExplanation;
+    universities: University;
+    'university-programs': UniversityProgram;
+    'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    universities: {
+      programList: 'university-programs';
+    };
+  };
   collectionsSelect: {
+    admins: AdminsSelect<false> | AdminsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'university-media': UniversityMediaSelect<false> | UniversityMediaSelect<true>;
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
+    'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
+    'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
+    'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
+    'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
+    universities: UniversitiesSelect<false> | UniversitiesSelect<true>;
+    'university-programs': UniversityProgramsSelect<false> | UniversityProgramsSelect<true>;
+    'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -88,18 +110,17 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
+  fallbackLocale: null;
   globals: {};
   globalsSelect: {};
   locale: null;
-  user: User & {
-    collection: 'users';
-  };
+  user: Admin;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
-export interface UserAuthOperations {
+export interface AdminAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -119,14 +140,12 @@ export interface UserAuthOperations {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
+ * via the `definition` "admins".
  */
-export interface User {
+export interface Admin {
   id: string;
-  username: string;
-  paid?: boolean | null;
-  payment?: (string | null) | Media;
-  roles?: ('super-admin' | 'admin' | 'user')[] | null;
+  role: 'super-admin' | 'admin' | 'volunteer';
+  name?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -136,7 +155,42 @@ export interface User {
   hash?: string | null;
   loginAttempts?: number | null;
   lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
   password?: string | null;
+  collection: 'admins';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  email: string;
+  clerkUserId?: string | null;
+  profileCompleted?: boolean | null;
+  username?: string | null;
+  fullName?: string | null;
+  whatsapp?: string | null;
+  schoolOrigin?: string | null;
+  grade?: ('10' | '11' | '12' | 'gap_year') | null;
+  targetPTN?: string | null;
+  targetMajor?: string | null;
+  targetPTN2?: string | null;
+  targetMajor2?: string | null;
+  targetPTN3?: string | null;
+  targetMajor3?: string | null;
+  paid?: boolean | null;
+  payment?: (string | null) | Media;
+  roles?: ('super-admin' | 'admin' | 'user')[] | null;
+  dateOfBirth?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -144,6 +198,96 @@ export interface User {
  */
 export interface Media {
   id: string;
+  alt: string;
+  /**
+   * Terkait dengan Batch Tryout (Opsional)
+   */
+  relatedTryout?: (string | null) | Tryout;
+  /**
+   * ID atau Nama Subtest Terkait (Opsional)
+   */
+  relatedSubtest?: string | null;
+  /**
+   * Nomor Soal Terkait (Opsional)
+   */
+  relatedQuestionNumber?: number | null;
+  _key?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      _key?: string | null;
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      _key?: string | null;
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    tablet?: {
+      _key?: string | null;
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryouts".
+ */
+export interface Tryout {
+  id: string;
+  title: string;
+  /**
+   * Auto-generated from title if empty
+   */
+  slugField?: string | null;
+  /**
+   * WIB (GMT+7)
+   */
+  dateOpen: string;
+  /**
+   * WIB (GMT+7)
+   */
+  dateClose: string;
+  /**
+   * When scores become visible to students. WIB (GMT+7)
+   */
+  scoreReleaseDate?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-media".
+ */
+export interface UniversityMedia {
+  id: string;
+  /**
+   * Teks alternatif untuk aksesibilitas dan SEO.
+   */
   alt: string;
   _key?: string | null;
   updatedAt: string;
@@ -160,26 +304,13 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tryouts".
- */
-export interface Tryout {
-  id: string;
-  title: string;
-  'Date Open': string;
-  'Date Open_tz': SupportedTimezones;
-  'Date Close': string;
-  'Date Close_tz': SupportedTimezones;
-  description: string;
-  questions: (string | Question)[];
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "questions".
  */
 export interface Question {
   id: string;
+  duration: number;
+  subtest?: ('PU' | 'PK' | 'PM' | 'LBE' | 'LBI' | 'PPU' | 'KMBM') | null;
+  tryout: string | Tryout;
   title: string;
   tryoutQuestions?:
     | {
@@ -187,7 +318,7 @@ export interface Question {
           root: {
             type: string;
             children: {
-              type: string;
+              type: any;
               version: number;
               [k: string]: unknown;
             }[];
@@ -203,7 +334,7 @@ export interface Question {
             root: {
               type: string;
               children: {
-                type: string;
+                type: any;
                 version: number;
                 [k: string]: unknown;
               }[];
@@ -230,11 +361,330 @@ export interface Question {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-attempts".
+ */
+export interface TryoutAttempt {
+  id: string;
+  user: string | User;
+  tryout: string | Tryout;
+  answers?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  flags?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  questionResults?:
+    | {
+        subtestId: string;
+        questionId: string;
+        questionNumber: number;
+        selectedLetter?: string | null;
+        correctLetter?: string | null;
+        isCorrect?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'started' | 'completed';
+  startedAt?: string | null;
+  /**
+   * Authoritative server timestamp when the active subtest started.
+   */
+  subtestStartedAt?: string | null;
+  /**
+   * Authoritative server deadline for the current active subtest.
+   */
+  subtestDeadlineAt?: string | null;
+  completedAt?: string | null;
+  /**
+   * Index of the currently active subtest (0-based).
+   */
+  currentSubtest?: number | null;
+  /**
+   * Internal exam state (running vs bridging).
+   */
+  examState?: ('running' | 'bridging') | null;
+  /**
+   * Bridging expiry time (if currently bridging).
+   */
+  bridgingExpiry?: string | null;
+  /**
+   * Remaining seconds at last backup.
+   */
+  secondsRemaining?: number | null;
+  /**
+   * Percentage of correct answers.
+   */
+  score?: number | null;
+  correctAnswersCount?: number | null;
+  totalQuestionsCount?: number | null;
+  /**
+   * Index of the current question in the active subtest (0-based).
+   */
+  currentQuestionIndex?: number | null;
+  processedBatchIds?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Selected tryout result plan.
+   */
+  resultPlan?: ('none' | 'free' | 'paid') | null;
+  /**
+   * Elapsed time (seconds) per subtest, mapped by subtestId.
+   */
+  subtestDurations?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * List user yang sudah melakukan pembayaran manual (untuk verifikasi).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-payments".
+ */
+export interface TryoutPayment {
+  id: string;
+  /**
+   * User yang melakukan pembayaran
+   */
+  user: string | User;
+  tryout: string | Tryout;
+  attempt: string | TryoutAttempt;
+  status: 'pending' | 'verified' | 'rejected';
+  program?: string | null;
+  /**
+   * Nominal pembayaran
+   */
+  amount?: number | null;
+  paymentDate?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-scores".
+ */
+export interface TryoutScore {
+  id: string;
+  user: string | User;
+  tryout: string | Tryout;
+  /**
+   * PU
+   */
+  score_PU?: number | null;
+  /**
+   * PK
+   */
+  score_PK?: number | null;
+  /**
+   * PM
+   */
+  score_PM?: number | null;
+  /**
+   * LBE
+   */
+  score_LBE?: number | null;
+  /**
+   * LBI
+   */
+  score_LBI?: number | null;
+  /**
+   * PPU
+   */
+  score_PPU?: number | null;
+  /**
+   * KMBM
+   */
+  score_KMBM?: number | null;
+  finalScore: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Pembahasan Tryout dalam bentuk file PDF.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-explanations".
+ */
+export interface TryoutExplanation {
+  id: string;
+  /**
+   * Name of the explanation document.
+   */
+  title: string;
+  /**
+   * Select the Tryout batch this explanation belongs to.
+   */
+  tryout: string | Tryout;
+  /**
+   * Upload the PDF file containing the explanations.
+   */
+  pdf: string | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "universities".
+ */
+export interface University {
+  id: string;
+  name: string;
+  /**
+   * Otomatis di-generate dari nama. Bisa diedit manual.
+   */
+  slugField?: string | null;
+  abbreviation?: string | null;
+  npsn?: string | null;
+  status?: ('negeri' | 'swasta' | 'ptk') | null;
+  accreditation?: string | null;
+  address?: string | null;
+  district?: string | null;
+  city?: string | null;
+  province?: string | null;
+  website?: string | null;
+  pddiktiId?: string | null;
+  image?: (string | null) | UniversityMedia;
+  coverImage?: (string | null) | UniversityMedia;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  visionMission?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  programCount?: number | null;
+  programsWithMetricsCount?: number | null;
+  completenessScore?: number | null;
+  /**
+   * Program studi yang terhubung dengan universitas ini (dari koleksi University Programs).
+   */
+  programList?: {
+    docs?: (string | UniversityProgram)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Program studi per-universitas. Data ini di-generate dari field `programs` lama untuk meringankan dokumen universitas.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-programs".
+ */
+export interface UniversityProgram {
+  id: string;
+  university: string | University;
+  universityName?: string | null;
+  abbreviation?: string | null;
+  status?: string | null;
+  universityAccreditation?: string | null;
+  name: string;
+  faculty?: string | null;
+  level?: string | null;
+  category?: ('snbt' | 'snbp' | 'mandiri') | null;
+  accreditation?: string | null;
+  /**
+   * Diisi otomatis dari data scraping. Boleh dikosongkan untuk input manual.
+   */
+  metrics?:
+    | {
+        year?: string | null;
+        capacity?: number | null;
+        applicants?: number | null;
+        passingPercentage?: string | null;
+        predictedApplicants?: number | null;
+        admissionMetric?: string | null;
+        avgUkt?: string | null;
+        maxUkt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Dipakai untuk migrasi dan menjaga referensi dari data lama.
+   */
+  legacyProgramId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-kv".
+ */
+export interface PayloadKv {
+  id: string;
+  key: string;
+  data:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
   id: string;
   document?:
+    | ({
+        relationTo: 'admins';
+        value: string | Admin;
+      } | null)
     | ({
         relationTo: 'users';
         value: string | User;
@@ -244,17 +694,45 @@ export interface PayloadLockedDocument {
         value: string | Media;
       } | null)
     | ({
+        relationTo: 'university-media';
+        value: string | UniversityMedia;
+      } | null)
+    | ({
         relationTo: 'tryouts';
         value: string | Tryout;
       } | null)
     | ({
         relationTo: 'questions';
         value: string | Question;
+      } | null)
+    | ({
+        relationTo: 'tryout-attempts';
+        value: string | TryoutAttempt;
+      } | null)
+    | ({
+        relationTo: 'tryout-payments';
+        value: string | TryoutPayment;
+      } | null)
+    | ({
+        relationTo: 'tryout-scores';
+        value: string | TryoutScore;
+      } | null)
+    | ({
+        relationTo: 'tryout-explanations';
+        value: string | TryoutExplanation;
+      } | null)
+    | ({
+        relationTo: 'universities';
+        value: string | University;
+      } | null)
+    | ({
+        relationTo: 'university-programs';
+        value: string | UniversityProgram;
       } | null);
   globalSlug?: string | null;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'admins';
+    value: string | Admin;
   };
   updatedAt: string;
   createdAt: string;
@@ -266,8 +744,8 @@ export interface PayloadLockedDocument {
 export interface PayloadPreference {
   id: string;
   user: {
-    relationTo: 'users';
-    value: string | User;
+    relationTo: 'admins';
+    value: string | Admin;
   };
   key?: string | null;
   value?:
@@ -295,13 +773,11 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "admins_select".
  */
-export interface UsersSelect<T extends boolean = true> {
-  username?: T;
-  paid?: T;
-  payment?: T;
-  roles?: T;
+export interface AdminsSelect<T extends boolean = true> {
+  role?: T;
+  name?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -311,12 +787,104 @@ export interface UsersSelect<T extends boolean = true> {
   hash?: T;
   loginAttempts?: T;
   lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  email?: T;
+  clerkUserId?: T;
+  profileCompleted?: T;
+  username?: T;
+  fullName?: T;
+  whatsapp?: T;
+  schoolOrigin?: T;
+  grade?: T;
+  targetPTN?: T;
+  targetMajor?: T;
+  targetPTN2?: T;
+  targetMajor2?: T;
+  targetPTN3?: T;
+  targetMajor3?: T;
+  paid?: T;
+  payment?: T;
+  roles?: T;
+  dateOfBirth?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  relatedTryout?: T;
+  relatedSubtest?: T;
+  relatedQuestionNumber?: T;
+  _key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              _key?: T;
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        card?:
+          | T
+          | {
+              _key?: T;
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        tablet?:
+          | T
+          | {
+              _key?: T;
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-media_select".
+ */
+export interface UniversityMediaSelect<T extends boolean = true> {
   alt?: T;
   _key?: T;
   updatedAt?: T;
@@ -337,12 +905,10 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface TryoutsSelect<T extends boolean = true> {
   title?: T;
-  'Date Open'?: T;
-  'Date Open_tz'?: T;
-  'Date Close'?: T;
-  'Date Close_tz'?: T;
-  description?: T;
-  questions?: T;
+  slugField?: T;
+  dateOpen?: T;
+  dateClose?: T;
+  scoreReleaseDate?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -351,6 +917,9 @@ export interface TryoutsSelect<T extends boolean = true> {
  * via the `definition` "questions_select".
  */
 export interface QuestionsSelect<T extends boolean = true> {
+  duration?: T;
+  subtest?: T;
+  tryout?: T;
   title?: T;
   tryoutQuestions?:
     | T
@@ -378,6 +947,158 @@ export interface QuestionsSelect<T extends boolean = true> {
   active?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-attempts_select".
+ */
+export interface TryoutAttemptsSelect<T extends boolean = true> {
+  user?: T;
+  tryout?: T;
+  answers?: T;
+  flags?: T;
+  questionResults?:
+    | T
+    | {
+        subtestId?: T;
+        questionId?: T;
+        questionNumber?: T;
+        selectedLetter?: T;
+        correctLetter?: T;
+        isCorrect?: T;
+        id?: T;
+      };
+  status?: T;
+  startedAt?: T;
+  subtestStartedAt?: T;
+  subtestDeadlineAt?: T;
+  completedAt?: T;
+  currentSubtest?: T;
+  examState?: T;
+  bridgingExpiry?: T;
+  secondsRemaining?: T;
+  score?: T;
+  correctAnswersCount?: T;
+  totalQuestionsCount?: T;
+  currentQuestionIndex?: T;
+  processedBatchIds?: T;
+  resultPlan?: T;
+  subtestDurations?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-payments_select".
+ */
+export interface TryoutPaymentsSelect<T extends boolean = true> {
+  user?: T;
+  tryout?: T;
+  attempt?: T;
+  status?: T;
+  program?: T;
+  amount?: T;
+  paymentDate?: T;
+  notes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-scores_select".
+ */
+export interface TryoutScoresSelect<T extends boolean = true> {
+  user?: T;
+  tryout?: T;
+  score_PU?: T;
+  score_PK?: T;
+  score_PM?: T;
+  score_LBE?: T;
+  score_LBI?: T;
+  score_PPU?: T;
+  score_KMBM?: T;
+  finalScore?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-explanations_select".
+ */
+export interface TryoutExplanationsSelect<T extends boolean = true> {
+  title?: T;
+  tryout?: T;
+  pdf?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "universities_select".
+ */
+export interface UniversitiesSelect<T extends boolean = true> {
+  name?: T;
+  slugField?: T;
+  abbreviation?: T;
+  npsn?: T;
+  status?: T;
+  accreditation?: T;
+  address?: T;
+  district?: T;
+  city?: T;
+  province?: T;
+  website?: T;
+  pddiktiId?: T;
+  image?: T;
+  coverImage?: T;
+  description?: T;
+  visionMission?: T;
+  programCount?: T;
+  programsWithMetricsCount?: T;
+  completenessScore?: T;
+  programList?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-programs_select".
+ */
+export interface UniversityProgramsSelect<T extends boolean = true> {
+  university?: T;
+  universityName?: T;
+  abbreviation?: T;
+  status?: T;
+  universityAccreditation?: T;
+  name?: T;
+  faculty?: T;
+  level?: T;
+  category?: T;
+  accreditation?: T;
+  metrics?:
+    | T
+    | {
+        year?: T;
+        capacity?: T;
+        applicants?: T;
+        passingPercentage?: T;
+        predictedApplicants?: T;
+        admissionMetric?: T;
+        avgUkt?: T;
+        maxUkt?: T;
+        id?: T;
+      };
+  legacyProgramId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-kv_select".
+ */
+export interface PayloadKvSelect<T extends boolean = true> {
+  key?: T;
+  data?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

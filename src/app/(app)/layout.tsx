@@ -1,18 +1,25 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Montserrat, Open_Sans } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { idID } from "@clerk/localizations";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/client";
+import { Toaster } from "@/components/ui/sonner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const openSans = Open_Sans({
+  variable: "--font-open-sans",
   subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -27,12 +34,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider localization={idID}>
+      <html lang="id" suppressHydrationWarning>
+        <body className={`${montserrat.variable} ${openSans.variable} antialiased`}>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <TRPCReactProvider>{children}</TRPCReactProvider>
+            <Toaster />
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

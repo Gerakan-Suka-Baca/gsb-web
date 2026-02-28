@@ -8,6 +8,17 @@ import { CTASection } from '@/modules/home/ui/components/CTASection';
 export default function HomePage() {
   return (
     <>
+      <link
+        rel="preconnect"
+        href="https://shining-terrier-19.clerk.accounts.dev"
+        crossOrigin="anonymous"
+      />
+      <link
+        rel="preload"
+        href="/home/top/gambar1.jpg"
+        as="image"
+        fetchPriority="high"
+      />
       <HeroSection />
       <AboutSection />
       <ProgramSection />

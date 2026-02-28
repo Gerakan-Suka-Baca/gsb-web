@@ -102,14 +102,14 @@ export default function LearningPathPage() {
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Hero Section */}
-            <section className="relative py-12 lg:py-20 bg-muted/30 overflow-hidden">
+            <section className="relative py-10 lg:py-16 bg-muted/30 overflow-hidden">
                 <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
                     <FadeIn direction="up">
-                        <Badge variant="outline" className="mb-4 text-gsb-orange border-gsb-orange">
+                        <Badge variant="outline" className="mb-4 text-responsive-maroon border-gsb-orange">
                             Learning Path
                         </Badge>
-                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-gsb-maroon mb-6 leading-tight">
-                            Pilih Jalur <span className="text-gsb-orange">Belajarmu</span>
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-responsive-maroon mb-6 leading-tight">
+                            Pilih Jalur <span className="text-responsive-orange">Belajarmu</span>
                         </h1>
                         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
                             Temukan program belajar yang dirancang khusus untuk membantumu berkembang, dari skill teknis hingga persiapan ujian masuk perguruan tinggi.
@@ -122,10 +122,10 @@ export default function LearningPathPage() {
             </section>
 
             {/* How It Works */}
-            <section className="py-12 bg-muted/30">
+            <section className="py-10 bg-muted/30">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-10">
-                        <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-4">
+                        <h2 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mb-4">
                             Cara Memulai
                         </h2>
                     </div>
@@ -142,7 +142,7 @@ export default function LearningPathPage() {
             </section>
 
             {/* Paths Grid */}
-            <section className="py-12">
+            <section className="py-10">
                 <div className="container mx-auto px-4 lg:px-6">
                     <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-5xl mx-auto">
                         {paths.map((item, idx) => (
@@ -187,9 +187,9 @@ export default function LearningPathPage() {
             {/* FAQ */}
             <section className="py-12 bg-background max-w-3xl mx-auto px-4">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-heading font-bold text-gsb-maroon mb-4">
-                        Pertanyaan Umum
-                    </h2>
+<h2 className="text-3xl font-heading font-bold text-responsive-maroon mb-4">
+                    Pertanyaan Umum
+                </h2>
                 </div>
                 <Accordion type="single" collapsible className="w-full">
                     {faqs.map((faq, idx) => (

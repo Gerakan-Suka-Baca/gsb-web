@@ -97,7 +97,7 @@ export function AboutSection() {
             </FadeIn>
 
             <FadeIn direction="up" delay={0.4} className="pt-6">
-              <h3 className="text-xl font-heading font-semibold mb-6 text-gsb-maroon dark:text-white flex items-center gap-3">
+              <h3 className="text-xl font-heading font-semibold mb-6 text-responsive-maroon flex items-center gap-3">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gsb-orange/10 text-gsb-orange">
                   <Target className="h-4 w-4" />
                 </span>

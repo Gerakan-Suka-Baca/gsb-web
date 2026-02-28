@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { UserMenu } from "./UserMenu"
+import { useExamNavbar } from "./exam-navbar-context"
 
 // Types
 interface MenuItem {
@@ -72,6 +74,7 @@ const menuItems: MenuItem[] = [
     ],
   },
   { title: "Learning Path", url: "/learning-path" },
+  { title: "Universitas", url: "/universitas" },
 ]
 
 const ease: Easing = [0.0, 0.0, 0.2, 1]
@@ -141,6 +144,7 @@ export function Navbar() {
   const [activeMenu, setActiveMenu] = React.useState<string | null>(null)
   const [isOpen, setIsOpen] = React.useState(false)
   const { theme, setTheme } = useTheme()
+  const { examNavbarContent } = useExamNavbar()
 
   React.useEffect(() => {
     setMounted(true)
@@ -172,11 +176,11 @@ export function Navbar() {
       )}
       onMouseLeave={() => setActiveMenu(null)}
     >
-      <div className="container flex h-20 items-center px-4 md:px-6">
+      <div className="w-full min-h-[80px] h-20 flex items-center justify-between px-4 md:px-8 lg:px-12">
         {/* Logo + Navigation */}
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center shrink-0 gap-2">
-            <Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-auto object-contain" />
+            <Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-[120px] object-contain" />
           </Link>
 
           {/* Desktop Menu */}
@@ -232,29 +236,33 @@ export function Navbar() {
           </div>
         </div>
 
-        <div className="flex-1" />
-
         {/* Desktop CTA */}
-        <div className="hidden xl:flex items-center gap-4">
+        <div className="hidden xl:flex items-center gap-4 ml-auto">
           <Button asChild className="bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full px-6 shadow-md transition-all hover:scale-105">
             <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer">Jadi Relawan</Link>
           </Button>
-          <Button variant="outline" className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105" asChild>
-            <Link href="/sign-in">Masuk</Link>
-          </Button>
+          <UserMenu />
           <ThemeButton />
         </div>
 
+        {/* Mobile exam slot */}
+        {examNavbarContent && (
+          <div className="flex xl:hidden items-center flex-1 justify-center mx-2 min-w-0">
+            {examNavbarContent}
+          </div>
+        )}
+
         {/* Mobile Menu */}
         <div className="flex xl:hidden items-center gap-2">
-          <ThemeButton />
+          {!examNavbarContent && <ThemeButton />}
+          {!examNavbarContent && <UserMenu />}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Toggle menu"><Menu className="h-6 w-6" /></Button>
             </SheetTrigger>
             <SheetContent side="right" className="overflow-y-auto w-[320px] sm:w-[400px] p-6">
               <SheetHeader className="mb-8 text-left pt-2">
-                <SheetTitle><Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-auto object-contain" /></SheetTitle>
+                <SheetTitle><Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-[120px] object-contain" /></SheetTitle>
               </SheetHeader>
 
               <motion.div className="flex flex-col gap-8" variants={containerVariants} initial="hidden" animate="show">
@@ -265,9 +273,6 @@ export function Navbar() {
                 <motion.div className="flex flex-col gap-4 mt-6 pt-4 border-t border-border/50" variants={itemVariants}>
                   <Button asChild className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full h-14 text-lg shadow-md">
                     <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>Jadi Relawan</Link>
-                  </Button>
-                  <Button variant="outline" className="w-full border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full h-14 text-lg" asChild>
-                    <Link href="/sign-in" onClick={closeMenu}>Masuk</Link>
                   </Button>
                 </motion.div>
               </motion.div>

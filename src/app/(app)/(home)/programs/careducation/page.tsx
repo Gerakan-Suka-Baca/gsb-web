@@ -35,8 +35,8 @@ export default function CareducationPage() {
         <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
           <FadeIn direction="up">
             <span className="inline-block py-1 px-3 rounded-full bg-gsb-tosca/10 text-gsb-tosca text-sm font-bold mb-4 tracking-wider uppercase">Social Enterprise</span>
-            <h1 className="text-4xl md:text-6xl font-heading font-bold text-gsb-maroon mb-6">
-              Careducation <span className="text-gsb-orange">Movement</span>
+            <h1 className="text-4xl md:text-6xl font-heading font-bold text-responsive-maroon mb-6">
+              Careducation <span className="text-responsive-orange">Movement</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
               Inovasi keberlanjutan untuk menjembatani akses pendidikan melalui produk dan layanan edukatif yang berdampak.
@@ -54,7 +54,7 @@ export default function CareducationPage() {
                      <div className={`${item.bg} w-16 h-16 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                         <span className={`${item.color}`}>{item.icon}</span>
                      </div>
-                     <h3 className="text-2xl font-bold text-gsb-maroon dark:text-gsb-yellow mb-3">{item.title}</h3>
+                     <h3 className="text-2xl font-bold text-responsive-maroon mb-3">{item.title}</h3>
                      <p className="text-muted-foreground leading-relaxed">{item.desc}</p>
                   </FadeIn>
                ))}

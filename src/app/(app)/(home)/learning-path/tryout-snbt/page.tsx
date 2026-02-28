@@ -104,11 +104,11 @@ export default function TryoutSNBTPage() {
             <section className="relative py-20 lg:py-32 bg-muted/30 overflow-hidden">
                 <div className="container mx-auto px-4 lg:px-6 relative z-10 text-center">
                     <FadeIn direction="up">
-                        <Badge variant="outline" className="mb-4 text-gsb-orange border-gsb-orange">
+                        <Badge variant="outline" className="mb-4 text-responsive-maroon border-gsb-orange">
                             Tryout SNBT 2026
                         </Badge>
-                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-gsb-maroon mb-6 leading-tight">
-                            Siap Taklukan <span className="text-gsb-orange">UTBK?</span>
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-heading font-bold text-responsive-maroon mb-6 leading-tight">
+                            Siap Taklukan <span className="text-responsive-orange">UTBK?</span>
                         </h1>
                         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-8">
                             Simulasi ujian berbasis komputer dengan sistem penilaian IRT dan blocking time yang dirancang semirip mungkin dengan aslinya.
@@ -127,7 +127,7 @@ export default function TryoutSNBTPage() {
                                 size="lg"
                                 className="border-2 border-gsb-blue text-gsb-blue font-semibold rounded-full px-8 h-12 text-lg hover:bg-gsb-blue hover:text-white transition-all"
                             >
-                                <Link href="#subtests">Pelajari Materi</Link>
+                                <Link href="#subtests">Cakupan Materi</Link>
                             </Button>
                         </div>
                     </FadeIn>
@@ -143,7 +143,7 @@ export default function TryoutSNBTPage() {
                 <div className="container mx-auto px-4 lg:px-6">
                     <div className="text-center mb-16">
                         <FadeIn direction="up">
-                            <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-4">
+                            <h2 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mb-4">
                                 Materi yang Diujikan
                             </h2>
                             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
@@ -186,7 +186,7 @@ export default function TryoutSNBTPage() {
                         {/* Features Left */}
                         <div className="space-y-8">
                             <FadeIn direction="right">
-                                <h2 className="text-3xl md:text-4xl font-heading font-bold text-gsb-maroon mb-6">
+                                <h2 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mb-6">
                                     Mengapa Tryout di GSB?
                                 </h2>
                                 <div className="space-y-6">
@@ -250,7 +250,7 @@ export default function TryoutSNBTPage() {
             <section className="py-20 text-center">
                 <div className="container mx-auto px-4">
                     <FadeIn direction="up">
-                        <h2 className="text-3xl font-heading font-bold text-gsb-maroon mb-6">Sudah Siap Menguji Kemampuan?</h2>
+                        <h2 className="text-3xl font-heading font-bold text-responsive-maroon mb-6">Sudah Siap Menguji Kemampuan?</h2>
                         <Button
                             asChild
                             size="lg"

@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { uploadthingStorage } from "@payloadcms/storage-uploadthing";
 
+import { Admins } from './collections/Admins'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Tryouts } from './collections/Tryouts'
@@ -16,14 +17,43 @@ import { Questions } from './collections/Questions'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+import { TryoutAttempts } from './collections/TryoutAttempts'
+import { TryoutPayments } from './collections/TryoutPayments'
+import { TryoutScores } from './collections/TryoutScores'
+import { TryoutExplanations } from './collections/TryoutExplanations'
+import { Universities } from './collections/Universities'
+import { UniversityPrograms } from './collections/UniversityPrograms'
+
+import { UniversityMedia } from './collections/UniversityMedia'
+
 export default buildConfig({
   admin: {
-    user: Users.slug,
+    user: Admins.slug,
     importMap: {
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Tryouts, Questions],
+  defaultDepth: 0,
+  collections: [
+    Admins,
+    Users,
+    Media,
+    UniversityMedia,
+    Tryouts,
+    Questions,
+    TryoutAttempts,
+    TryoutPayments,
+    TryoutScores,
+    TryoutExplanations,
+    Universities,
+    UniversityPrograms,
+  ],
+  // @ts-expect-error: rateLimit type definition missing
+  rateLimit: {
+    trustProxy: true,
+    max: 500,
+    window: 15 * 60 * 1000,
+  },
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {
@@ -31,6 +61,17 @@ export default buildConfig({
   },
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || "",
+    connectOptions: {
+      family: 4,
+      maxPoolSize: 100,
+      minPoolSize: 0,
+      maxConnecting: 2,
+      maxIdleTimeMS: 30000,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 0,
+      connectTimeoutMS: 10000,
+      waitQueueTimeoutMS: 0,
+    },
   }),
   sharp,
   plugins: [
@@ -38,6 +79,7 @@ export default buildConfig({
     uploadthingStorage({
       collections: {
         media: true,
+        "university-media": true,
       },
       options: {
         token: process.env.UPLOADTHING_TOKEN,
