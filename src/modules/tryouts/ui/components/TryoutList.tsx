@@ -64,7 +64,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const TryoutsList = () => {
+export const TryoutList = () => {
   const trpc = useTRPC();
   const { data } = useSuspenseQuery(trpc.tryouts.getMany.queryOptions({}));
   const { data: myAttempts, isLoading: attemptsLoading } = useQuery(

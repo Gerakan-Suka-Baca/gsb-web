@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Globe, GraduationCap, Building2, BookOpen, ShieldAlert } from "lucide-react";
 import { RichText } from "@/components/ui/RichText";
-import { ProgramListDropdown } from "@/modules/universitas/ui/components/ProgramListDropdown";
+import { UnivProgramListDropdown } from "@/modules/universitas/ui/components/UnivProgramListDropdown";
 import type { University } from "@/payload-types";
 import Image from "next/image";
 
@@ -302,7 +302,7 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
                     </CardHeader>
 
                     <CardContent className="p-4 sm:p-6 bg-muted/10">
-                        <ProgramListDropdown faculties={faculties} groupedPrograms={groupedPrograms} />
+                        <UnivProgramListDropdown faculties={faculties} groupedPrograms={groupedPrograms} />
                     </CardContent>
                 </Card>
             </div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, XCircle, MinusCircle, Loader2, Clock, Trophy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SUBTEST_OPTIONS } from "@/collections/subtestOptions";
-import { AdmissionAnalysis } from "@/modules/universitas/ui/components/AdmissionAnalysis";
+import { UnivAdmissionAnalysis } from "@/modules/universitas/ui/components/UnivAdmissionAnalysis";
 
 interface Props {
   tryoutId: string;
@@ -71,7 +71,7 @@ function formatDuration(seconds: number): string {
   return `${m} mnt ${s} dtk`;
 }
 
-export const ScoreDashboard = ({ tryoutId }: Props) => {
+export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
 
@@ -219,7 +219,7 @@ export const ScoreDashboard = ({ tryoutId }: Props) => {
         </Card>
       </div>
 
-      <AdmissionAnalysis tryoutId={tryoutId} />
+      <UnivAdmissionAnalysis tryoutId={tryoutId} />
 
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-4 px-1 text-foreground">Rekap Hasil Tryout</h2>

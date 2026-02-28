@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Users, Target } from "lucide-react";
-import { ProgramMetricsDisplay } from "@/modules/universitas/ui/components/ProgramMetricsDisplay";
+import { UnivProgramMetricsDisplay } from "@/modules/universitas/ui/components/UnivProgramMetricsDisplay";
 
 type ProgramMetric = {
   year?: string;
@@ -27,12 +27,12 @@ type ProgramItem = {
   metrics?: ProgramMetric[];
 };
 
-interface ProgramListDropdownProps {
+interface UnivProgramListDropdownProps {
   faculties: string[];
   groupedPrograms: Record<string, ProgramItem[]>;
 }
 
-export function ProgramListDropdown({ faculties, groupedPrograms }: ProgramListDropdownProps) {
+export function UnivProgramListDropdown({ faculties, groupedPrograms }: UnivProgramListDropdownProps) {
   const [activeFaculty, setActiveFaculty] = useState<string>(faculties[0] || "");
 
   if (faculties.length === 0) {
@@ -132,7 +132,7 @@ export function ProgramListDropdown({ faculties, groupedPrograms }: ProgramListD
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pt-2 pb-6">
-                  <ProgramMetricsDisplay metrics={prog.metrics || []} />
+                  <UnivProgramMetricsDisplay metrics={prog.metrics || []} />
                 </AccordionContent>
               </AccordionItem>
             );

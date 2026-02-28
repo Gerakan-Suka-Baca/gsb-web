@@ -33,7 +33,7 @@ type TargetAnalysisResponse = {
   choice3: TargetChoice;
 } | null;
 
-export const AdmissionAnalysis = ({ tryoutId }: Props) => {
+export const UnivAdmissionAnalysis = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
   const cacheKey = `admission-analysis:${tryoutId}`;

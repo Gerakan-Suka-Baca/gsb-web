@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 import { useTryoutExam, ANIM, SUBTEST_LABELS } from "../hooks/useTryoutExam";
-import { QuestionDisplay } from "./exam/QuestionDisplay";
+import { ExamQuestionDisplay } from "./exam/ExamQuestionDisplay";
 import { ExamHeader } from "./exam/ExamHeader";
 import { ExamSidebar } from "./exam/ExamSidebar";
 import { ExamDialogs } from "./exam/ExamDialogs";
 import { ExamFinished } from "./exam/ExamFinished";
-import { MobileExamControls } from "./exam/MobileExamControls";
+import { ExamMobileControls } from "./exam/ExamMobileControls";
 
 import type { Tryout } from "@/payload-types";
 import type { TryoutAttempt } from "../../types";
@@ -106,7 +106,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
                   </div>
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button size="lg" onClick={exam.handleNextSubtest} className="w-full h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg">
+                  <Button type="button" size="lg" onClick={exam.handleNextSubtest} className="w-full h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg">
                     Mulai Subtes Berikutnya →
                   </Button>
                 </motion.div>
@@ -130,6 +130,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
+                type="button"
                 onClick={() => exam.refetchSubtest()}
                 className="bg-gsb-orange hover:bg-gsb-orange/90 text-white h-11 px-6 rounded-full"
                 disabled={exam.startAttemptMutation.isPending}
@@ -137,6 +138,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
                 Coba Muat Lagi
               </Button>
               <Button
+                type="button"
                 variant="outline"
                 onClick={() => exam.router.push("/tryout")}
                 className="h-11 px-6 rounded-full"
@@ -173,7 +175,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
               <span className="font-semibold">Mulai Subtes Ini</span>.
             </p>
           </div>
-          <Button size="lg" onClick={exam.handleStart} className="w-full md:w-auto px-12 h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg" disabled={exam.startAttemptMutation.isPending}>
+          <Button type="button" size="lg" onClick={exam.handleStart} className="w-full md:w-auto px-12 h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg" disabled={exam.startAttemptMutation.isPending}>
             {exam.startAttemptMutation.isPending && <Loader2 className="mr-2 animate-spin" />} Mulai Subtes Ini
           </Button>
         </Card>
@@ -189,7 +191,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
 
   return (
     <div className="container mx-auto pt-8 pb-32 md:pt-12 md:pb-40 px-4 md:px-6 min-h-screen">
-      <MobileExamControls
+      <ExamMobileControls
         timeLeft={exam.timeLeft}
         formatTime={exam.formatTime}
         questions={exam.questions}
@@ -208,7 +210,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 min-h-[80vh] select-none" onContextMenu={(e) => e.preventDefault()}>
         <div className="lg:col-span-3 flex flex-col">
-          <QuestionDisplay
+          <ExamQuestionDisplay
             key={exam.currentSubtestId}
             question={exam.currentQuestion}
             index={exam.currentQuestionIndex}

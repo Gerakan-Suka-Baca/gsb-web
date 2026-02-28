@@ -1,4 +1,4 @@
-import { CompleteProfileView } from "@/modules/auth/ui/views/complete-profile-view";
+import { CompleteProfileView } from "@/modules/auth/ui/views/CompleteProfileView";
 import { auth } from "@clerk/nextjs/server";
 import { getPayloadCached } from "@/lib/payload";
 import { redirect } from "next/navigation";
