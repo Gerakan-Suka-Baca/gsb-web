@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LayoutGrid, Clock, X } from "lucide-react";
-import { Navigator } from "./Navigator";
+import { ExamNavigator } from "./ExamNavigator";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useExamNavbar } from "@/components/layout/exam-navbar-context";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,7 @@ type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
 type AnswerMap = Record<string, string>;
 type FlagMap = Record<string, boolean>;
 
-interface MobileExamControlsProps {
+interface ExamMobileControlsProps {
   timeLeft: number;
   formatTime: (seconds: number) => string;
   questions: SubtestQuestion[];
@@ -22,7 +22,7 @@ interface MobileExamControlsProps {
   setCurrentQuestionIndex: (index: number) => void;
 }
 
-export const MobileExamControls = ({
+export const ExamMobileControls = ({
   timeLeft,
   formatTime,
   questions,
@@ -31,7 +31,7 @@ export const MobileExamControls = ({
   flags,
   currentQuestionIndex,
   setCurrentQuestionIndex,
-}: MobileExamControlsProps) => {
+}: ExamMobileControlsProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isWarning, setIsWarning] = useState(false);
   const { setExamNavbarContent } = useExamNavbar();
@@ -127,7 +127,7 @@ export const MobileExamControls = ({
 
             {/* Navigator grid */}
             <div className="overflow-y-auto flex-1 px-5 py-4">
-              <Navigator
+              <ExamNavigator
                 questions={questions}
                 currentSubtestId={currentSubtestId}
                 answers={answers}
@@ -156,6 +156,7 @@ export const MobileExamControls = ({
 
         {/* Navigator trigger */}
         <Button
+          type="button"
           variant="outline"
           size="icon"
           onClick={toggleOpen}

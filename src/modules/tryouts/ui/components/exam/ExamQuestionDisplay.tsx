@@ -10,7 +10,7 @@ import type { Question } from "@/payload-types";
 type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
 type SubtestAnswer = NonNullable<SubtestQuestion["tryoutAnswers"]>[number];
 
-interface QuestionDisplayProps {
+interface ExamQuestionDisplayProps {
   question: SubtestQuestion;
   index: number;
   userAnswer?: string;
@@ -24,7 +24,7 @@ interface QuestionDisplayProps {
   onFinishSubtest: () => void;
 }
 
-export const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, onAnswer, onFlag, onNext, onPrev, isFirst, isLast, onFinishSubtest }: QuestionDisplayProps) => {
+export const ExamQuestionDisplay = memo(({ question, index, userAnswer, isFlagged, onAnswer, onFlag, onNext, onPrev, isFirst, isLast, onFinishSubtest }: ExamQuestionDisplayProps) => {
   const qID = question.id || `q-${index}`;
 
   return (
@@ -87,15 +87,15 @@ export const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, o
         </Card>
 
         <div className="flex justify-between mt-2 md:mt-4 pb-2 md:pb-4">
-          <Button variant="outline" onClick={onPrev} disabled={isFirst} className="h-9 md:h-11 px-4 md:px-6 rounded-full border-2 select-none text-sm">
+          <Button type="button" variant="outline" onClick={onPrev} disabled={isFirst} className="h-9 md:h-11 px-4 md:px-6 rounded-full border-2 select-none text-sm">
             <ChevronLeft className="w-4 h-4 mr-1 md:mr-2" /> Sebelumnya
           </Button>
           {!isLast ? (
-            <Button onClick={onNext} className="bg-gsb-orange hover:bg-gsb-orange/90 text-white h-9 md:h-11 px-5 md:px-8 rounded-full shadow-md transition-transform hover:scale-105 select-none text-sm">
+            <Button type="button" onClick={onNext} className="bg-gsb-orange hover:bg-gsb-orange/90 text-white h-9 md:h-11 px-5 md:px-8 rounded-full shadow-md transition-transform hover:scale-105 select-none text-sm">
               Selanjutnya <ChevronRight className="w-4 h-4 ml-1 md:ml-2" />
             </Button>
           ) : (
-            <Button variant="destructive" onClick={onFinishSubtest} className="h-9 md:h-11 px-5 md:px-8 rounded-full shadow-md bg-gsb-red hover:bg-gsb-red/90 transition-transform hover:scale-105 select-none text-sm">
+            <Button type="button" variant="destructive" onClick={onFinishSubtest} className="h-9 md:h-11 px-5 md:px-8 rounded-full shadow-md bg-gsb-red hover:bg-gsb-red/90 transition-transform hover:scale-105 select-none text-sm">
               Selesai Subtes
             </Button>
           )}
@@ -104,4 +104,4 @@ export const QuestionDisplay = memo(({ question, index, userAnswer, isFlagged, o
     </AnimatePresence>
   );
 });
-QuestionDisplay.displayName = "QuestionDisplay";
+ExamQuestionDisplay.displayName = "ExamQuestionDisplay";

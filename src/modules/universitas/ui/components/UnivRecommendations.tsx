@@ -19,7 +19,7 @@ type RecommendationsResponse = {
   recommendations: unknown[];
 } | null;
 
-export const Recommendations = ({ tryoutId }: Props) => {
+export const UnivRecommendations = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
   const cacheKey = `recommendations:${tryoutId}`;

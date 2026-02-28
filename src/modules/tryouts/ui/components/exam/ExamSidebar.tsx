@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { LayoutGrid } from "lucide-react";
-import { Navigator } from "./Navigator";
+import { ExamNavigator } from "./ExamNavigator";
 import type { Question } from "@/payload-types";
 
 type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
@@ -53,7 +53,7 @@ export const ExamSidebar = ({
           <h3 className="font-semibold text-gsb-blue">Navigasi Soal</h3>
         </div>
         
-        <Navigator
+        <ExamNavigator
           questions={questions}
           currentSubtestId={currentSubtestId}
           answers={answers}

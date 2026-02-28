@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { SignUpView } from "@/modules/auth/ui/views/sign-up-view";
+import { SignUpView } from "@/modules/auth/ui/views/SignUpView";
 
 export const dynamic = "force-dynamic";
 

@@ -14,7 +14,7 @@ type ProgramMetric = {
   maxUkt?: string | null;
 };
 
-export function ProgramMetricsDisplay({ metrics }: { metrics: ProgramMetric[] }) {
+export function UnivProgramMetricsDisplay({ metrics }: { metrics: ProgramMetric[] }) {
   const [selectedYearIndex, setSelectedYearIndex] = useState(0);
 
   if (!metrics || metrics.length === 0) {

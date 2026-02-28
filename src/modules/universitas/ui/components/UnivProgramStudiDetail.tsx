@@ -55,7 +55,7 @@ type ProgramDetail = {
   };
 };
 
-export const ProgramStudiDetail = ({ programId }: Props) => {
+export const UnivProgramStudiDetail = ({ programId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
   const cacheKey = `program-detail:${programId}`;

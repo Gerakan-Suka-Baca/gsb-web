@@ -1,6 +1,6 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getQueryClient, trpc } from "@/trpc/server";
-import { TryoutView } from "@/modules/tryouts/ui/views/tryout-view";
+import { TryoutView } from "@/modules/tryouts/ui/views/TryoutView";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 

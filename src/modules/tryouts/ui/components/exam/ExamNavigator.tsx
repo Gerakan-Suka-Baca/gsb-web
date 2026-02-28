@@ -7,7 +7,7 @@ type SubtestQuestion = NonNullable<Question["tryoutQuestions"]>[number];
 type AnswerMap = Record<string, string>;
 type FlagMap = Record<string, boolean>;
 
-interface NavigatorProps {
+interface ExamNavigatorProps {
   questions: SubtestQuestion[];
   currentSubtestId: string;
   answers: Record<string, AnswerMap>;
@@ -16,7 +16,7 @@ interface NavigatorProps {
   onSelect: (index: number) => void;
 }
 
-export const Navigator = memo(({ questions, currentSubtestId, answers, flags, currentIndex, onSelect }: NavigatorProps) => (
+export const ExamNavigator = memo(({ questions, currentSubtestId, answers, flags, currentIndex, onSelect }: ExamNavigatorProps) => (
   <div className="grid grid-cols-5 sm:grid-cols-7 lg:flex lg:flex-wrap gap-2 justify-center content-start">
     {questions.map((q: SubtestQuestion, idx: number) => {
       const qID = q.id || `q-${idx}`;
@@ -44,4 +44,4 @@ export const Navigator = memo(({ questions, currentSubtestId, answers, flags, cu
     })}
   </div>
 ));
-Navigator.displayName = "Navigator";
+ExamNavigator.displayName = "ExamNavigator";

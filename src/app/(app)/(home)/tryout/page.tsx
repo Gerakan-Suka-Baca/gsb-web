@@ -1,4 +1,4 @@
-import { TryoutListView } from "@/modules/tryouts/ui/views/tryout-list-view";
+import { TryoutListView } from "@/modules/tryouts/ui/views/TryoutListView";
 import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
