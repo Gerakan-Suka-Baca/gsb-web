@@ -204,7 +204,15 @@ export interface Media {
    */
   relatedTryout?: (string | null) | Tryout;
   /**
-   * ID atau Nama Subtest Terkait (Opsional)
+   * Terkait dengan Subtest/Soal (Durable Link)
+   */
+  relatedQuestion?: (string | null) | Question;
+  /**
+   * Terkait dengan Universitas (Jika ada)
+   */
+  relatedUniversity?: (string | null) | University;
+  /**
+   * ID atau Nama Subtest Terkait (Opsional - Legacy)
    */
   relatedSubtest?: string | null;
   /**
@@ -223,35 +231,6 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      _key?: string | null;
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    card?: {
-      _key?: string | null;
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    tablet?: {
-      _key?: string | null;
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -278,29 +257,6 @@ export interface Tryout {
   scoreReleaseDate?: string | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "university-media".
- */
-export interface UniversityMedia {
-  id: string;
-  /**
-   * Teks alternatif untuk aksesibilitas dan SEO.
-   */
-  alt: string;
-  _key?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -356,6 +312,137 @@ export interface Question {
       }[]
     | null;
   active: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "universities".
+ */
+export interface University {
+  id: string;
+  name: string;
+  /**
+   * Otomatis di-generate dari nama. Bisa diedit manual.
+   */
+  slugField?: string | null;
+  abbreviation?: string | null;
+  npsn?: string | null;
+  status?: ('negeri' | 'swasta' | 'ptk') | null;
+  accreditation?: string | null;
+  address?: string | null;
+  district?: string | null;
+  city?: string | null;
+  province?: string | null;
+  website?: string | null;
+  pddiktiId?: string | null;
+  image?: (string | null) | UniversityMedia;
+  coverImage?: (string | null) | UniversityMedia;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  visionMission?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  programCount?: number | null;
+  programsWithMetricsCount?: number | null;
+  completenessScore?: number | null;
+  /**
+   * Program studi yang terhubung dengan universitas ini (dari koleksi University Programs).
+   */
+  programList?: {
+    docs?: (string | UniversityProgram)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-media".
+ */
+export interface UniversityMedia {
+  id: string;
+  /**
+   * Teks alternatif untuk aksesibilitas dan SEO.
+   */
+  alt: string;
+  _key?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * Program studi per-universitas. Data ini di-generate dari field `programs` lama untuk meringankan dokumen universitas.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "university-programs".
+ */
+export interface UniversityProgram {
+  id: string;
+  university: string | University;
+  universityName?: string | null;
+  abbreviation?: string | null;
+  status?: string | null;
+  universityAccreditation?: string | null;
+  name: string;
+  faculty?: string | null;
+  level?: string | null;
+  category?: ('snbt' | 'snbp' | 'mandiri') | null;
+  accreditation?: string | null;
+  /**
+   * Diisi otomatis dari data scraping. Boleh dikosongkan untuk input manual.
+   */
+  metrics?:
+    | {
+        year?: string | null;
+        capacity?: number | null;
+        applicants?: number | null;
+        passingPercentage?: string | null;
+        predictedApplicants?: number | null;
+        admissionMetric?: string | null;
+        avgUkt?: string | null;
+        maxUkt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Dipakai untuk migrasi dan menjaga referensi dari data lama.
+   */
+  legacyProgramId?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -551,114 +638,6 @@ export interface TryoutExplanation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "universities".
- */
-export interface University {
-  id: string;
-  name: string;
-  /**
-   * Otomatis di-generate dari nama. Bisa diedit manual.
-   */
-  slugField?: string | null;
-  abbreviation?: string | null;
-  npsn?: string | null;
-  status?: ('negeri' | 'swasta' | 'ptk') | null;
-  accreditation?: string | null;
-  address?: string | null;
-  district?: string | null;
-  city?: string | null;
-  province?: string | null;
-  website?: string | null;
-  pddiktiId?: string | null;
-  image?: (string | null) | UniversityMedia;
-  coverImage?: (string | null) | UniversityMedia;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  visionMission?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  programCount?: number | null;
-  programsWithMetricsCount?: number | null;
-  completenessScore?: number | null;
-  /**
-   * Program studi yang terhubung dengan universitas ini (dari koleksi University Programs).
-   */
-  programList?: {
-    docs?: (string | UniversityProgram)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Program studi per-universitas. Data ini di-generate dari field `programs` lama untuk meringankan dokumen universitas.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "university-programs".
- */
-export interface UniversityProgram {
-  id: string;
-  university: string | University;
-  universityName?: string | null;
-  abbreviation?: string | null;
-  status?: string | null;
-  universityAccreditation?: string | null;
-  name: string;
-  faculty?: string | null;
-  level?: string | null;
-  category?: ('snbt' | 'snbp' | 'mandiri') | null;
-  accreditation?: string | null;
-  /**
-   * Diisi otomatis dari data scraping. Boleh dikosongkan untuk input manual.
-   */
-  metrics?:
-    | {
-        year?: string | null;
-        capacity?: number | null;
-        applicants?: number | null;
-        passingPercentage?: string | null;
-        predictedApplicants?: number | null;
-        admissionMetric?: string | null;
-        avgUkt?: string | null;
-        maxUkt?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Dipakai untuk migrasi dan menjaga referensi dari data lama.
-   */
-  legacyProgramId?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -828,6 +807,8 @@ export interface UsersSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   relatedTryout?: T;
+  relatedQuestion?: T;
+  relatedUniversity?: T;
   relatedSubtest?: T;
   relatedQuestionNumber?: T;
   _key?: T;
@@ -842,43 +823,6 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
-  sizes?:
-    | T
-    | {
-        thumbnail?:
-          | T
-          | {
-              _key?: T;
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        card?:
-          | T
-          | {
-              _key?: T;
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        tablet?:
-          | T
-          | {
-              _key?: T;
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
