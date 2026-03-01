@@ -3,6 +3,8 @@
 import { useCallback, useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { TRPCClientErrorLike } from "@trpc/client";
+import type { AppRouter } from "@/trpc/routers/_app";
 import { useTRPC } from "@/trpc/client";
 import { usePostHog } from 'posthog-js/react';
 import { toast } from "sonner";
@@ -25,6 +27,9 @@ export interface TryoutExamProps {
   initialAttempt?: TryoutAttempt | null;
   onFinish: (answers: Record<string, AnswerMap>) => void;
 }
+
+type StartAttemptInput = { tryoutId: string };
+type SubmitAttemptInput = { attemptId: string; answers: Record<string, AnswerMap> };
 
 interface TryoutWithTests extends Tryout {
   tests?: Question[] | null;
@@ -69,36 +74,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       : null
   );
   const [serverNow, setServerNow] = useState<string | null>(null);
-
-  const applyServerTiming = useCallback((payload?: ServerTimingSyncPayload | null) => {
-    if (!payload) return;
-    if (typeof payload.subtestStartedAt === "string") {
-      setSubtestStartedAt(payload.subtestStartedAt);
-    }
-    if (typeof payload.subtestDeadlineAt === "string") {
-      setSubtestDeadlineAt(payload.subtestDeadlineAt);
-    }
-    if (typeof payload.serverNow === "string") {
-      setServerNow(payload.serverNow);
-    }
-  }, []);
-
-  const applyServerTimingFromRecord = useCallback(
-    (record: Record<string, unknown>) => {
-      applyServerTiming({
-        subtestStartedAt:
-          typeof record.subtestStartedAt === "string"
-            ? record.subtestStartedAt
-            : undefined,
-        subtestDeadlineAt:
-          typeof record.subtestDeadlineAt === "string"
-            ? record.subtestDeadlineAt
-            : undefined,
-        serverNow: typeof record.serverNow === "string" ? record.serverNow : undefined,
-      });
-    },
-    [applyServerTiming]
-  );
 
   const safeSubtestIndex = useMemo(() => {
     if (!Number.isFinite(state.currentSubtestIndex)) return 0;
@@ -161,7 +136,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const subtestDuration = currentSubtest?.duration ? currentSubtest.duration * 60 : 0;
 
-  const { timeLeft, setTimeLeft, formatTime } = useExamTimer({
+  const { timeLeft, setTimeLeft, formatTime, hasValidDeadline } = useExamTimer({
     initialSeconds: subtestDuration,
     isRunning: state.status === "running" && subtestDuration > 0,
     deadlineAt: subtestDeadlineAt,
@@ -169,11 +144,47 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     onTimeUp: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true }), [dispatch]),
   });
 
+  const applyServerTiming = useCallback((payload?: ServerTimingSyncPayload | null) => {
+    if (!payload) return;
+    if (typeof payload.subtestStartedAt === "string") {
+      setSubtestStartedAt(payload.subtestStartedAt);
+    }
+    if (typeof payload.subtestDeadlineAt === "string") {
+      setSubtestDeadlineAt(payload.subtestDeadlineAt);
+    }
+    if (typeof payload.serverNow === "string") {
+      setServerNow(payload.serverNow);
+    }
+    if (typeof payload.secondsRemaining === "number" && payload.secondsRemaining >= 0) {
+      setTimeLeft(payload.secondsRemaining);
+    }
+  }, [setTimeLeft]);
+
+  const applyServerTimingFromRecord = useCallback(
+    (record: Record<string, unknown>) => {
+      applyServerTiming({
+        subtestStartedAt:
+          typeof record.subtestStartedAt === "string"
+            ? record.subtestStartedAt
+            : undefined,
+        subtestDeadlineAt:
+          typeof record.subtestDeadlineAt === "string"
+            ? record.subtestDeadlineAt
+            : undefined,
+        serverNow: typeof record.serverNow === "string" ? record.serverNow : undefined,
+        secondsRemaining:
+          typeof record.secondsRemaining === "number" ? record.secondsRemaining : undefined,
+      });
+    },
+    [applyServerTiming]
+  );
+
   const { queueEvent, flushEvents, clearSyncData } = useExamSync({
     attemptId: state.attemptId,
     state,
     timeLeft,
     onServerTiming: applyServerTiming,
+    tryoutId: tryout.id,
   });
 
   useNavigationProtection({
@@ -195,11 +206,41 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   );
 
 
-  const startAttemptMutation = useMutation(trpc.tryoutAttempts.startAttempt.mutationOptions({
-    onSuccess: async (data) => {
+  const startAttemptMutation = useMutation<TryoutAttempt, TRPCClientErrorLike<AppRouter>, StartAttemptInput>(
+    trpc.tryoutAttempts.startAttempt.mutationOptions({
+    onSuccess: async (data: TryoutAttempt) => {
       dispatch({ type: "SET_ATTEMPT", id: data.id, status: "running" });
-      applyServerTimingFromRecord(data as unknown as Record<string, unknown>);
-      setTimeLeft((currentSubtest?.duration ?? 0) * 60);
+      const record = data as unknown as Record<string, unknown>;
+      if (record.retakeStatus === "running") {
+        const retakeAnswers =
+          (record.retakeAnswers as Record<string, AnswerMap> | undefined) || {};
+        const retakeFlags =
+          (record.retakeFlags as Record<string, FlagMap> | undefined) || {};
+        const retakeSubtest =
+          typeof record.retakeCurrentSubtest === "number"
+            ? record.retakeCurrentSubtest
+            : 0;
+        const retakeQuestion =
+          typeof record.retakeCurrentQuestionIndex === "number"
+            ? record.retakeCurrentQuestionIndex
+            : 0;
+        dispatch({
+          type: "LOAD_STATE",
+          state: {
+            answers: retakeAnswers,
+            flags: retakeFlags,
+            currentSubtestIndex: retakeSubtest,
+            currentQuestionIndex: retakeQuestion,
+            status: "running",
+          },
+        });
+      }
+      applyServerTimingFromRecord(record);
+      const secondsRemaining =
+        typeof record.secondsRemaining === "number" ? record.secondsRemaining : undefined;
+      if (typeof secondsRemaining === "number" && secondsRemaining > 0) {
+        setTimeLeft(secondsRemaining);
+      }
       toast.success("Ujian dimulai!");
       
       posthog.capture("tryout_started", { tryout_id: tryout.id, attempt_id: data.id });
@@ -214,21 +255,29 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
         queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId: tryout.id }, type: "query" }],
       });
     },
-    onError: (err) => {
+    onError: (err: TRPCClientErrorLike<AppRouter>) => {
       toast.error("Gagal memulai: " + err.message);
       setSubtestStartedAt(null);
       setSubtestDeadlineAt(null);
     },
   }));
 
-  const submitAttemptMutation = useMutation(trpc.tryoutAttempts.submitAttempt.mutationOptions({
+  const submitAttemptMutation = useMutation<TryoutAttempt, TRPCClientErrorLike<AppRouter>, SubmitAttemptInput>(
+    trpc.tryoutAttempts.submitAttempt.mutationOptions({
     onSuccess: () => {
       dispatch({ type: "SET_STATUS", status: "finished" });
       if (state.attemptId) clearSyncData();
       toast.success("Ujian selesai! Jawaban tersimpan.");
       onFinish(state.answers);
     },
-    onError: (err) => toast.error("Gagal submit: " + err.message),
+    onError: (err: TRPCClientErrorLike<AppRouter>) => {
+      posthog.capture("tryout_submit_failed", {
+        tryout_id: tryout.id,
+        attempt_id: state.attemptId,
+        message: err.message,
+      });
+      toast.error("Gagal submit: " + err.message);
+    },
   }));
 
   useAttemptRestoration({
@@ -280,12 +329,20 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     }
 
     if (state.currentSubtestIndex < subtests.length - 1) {
-      await flushEvents(true);
+      const timing = await flushEvents(true, { status: "bridging" });
+      if (!timing) {
+        toast.error("Gagal menyimpan progres. Coba lagi sebelum lanjut.");
+        return;
+      }
       dispatch({ type: "SET_STATUS", status: "bridging" });
     } else {
       if (state.attemptId) {
         try {
-          await flushEvents(true);
+          const timing = await flushEvents(true);
+          if (!timing) {
+            toast.error("Gagal menyimpan progres. Coba lagi sebelum submit.");
+            return;
+          }
           const safeAnswers = state.answers || {};
           const safeDurations = { ...state.subtestDurations };
           if (currentSubtestId) safeDurations[currentSubtestId] = elapsedSeconds;
@@ -294,7 +351,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
             attemptId: state.attemptId, 
             answers: safeAnswers
           });
-        } catch (error) {
+        } catch {
           toast.error("Terjadi kesalahan saat finalisasi ujian. Pastikan koneksi stabil lalu coba lagi.");
         }
       } else {
@@ -302,39 +359,93 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
         onFinish(state.answers || {});
       }
     }
-  }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, state.subtestDurations, onFinish, submitAttemptMutation, flushEvents, dispatch, currentSubtest?.duration, currentSubtestId, timeLeft]);
+  }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, state.subtestDurations, onFinish, submitAttemptMutation, flushEvents, dispatch, currentSubtest?.duration, currentSubtestId, timeLeft, posthog, tryout.id]);
+
+  const handleTimeUpConfirm = useCallback(async () => {
+    if (!hasValidDeadline) {
+      posthog.capture("timeup_blocked_invalid_deadline", {
+        tryout_id: tryout.id,
+        attempt_id: state.attemptId,
+      });
+      toast.error("Timer belum tervalidasi. Sinkronisasi dulu.");
+      return;
+    }
+    const timing = await flushEvents(true);
+    if (!timing || typeof timing.secondsRemaining !== "number") {
+      posthog.capture("timeup_sync_failed", {
+        tryout_id: tryout.id,
+        attempt_id: state.attemptId,
+      });
+      toast.error("Gagal sinkronisasi timer. Coba lagi.");
+      return;
+    }
+    if (timing.secondsRemaining > 0) {
+      posthog.capture("timeup_blocked_not_expired", {
+        tryout_id: tryout.id,
+        attempt_id: state.attemptId,
+        seconds_remaining: timing.secondsRemaining,
+      });
+      toast.error("Timer belum habis. Sinkronisasi ulang.");
+      return;
+    }
+    posthog.capture("timeup_confirmed", {
+      tryout_id: tryout.id,
+      attempt_id: state.attemptId,
+    });
+    await handleSubtestFinish();
+  }, [flushEvents, handleSubtestFinish, hasValidDeadline, posthog, tryout.id, state.attemptId]);
 
   const handleNextSubtest = useCallback(async () => {
     const nextIdx = state.currentSubtestIndex + 1;
     const nextDuration = subtests[nextIdx]?.duration ?? 0;
-    const now = new Date();
-    const nowIso = now.toISOString();
-    const nextSeconds = Math.max(0, Math.round(nextDuration * 60));
-    
-    dispatch({ type: "SET_SUBTEST", index: nextIdx });
-    dispatch({ type: "SET_STATUS", status: "running" });
-    setSubtestStartedAt(nowIso);
-    setSubtestDeadlineAt(new Date(now.getTime() + nextSeconds * 1000).toISOString());
-    setServerNow(nowIso);
-    setTimeLeft(nextSeconds);
+    const fallbackSeconds = Math.max(0, Math.round(nextDuration * 60));
+    dispatch({ type: "SET_STATUS", status: "loading" });
+    setSubtestStartedAt(null);
+    setSubtestDeadlineAt(null);
+    setServerNow(null);
+    setTimeLeft(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
-    
+
+    const timing = await flushEvents(true, {
+      currentSubtestIndex: nextIdx,
+      currentQuestionIndex: 0,
+      status: "running",
+    });
+
+    if (!timing) {
+      toast.error("Gagal sinkronisasi subtes. Coba lagi.");
+      dispatch({ type: "SET_STATUS", status: "bridging" });
+      return;
+    }
+
+    const serverSubtest =
+      typeof timing.currentSubtest === "number" ? timing.currentSubtest : nextIdx;
+    if (serverSubtest !== nextIdx) {
+      posthog.capture("subtest_override_by_server", {
+        tryout_id: tryout.id,
+        attempt_id: state.attemptId,
+        client_subtest_index: nextIdx,
+        server_subtest_index: serverSubtest,
+      });
+    }
+    dispatch({ type: "SET_SUBTEST", index: serverSubtest });
     posthog.capture("subtest_started", {
       tryout_id: tryout.id,
       attempt_id: state.attemptId,
-      subtest_id: subtests[nextIdx]?.id,
-      subtest_duration_minutes: nextDuration
+      subtest_id: subtests[serverSubtest]?.id,
+      subtest_duration_minutes: subtests[serverSubtest]?.duration ?? 0,
     });
-    
-    await flushEvents(true);
-  }, [state.currentSubtestIndex, subtests, flushEvents, dispatch, setTimeLeft]);
+    dispatch({ type: "SET_STATUS", status: "running" });
+    if (timing?.secondsRemaining && timing.secondsRemaining > 0) {
+      setTimeLeft(timing.secondsRemaining);
+    } else if (fallbackSeconds > 0) {
+      setTimeLeft(fallbackSeconds);
+    }
+  }, [state.currentSubtestIndex, subtests, flushEvents, dispatch, setTimeLeft, posthog, tryout.id, state.attemptId]);
 
   useExamDialogs({
     status: state.status,
     bridgingSeconds: state.bridgingSeconds,
-    timeUpDialog: state.dialogs.timeUp,
-    onNextSubtest: handleNextSubtest,
-    onFinish: handleSubtestFinish,
     dispatch,
   });
 
@@ -413,6 +524,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
     handleStart,
     handleSubtestFinish,
+    handleTimeUpConfirm,
     handleNextSubtest,
     handleNextQuestion,
     handlePrevQuestion,

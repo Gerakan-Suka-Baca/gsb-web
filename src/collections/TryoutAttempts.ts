@@ -65,9 +65,44 @@ export const TryoutAttempts: CollectionConfig = {
       index: true,
     },
     {
+      name: "allowRetake",
+      type: "checkbox",
+      label: "Allow Retake",
+      defaultValue: false,
+    },
+    {
+      name: "retakeStatus",
+      type: "select",
+      options: [
+        { label: "Idle", value: "idle" },
+        { label: "Running", value: "running" },
+        { label: "Completed", value: "completed" },
+      ],
+      defaultValue: "idle",
+      admin: { description: "Status retake tanpa mengubah status utama." },
+    },
+    {
+      name: "maxRetake",
+      type: "number",
+      label: "Max Retake",
+      defaultValue: 1,
+      admin: { description: "Batas maksimal retake untuk attempt ini." },
+    },
+    {
+      name: "retakeCount",
+      type: "number",
+      label: "Jumlah Retake",
+      defaultValue: 0,
+      admin: { description: "Total retake yang sudah dimulai." },
+    },
+    {
       name: "startedAt",
       type: "date",
       defaultValue: () => new Date(),
+    },
+    {
+      name: "retakeStartedAt",
+      type: "date",
     },
     {
       name: "subtestStartedAt",
@@ -78,6 +113,10 @@ export const TryoutAttempts: CollectionConfig = {
       },
     },
     {
+      name: "retakeSubtestStartedAt",
+      type: "date",
+    },
+    {
       name: "subtestDeadlineAt",
       type: "date",
       admin: {
@@ -86,7 +125,15 @@ export const TryoutAttempts: CollectionConfig = {
       },
     },
     {
+      name: "retakeSubtestDeadlineAt",
+      type: "date",
+    },
+    {
       name: "completedAt",
+      type: "date",
+    },
+    {
+      name: "retakeCompletedAt",
       type: "date",
     },
     {
@@ -94,6 +141,11 @@ export const TryoutAttempts: CollectionConfig = {
       type: "number",
       defaultValue: 0,
       admin: { description: "Index of the currently active subtest (0-based)." },
+    },
+    {
+      name: "retakeCurrentSubtest",
+      type: "number",
+      defaultValue: 0,
     },
     {
       name: "examState",
@@ -114,6 +166,11 @@ export const TryoutAttempts: CollectionConfig = {
       name: "secondsRemaining",
       type: "number",
       admin: { description: "Remaining seconds at last backup." },
+    },
+    {
+      name: "heartbeatAt",
+      type: "date",
+      admin: { description: "Last server heartbeat time for this attempt." },
     },
     {
       name: "score",
@@ -138,9 +195,65 @@ export const TryoutAttempts: CollectionConfig = {
       admin: { description: "Index of the current question in the active subtest (0-based)." },
     },
     {
+      name: "retakeCurrentQuestionIndex",
+      type: "number",
+      defaultValue: 0,
+    },
+    {
       name: "processedBatchIds",
       type: "json",
       defaultValue: [],
+    },
+    {
+      name: "retakeProcessedBatchIds",
+      type: "json",
+      defaultValue: [],
+    },
+    {
+      name: "eventRevisions",
+      type: "json",
+      defaultValue: {},
+      admin: { description: "Latest applied revision per event key." },
+    },
+    {
+      name: "retakeEventRevisions",
+      type: "json",
+      defaultValue: {},
+    },
+    {
+      name: "subtestStates",
+      type: "json",
+      defaultValue: {},
+      admin: { description: "Subtest state map (idle/running/finished)." },
+    },
+    {
+      name: "retakeSubtestStates",
+      type: "json",
+      defaultValue: {},
+    },
+    {
+      name: "subtestSnapshots",
+      type: "array",
+      admin: { initCollapsed: true },
+      fields: [
+        { name: "subtestId", type: "text", required: true },
+        { name: "capturedAt", type: "date", required: true },
+        { name: "answers", type: "json" },
+        { name: "flags", type: "json" },
+        { name: "source", type: "text" },
+      ],
+    },
+    {
+      name: "retakeSubtestSnapshots",
+      type: "array",
+      admin: { initCollapsed: true },
+      fields: [
+        { name: "subtestId", type: "text", required: true },
+        { name: "capturedAt", type: "date", required: true },
+        { name: "answers", type: "json" },
+        { name: "flags", type: "json" },
+        { name: "source", type: "text" },
+      ],
     },
     {
       name: "resultPlan",
@@ -159,6 +272,25 @@ export const TryoutAttempts: CollectionConfig = {
       type: "json",
       defaultValue: {},
       admin: { description: "Elapsed time (seconds) per subtest, mapped by subtestId." }
+    },
+    {
+      name: "retakeSubtestDurations",
+      type: "json",
+      defaultValue: {},
+    },
+    {
+      name: "retakeAnswers",
+      type: "json",
+      defaultValue: {},
+    },
+    {
+      name: "retakeFlags",
+      type: "json",
+      defaultValue: {},
+    },
+    {
+      name: "retakeSecondsRemaining",
+      type: "number",
     },
   ],
 };

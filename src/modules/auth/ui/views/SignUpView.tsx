@@ -37,9 +37,6 @@ export const SignUpView = () => {
                     </ul>
                 </div>
              </div>
-             <div className="relative z-10 text-xs text-white/40 mt-12">
-                Dengan mendaftar, Anda menyetujui Syarat & Ketentuan GSB.
-             </div>
         </div>
 
         {/* Sign-up form */}
@@ -73,7 +70,7 @@ export const SignUpView = () => {
                       "border-2 border-border hover:bg-muted font-semibold transition-all",
                     socialButtonsBlockButtonText: "font-semibold",
                     formButtonPrimary:
-                      "bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg h-11",
+                      "bg-gsb-orange hover:bg-gsb-orange hover:brightness-110 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg h-11",
                     formFieldInput:
                       "h-11 border-border rounded-lg focus:ring-2 focus:ring-gsb-orange/30 focus:border-gsb-orange",
                     formFieldLabel: "text-foreground font-medium",
@@ -89,7 +86,11 @@ export const SignUpView = () => {
               />
             </div>
 
-            <div className="mt-8 text-center text-sm">
+            <div className="mt-6 text-center text-xs text-muted-foreground">
+                Dengan mendaftar, Anda menyetujui Syarat & Ketentuan GSB.
+            </div>
+
+            <div className="mt-6 text-center text-sm">
                 <span className="text-muted-foreground">Sudah punya akun? </span>
                 <Link href="/sign-in" className="font-bold text-responsive-orange hover:opacity-90 transition-opacity">
                     Masuk di sini

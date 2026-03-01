@@ -82,7 +82,7 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
         <Button 
             size="lg" 
             onClick={onStart} 
-            className="w-full md:w-auto bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold text-lg h-14 px-10 rounded-full shadow-lg hover:shadow-xl transition-all"
+            className="w-full md:w-auto bg-gsb-orange hover:bg-gsb-orange hover:brightness-110 text-white font-bold text-lg h-14 px-10 rounded-full shadow-lg hover:shadow-xl transition-all"
         >
             Saya Siap Mengerjakan
         </Button>

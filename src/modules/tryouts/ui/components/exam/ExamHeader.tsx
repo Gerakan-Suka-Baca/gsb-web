@@ -13,10 +13,10 @@ export const ExamHeader = ({ currentSubtestIndex, subtests, currentSubtestTitle 
     <motion.div 
       initial={{ opacity: 0, y: -10 }} 
       animate={{ opacity: 1, y: 0 }} 
-      className="mb-3 md:mb-8 rounded-xl bg-gradient-to-r from-gsb-maroon to-gsb-red px-4 md:px-6 py-3 md:py-4 flex items-center justify-between text-white shadow-xl"
+      className="mb-3 md:mb-8 rounded-xl bg-card border border-border px-4 md:px-6 py-3 md:py-4 flex items-center justify-between text-foreground shadow-sm"
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <span className="bg-white/20 rounded-full px-2 md:px-3 py-0.5 text-xs font-bold shrink-0">
+        <span className="bg-gsb-orange/10 text-gsb-orange rounded-full px-2 md:px-3 py-0.5 text-xs font-bold shrink-0">
           Subtes {currentSubtestIndex + 1}/{subtests.length}
         </span>
         <span className="font-semibold text-xs md:text-sm line-clamp-1">
@@ -29,7 +29,7 @@ export const ExamHeader = ({ currentSubtestIndex, subtests, currentSubtestTitle 
             key={idx} 
             className={cn(
               "w-2 h-2 rounded-full", 
-              idx === currentSubtestIndex ? "bg-white" : idx < currentSubtestIndex ? "bg-gsb-tosca" : "bg-white/30"
+              idx === currentSubtestIndex ? "bg-gsb-orange" : idx < currentSubtestIndex ? "bg-gsb-tosca" : "bg-muted"
             )} 
           />
         ))}

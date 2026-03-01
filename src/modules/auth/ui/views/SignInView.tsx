@@ -49,7 +49,7 @@ export const SignInView = () => {
             <div className="w-full max-w-md space-y-8">
                 <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold text-responsive-maroon font-heading">Selamat Datang Kembali</h2>
-                    <p className="text-muted-foreground mt-2 text-sm">Masuk untuk melanjutkan progress belajar Anda</p>
+                    <p className="text-muted-foreground mt-2 text-sm">Masuk untuk melanjutkan progres belajar Anda</p>
                 </div>
 
                 <div className="flex justify-center">
@@ -66,7 +66,7 @@ export const SignInView = () => {
                           "border-2 border-border hover:bg-muted font-semibold transition-all",
                         socialButtonsBlockButtonText: "font-semibold",
                         formButtonPrimary:
-                          "bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg h-11",
+                          "bg-gsb-orange hover:bg-gsb-orange hover:brightness-110 text-white font-bold shadow-md hover:shadow-lg transition-all rounded-lg h-11",
                         formFieldInput:
                           "h-11 border-border rounded-lg focus:ring-2 focus:ring-gsb-orange/30 focus:border-gsb-orange",
                         formFieldLabel: "text-foreground font-medium",
@@ -79,7 +79,7 @@ export const SignInView = () => {
                         footer: "hidden",
                       },
                     }}
-                    fallbackRedirectUrl="/"
+                    fallbackRedirectUrl="/tryout"
                   />
                 </div>
 

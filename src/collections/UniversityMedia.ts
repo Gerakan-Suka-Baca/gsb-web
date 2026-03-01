@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isVolunteerOrAbove, isAdminOrAbove } from './accessHelpers'
+import { isAdminOrAbove } from './accessHelpers'
 
 export const UniversityMedia: CollectionConfig = {
   slug: 'university-media',

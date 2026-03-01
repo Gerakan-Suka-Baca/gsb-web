@@ -48,9 +48,9 @@ export function useExamTimer({
     },
     []
   );
+  const hasValidDeadline = resolveRemainingByDeadline(deadlineAt) !== null;
 
   useEffect(() => {
-    const hasValidDeadline = resolveRemainingByDeadline(deadlineAt) !== null;
     if (!hasValidDeadline) {
       lastDeadlineRef.current = null;
       return;
@@ -79,10 +79,9 @@ export function useExamTimer({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [deadlineAt, isRunning, resolveRemainingByDeadline]);
+  }, [deadlineAt, isRunning, resolveRemainingByDeadline, hasValidDeadline]);
 
   useEffect(() => {
-    const hasValidDeadline = resolveRemainingByDeadline(deadlineAt) !== null;
     if (hasValidDeadline) return;
     if (!isRunning || initialSeconds <= 0) return;
 
@@ -97,10 +96,6 @@ export function useExamTimer({
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          if (!hasTriggeredTimeUpRef.current) {
-            hasTriggeredTimeUpRef.current = true;
-            onTimeUpRef.current();
-          }
           return 0;
         }
         return prev - 1;
@@ -108,7 +103,7 @@ export function useExamTimer({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [deadlineAt, initialSeconds, isRunning, resolveRemainingByDeadline]);
+  }, [deadlineAt, initialSeconds, isRunning, resolveRemainingByDeadline, hasValidDeadline]);
 
   const formatTime = (seconds: number) => {
     if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
@@ -121,5 +116,6 @@ export function useExamTimer({
     timeLeft,
     setTimeLeft,
     formatTime,
+    hasValidDeadline,
   };
 }

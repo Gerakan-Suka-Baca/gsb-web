@@ -8,7 +8,7 @@ const Page = async () => {
   const { userId } = await auth();
 
   if (userId) {
-    redirect("/");
+    redirect("/tryout");
   }
 
   return <SignInView />;

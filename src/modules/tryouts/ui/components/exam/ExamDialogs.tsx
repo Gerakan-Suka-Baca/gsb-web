@@ -20,6 +20,7 @@ interface ExamDialogsProps {
   setShowExitDialog: (open: boolean) => void;
   unansweredCount: number;
   onConfirmFinish: () => void;
+  onTimeUpConfirm: () => void;
 }
 
 export const ExamDialogs = ({
@@ -31,6 +32,7 @@ export const ExamDialogs = ({
   setShowExitDialog,
   unansweredCount,
   onConfirmFinish,
+  onTimeUpConfirm,
 }: ExamDialogsProps) => {
   const router = useRouter();
 
@@ -43,9 +45,20 @@ export const ExamDialogs = ({
               <Timer className="h-5 w-5" />Waktu Habis!
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Subtes ini telah berakhir. Anda akan dialihkan.
+              Subtes ini telah berakhir. Klik lanjutkan untuk menyimpan jawaban.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => {
+                setShowTimeUpDialog(false);
+                onTimeUpConfirm();
+              }}
+              className="bg-gsb-orange hover:bg-gsb-orange/90"
+            >
+              Lanjutkan
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 

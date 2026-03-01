@@ -60,8 +60,9 @@ export async function loadBackup(attemptId: string): Promise<TryoutBackup | null
   const data = await store.getItem<TryoutBackup>(key(attemptId));
   if (!data) return null;
   
-  // Basic integrity check
-  if (typeof data.currentSubtest !== 'number') return null;
+  if (data.version !== 2) return null;
+  if (typeof data.currentSubtest !== "number") return null;
+  if (typeof data.updatedAt !== "number") return null;
   
   return data;
 }

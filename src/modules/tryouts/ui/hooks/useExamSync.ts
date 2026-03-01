@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { useDebounce } from "@/hooks/use-debounce";
+import { usePostHog } from "posthog-js/react";
+import type { TRPCClientErrorLike } from "@trpc/client";
+import type { AppRouter } from "@/trpc/routers/_app";
 import {
   appendEvent,
   clearBackup,
@@ -31,22 +34,44 @@ export interface ServerTimingSyncPayload {
   subtestStartedAt?: string;
   subtestDeadlineAt?: string;
   serverNow?: string;
+  secondsRemaining?: number;
 }
+
+type SaveProgressBatchInput = {
+  attemptId: string;
+  batchId: string;
+  clientTime: number;
+  events: TryoutEvent[];
+  currentSubtest: number;
+  examState?: "running" | "bridging";
+  currentQuestionIndex: number;
+};
+
+type SaveProgressBatchOutput = ServerTimingSyncPayload & {
+  success: boolean;
+  duplicate?: boolean;
+  applied?: number;
+};
 
 export function useExamSync({
   attemptId,
   state,
   timeLeft,
   onServerTiming,
+  tryoutId,
 }: {
   attemptId: string | null;
   state: SyncState;
   timeLeft: number;
   onServerTiming?: (payload: ServerTimingSyncPayload) => void;
+  tryoutId?: string;
 }) {
+  const posthog = usePostHog();
   const stateRef = useRef(state);
   const timeLeftRef = useRef(timeLeft);
   const onServerTimingRef = useRef(onServerTiming);
+  const offlineRef = useRef(false);
+  const syncFailedRef = useRef(false);
   
   useEffect(() => {
     stateRef.current = state;
@@ -69,14 +94,24 @@ export function useExamSync({
     status: ExamState["status"];
   } | null>(null);
   
-  const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const flushEventsRef = useRef<(force?: boolean) => void>(() => {});
+  const writeQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+  const flushEventsRef = useRef<
+    (force?: boolean, overrideState?: Partial<SyncState>) => Promise<ServerTimingSyncPayload | null>
+  >(() => Promise.resolve(null));
 
-  const saveProgressBatchMutation = useMutation(
+  const saveProgressBatchMutation = useMutation<
+    SaveProgressBatchOutput,
+    TRPCClientErrorLike<AppRouter>,
+    SaveProgressBatchInput
+  >(
     trpc.tryoutAttempts.saveProgressBatch.mutationOptions({
       retry: false,
       onError: () => {},
-    })
+    }) as unknown as UseMutationOptions<
+      SaveProgressBatchOutput,
+      TRPCClientErrorLike<AppRouter>,
+      SaveProgressBatchInput
+    >
   );
 
   const createId = useCallback(() => {
@@ -96,18 +131,25 @@ export function useExamSync({
   }, []);
 
   const flushEvents = useCallback(
-    async (force?: boolean) => {
-      if (!attemptId) return;
+    async (force?: boolean, overrideState?: Partial<SyncState>) => {
+      if (!attemptId) return null;
       if (typeof navigator !== "undefined" && !navigator.onLine) {
+        if (!offlineRef.current) {
+          offlineRef.current = true;
+          posthog.capture("tryout_offline_detected", {
+            attempt_id: attemptId,
+            tryout_id: tryoutId,
+          });
+        }
         scheduleRetry(0);
-        return;
+        return null;
       }
 
-      const doFlush = async () => {
+      const doFlush = async (): Promise<ServerTimingSyncPayload | null> => {
         let pending: TryoutEvent[] = [];
         try {
           pending = await getPendingEvents(attemptId, 20);
-          const currentState = stateRef.current;
+          const currentState = { ...stateRef.current, ...(overrideState ?? {}) };
           const persistedExamState =
             currentState.status === "running" || currentState.status === "bridging"
               ? currentState.status
@@ -120,7 +162,7 @@ export function useExamSync({
           const shouldSendStateOnly =
             pending.length === 0 && Boolean(force || hasStateChanged);
 
-          if (pending.length === 0 && !shouldSendStateOnly) return;
+          if (pending.length === 0 && !shouldSendStateOnly) return null;
 
           const result = await saveProgressBatchMutation.mutateAsync({
             attemptId,
@@ -137,32 +179,45 @@ export function useExamSync({
           };
 
           const resultRecord = result as unknown as Record<string, unknown>;
-          if (onServerTimingRef.current) {
-            const timingPayload: ServerTimingSyncPayload = {};
-            if (typeof resultRecord.currentSubtest === "number") {
-              timingPayload.currentSubtest = resultRecord.currentSubtest;
-            }
-            if (typeof resultRecord.subtestStartedAt === "string") {
-              timingPayload.subtestStartedAt = resultRecord.subtestStartedAt;
-            }
-            if (typeof resultRecord.subtestDeadlineAt === "string") {
-              timingPayload.subtestDeadlineAt = resultRecord.subtestDeadlineAt;
-            }
-            if (typeof resultRecord.serverNow === "string") {
-              timingPayload.serverNow = resultRecord.serverNow;
-            }
-            if (Object.keys(timingPayload).length > 0) {
-              onServerTimingRef.current(timingPayload);
-            }
+          const timingPayload: ServerTimingSyncPayload = {};
+          if (typeof resultRecord.currentSubtest === "number") {
+            timingPayload.currentSubtest = resultRecord.currentSubtest;
+          }
+          if (typeof resultRecord.subtestStartedAt === "string") {
+            timingPayload.subtestStartedAt = resultRecord.subtestStartedAt;
+          }
+          if (typeof resultRecord.subtestDeadlineAt === "string") {
+            timingPayload.subtestDeadlineAt = resultRecord.subtestDeadlineAt;
+          }
+          if (typeof resultRecord.serverNow === "string") {
+            timingPayload.serverNow = resultRecord.serverNow;
+          }
+          if (typeof resultRecord.secondsRemaining === "number") {
+            timingPayload.secondsRemaining = resultRecord.secondsRemaining;
+          }
+          if (Object.keys(timingPayload).length > 0) {
+            onServerTimingRef.current?.(timingPayload);
           }
 
           await markEventsSent(
             attemptId,
             pending.map((e) => e.id)
           );
+          if (syncFailedRef.current) {
+            syncFailedRef.current = false;
+            posthog.capture("tryout_sync_recovered", {
+              attempt_id: attemptId,
+              tryout_id: tryoutId,
+            });
+          }
 
           const more = await getPendingEvents(attemptId, 1);
-          if (more.length > 0) await doFlush();
+          if (more.length > 0) {
+            const next = await doFlush();
+            return next ?? (Object.keys(timingPayload).length > 0 ? timingPayload : null);
+          }
+
+          return Object.keys(timingPayload).length > 0 ? timingPayload : null;
         } catch {
           await markEventsFailed(
             attemptId,
@@ -172,21 +227,32 @@ export function useExamSync({
             (acc, e) => Math.max(acc, (e.failedCount ?? 0) + 1),
             0
           );
+          if (!syncFailedRef.current) {
+            syncFailedRef.current = true;
+            posthog.capture("tryout_sync_failed", {
+              attempt_id: attemptId,
+              tryout_id: tryoutId,
+              pending_events: pending.length,
+              max_fail_count: maxFail,
+            });
+          }
           scheduleRetry(maxFail);
+          return null;
         }
       };
 
       if (force) {
-        const queued = writeQueueRef.current.then(doFlush).catch(() => {});
+        const queued = writeQueueRef.current.then(doFlush).catch(() => null);
         writeQueueRef.current = queued;
-        await queued;
-      } else {
-        writeQueueRef.current = writeQueueRef.current
-          .then(doFlush)
-          .catch(() => {});
+        return await queued;
       }
+
+      writeQueueRef.current = writeQueueRef.current
+        .then(doFlush)
+        .catch(() => null);
+      return null;
     },
-    [attemptId, createId, saveProgressBatchMutation, scheduleRetry, stateRef]
+    [attemptId, createId, saveProgressBatchMutation, scheduleRetry, posthog, tryoutId]
   );
 
   useEffect(() => {
@@ -231,12 +297,19 @@ export function useExamSync({
       flushEvents(false);
     }, 12000);
     return () => clearInterval(timer);
-  }, [attemptId, flushEvents]);
+  }, [attemptId, flushEvents, posthog, tryoutId]);
 
   useEffect(() => {
     if (!attemptId) return;
 
-    const onOnline = () => flushEvents(true);
+    const onOnline = () => {
+      offlineRef.current = false;
+      posthog.capture("tryout_back_online", {
+        attempt_id: attemptId,
+        tryout_id: tryoutId,
+      });
+      flushEvents(true);
+    };
     const onVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         saveBackup(attemptId, {
@@ -247,6 +320,13 @@ export function useExamSync({
           examState: stateRef.current.status,
           secondsRemaining: timeLeftRef.current,
           subtestDurations: stateRef.current.subtestDurations,
+        });
+        posthog.capture("tryout_backup_saved", {
+          attempt_id: attemptId,
+          tryout_id: tryoutId,
+          current_subtest: stateRef.current.currentSubtestIndex,
+          current_question: stateRef.current.currentQuestionIndex,
+          exam_state: stateRef.current.status,
         });
         flushEvents(true);
       }
@@ -263,6 +343,13 @@ export function useExamSync({
         secondsRemaining: timeLeftRef.current,
         subtestDurations: s.subtestDurations,
       });
+      posthog.capture("tryout_page_hidden", {
+        attempt_id: attemptId,
+        tryout_id: tryoutId,
+        current_subtest: s.currentSubtestIndex,
+        current_question: s.currentQuestionIndex,
+        exam_state: s.status,
+      });
       flushEvents(true);
     };
 
@@ -277,7 +364,7 @@ export function useExamSync({
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("beforeunload", onPageHide);
     };
-  }, [attemptId, flushEvents]);
+  }, [attemptId, flushEvents, posthog, tryoutId]);
 
   useEffect(() => {
     if (!attemptId) return;

@@ -58,7 +58,7 @@ export const ExamBridging = ({
           </motion.div>
           {nextSubtest && (
             <motion.div variants={ANIM.staggerChild}>
-              <Card className="p-8 border-none shadow-xl bg-gradient-to-br from-white to-orange-50/50">
+              <Card className="p-8 border border-border shadow-lg bg-card">
                 <div className="text-center mb-6">
                   <p className="text-sm text-muted-foreground uppercase tracking-wider mb-1">Subtes Selanjutnya</p>
                   <h2 className="text-2xl md:text-3xl font-heading font-bold text-gsb-maroon">{nextSubtest.title}</h2>
@@ -66,7 +66,7 @@ export const ExamBridging = ({
                   <div className="w-16 h-1 bg-gsb-orange rounded-full mx-auto mt-3" />
                 </div>
                 <div className="flex justify-center mb-6">
-                  <div className="text-sm font-semibold text-orange-600 bg-orange-100 px-4 py-1.5 rounded-full animate-pulse">Otomatis lanjut dalam {bridgingSeconds} detik</div>
+                  <div className="text-sm font-semibold text-orange-600 bg-orange-100 px-4 py-1.5 rounded-full">Waktu jeda: {bridgingSeconds} detik</div>
                 </div>
                  <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-1 text-center">
@@ -78,7 +78,7 @@ export const ExamBridging = ({
                     <span className="text-xl font-bold text-gsb-blue">{nextSubtest.tryoutQuestions?.length || 0} Butir</span>
                   </div>
                 </div>
-                <Button size="lg" onClick={onNextSubtest} className="w-full h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg">
+                <Button size="lg" onClick={onNextSubtest} className="w-full h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange hover:brightness-110 text-white rounded-full shadow-lg">
                     Mulai Subtes Berikutnya <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Card>
