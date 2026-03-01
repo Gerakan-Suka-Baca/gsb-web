@@ -93,7 +93,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
                   <div className="w-16 h-1 bg-gsb-orange rounded-full mx-auto mt-3" />
                 </div>
                 <div className="flex justify-center mb-6">
-                  <div className="text-sm font-semibold text-orange-600 bg-orange-100 px-4 py-1.5 rounded-full animate-pulse">Otomatis lanjut dalam {exam.bridgingSeconds} detik</div>
+                  <div className="text-sm font-semibold text-orange-600 bg-orange-100 px-4 py-1.5 rounded-full">Waktu jeda: {exam.bridgingSeconds} detik</div>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-1 text-center">
@@ -106,7 +106,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
                   </div>
                 </div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button type="button" size="lg" onClick={exam.handleNextSubtest} className="w-full h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-full shadow-lg">
+                  <Button type="button" size="lg" onClick={exam.handleNextSubtest} className="w-full h-12 text-lg font-bold bg-gsb-orange hover:bg-gsb-orange hover:brightness-110 text-white rounded-full shadow-lg">
                     Mulai Subtes Berikutnya →
                   </Button>
                 </motion.div>
@@ -248,6 +248,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
         setShowExitDialog={exam.setShowExitDialog}
         unansweredCount={unansweredCount}
         onConfirmFinish={exam.handleSubtestFinish}
+        onTimeUpConfirm={exam.handleTimeUpConfirm}
       />
     </div>
   );

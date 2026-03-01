@@ -20,9 +20,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Tryout, TryoutAttempt } from "@/payload-types";
 
 const TABS = [
-  { key: "current", label: "Berjalan", icon: Play },
+  { key: "current", label: "Aktif", icon: Play },
   { key: "registered", label: "Selesai", icon: CheckCircle2 },
-  { key: "others", label: "Lainnya", icon: BookOpen },
+  { key: "others", label: "Semua Tryout", icon: BookOpen },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
@@ -167,7 +167,7 @@ export const TryoutList = () => {
       <p className="text-muted-foreground text-lg">{message}</p>
       {activeTab === 'current' && (
          <p className="text-muted-foreground text-sm mt-2">
-           Cek <button type="button" onClick={() => setActiveTab('others')} className="text-responsive-orange underline font-semibold hover:opacity-90">Lainnya</button> untuk melihat Tryout lain yang sedang dibuka.
+           Cek <button type="button" onClick={() => setActiveTab('others')} className="text-responsive-orange underline font-semibold hover:opacity-90">Semua Tryout</button> untuk melihat Tryout lain yang sedang dibuka.
          </p>
       )}
     </motion.div>
@@ -187,7 +187,7 @@ export const TryoutList = () => {
           Kelola dan pantau tryout kamu di sini.
         </p>
         <p className="text-sm text-muted-foreground mt-2">
-          Cek <button type="button" onClick={() => setActiveTab("others")} className="font-semibold text-responsive-orange hover:underline focus:outline-none">Lainnya</button> untuk melihat tryout yang tersedia.
+          Cek <button type="button" onClick={() => setActiveTab("others")} className="font-semibold text-responsive-orange hover:underline focus:outline-none">Semua Tryout</button> untuk melihat tryout yang tersedia.
         </p>
       </motion.div>
 

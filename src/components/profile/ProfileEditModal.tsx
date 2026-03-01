@@ -148,7 +148,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       name="fullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nama Lengkap</FormLabel>
+                      <FormLabel>Nama Lengkap <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -161,7 +161,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Username</FormLabel>
+                      <FormLabel>Username <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -176,7 +176,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       name="whatsapp"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Nomor WhatsApp</FormLabel>
+                      <FormLabel>Nomor WhatsApp <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -259,7 +259,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       name="schoolOrigin"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Asal Sekolah</FormLabel>
+                          <FormLabel>Asal Sekolah <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <Input {...field} />
                           </FormControl>
@@ -272,7 +272,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       name="grade"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Kelas / Status</FormLabel>
+                          <FormLabel>Kelas / Status <span className="text-destructive">*</span></FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -297,8 +297,8 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       control={form.control}
                       name="targetPTN"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Target PTN (Pilihan 1)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                          <FormLabel>Target PTN (Pilihan 1) <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <UniversitySelect 
                               value={field.value} 
@@ -313,8 +313,8 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       control={form.control}
                       name="targetMajor"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Target Jurusan (Pilihan 1)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                          <FormLabel>Target Jurusan (Pilihan 1) <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <MajorSelect 
                               value={field.value} 
@@ -333,8 +333,8 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       control={form.control}
                       name="targetPTN2"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Target PTN (Pilihan 2)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                          <FormLabel>Target PTN (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                           <FormControl>
                             <UniversitySelect 
                                 value={field.value || ""} 
@@ -349,8 +349,8 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       control={form.control}
                       name="targetMajor2"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Target Jurusan (Pilihan 2)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                          <FormLabel>Target Jurusan (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                           <FormControl>
                             <MajorSelect 
                               value={field.value || ""} 
@@ -369,8 +369,8 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       control={form.control}
                       name="targetPTN3"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Target PTN (Pilihan 3)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                          <FormLabel>Target PTN (Pilihan 3) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                           <FormControl>
                             <UniversitySelect 
                                 value={field.value || ""} 
@@ -385,8 +385,8 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       control={form.control}
                       name="targetMajor3"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Target Jurusan (Pilihan 3)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                          <FormLabel>Target Jurusan (Pilihan 3) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                           <FormControl>
                             <MajorSelect 
                               value={field.value || ""} 

@@ -63,7 +63,7 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
       );
     }
     return (
-      <Button variant="outline" className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white font-semibold rounded-full px-6 transition-all hover:scale-105" asChild>
+      <Button variant="outline" className="border-2 border-gsb-blue text-gsb-blue hover:bg-gsb-blue hover:text-white hover:brightness-110 font-semibold rounded-full px-6 transition-all hover:scale-105" asChild>
         <Link href={signInUrl}>Masuk</Link>
       </Button>
     );

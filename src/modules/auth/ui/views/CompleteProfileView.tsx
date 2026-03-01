@@ -73,7 +73,7 @@ export const CompleteProfileView = () => {
       onSuccess: () => {
         toast.success("Profil berhasil dilengkapi!");
         void queryClient.invalidateQueries({ predicate: (q) => (q.queryKey[0] as string[])?.[0] === "auth" });
-        router.push("/");
+        router.push("/tryout");
       },
       onError: (err: { message?: string }) => {
         toast.error(err.message ?? "Gagal melengkapi profil");
@@ -89,7 +89,7 @@ export const CompleteProfileView = () => {
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
       <div className="max-w-3xl w-full bg-card rounded-2xl shadow-lg border border-border p-6 md:p-10">
         <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" size="icon" onClick={() => router.push("/")}>
+            <Button variant="ghost" size="icon" onClick={() => router.push("/tryout")}>
                 <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
@@ -111,7 +111,7 @@ export const CompleteProfileView = () => {
                 name="fullName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nama Lengkap</FormLabel>
+                    <FormLabel>Nama Lengkap <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Nama lengkap Anda" {...field} />
                     </FormControl>
@@ -126,7 +126,7 @@ export const CompleteProfileView = () => {
                 name="whatsapp"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nomor WhatsApp</FormLabel>
+                    <FormLabel>Nomor WhatsApp <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="08xxxxxxxxxx" {...field} />
                     </FormControl>
@@ -141,7 +141,7 @@ export const CompleteProfileView = () => {
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
-                    <FormLabel>Tanggal Lahir</FormLabel>
+                    <FormLabel>Tanggal Lahir <span className="text-destructive">*</span></FormLabel>
                     <Popover>
                       <PopoverTrigger asChild>
                         <FormControl>
@@ -196,7 +196,7 @@ export const CompleteProfileView = () => {
                 name="schoolOrigin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Asal Sekolah</FormLabel>
+                    <FormLabel>Asal Sekolah <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="SMA Negeri..." {...field} />
                     </FormControl>
@@ -211,7 +211,7 @@ export const CompleteProfileView = () => {
                 name="grade"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kelas / Status</FormLabel>
+                    <FormLabel>Kelas / Status <span className="text-destructive">*</span></FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -244,8 +244,8 @@ export const CompleteProfileView = () => {
                         control={form.control}
                         name="targetPTN"
                         render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Target Kampus (Pilihan 1)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                            <FormLabel>Target Kampus (Pilihan 1) <span className="text-destructive">*</span></FormLabel>
                             <FormControl>
                               <UniversitySelect
                                 value={field.value}
@@ -261,8 +261,8 @@ export const CompleteProfileView = () => {
                         control={form.control}
                         name="targetMajor"
                         render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Target Jurusan (Pilihan 1)</FormLabel>
+                        <FormItem className="min-h-[120px]">
+                            <FormLabel>Target Jurusan (Pilihan 1) <span className="text-destructive">*</span></FormLabel>
                             <FormControl>
                               <MajorSelect
                                 value={field.value}
@@ -280,7 +280,7 @@ export const CompleteProfileView = () => {
                         control={form.control}
                         name="targetPTN2"
                         render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="min-h-[120px]">
                             <FormLabel>Target Kampus (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                             <FormControl>
                               <UniversitySelect
@@ -297,7 +297,7 @@ export const CompleteProfileView = () => {
                         control={form.control}
                         name="targetMajor2"
                         render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="min-h-[120px]">
                             <FormLabel>Target Jurusan (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                             <FormControl>
                               <MajorSelect

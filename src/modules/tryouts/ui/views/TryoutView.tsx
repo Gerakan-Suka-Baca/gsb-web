@@ -31,8 +31,6 @@ export const TryoutView = ({ tryoutId }: Props) => {
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId }, { retry: false })
   );
 
-  const isSessionError = isMetadataError || isAttemptError;
-
   const isUnauthorized = 
     metadataErr?.data?.code === "UNAUTHORIZED" || attemptErr?.data?.code === "UNAUTHORIZED";
   const isNotFound = 
@@ -66,6 +64,11 @@ export const TryoutView = ({ tryoutId }: Props) => {
     }
 
     if (existingAttempt?.status === "completed") {
+      if (existingAttempt.allowRetake && existingAttempt.retakeStatus !== "completed") {
+        const target = existingAttempt.retakeStatus === "running" ? "exam" : "intro";
+        if (view !== target) setView(target);
+        return;
+      }
       const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;
       const target = (plan && plan !== "none") ? "thankyou" : "result";
       

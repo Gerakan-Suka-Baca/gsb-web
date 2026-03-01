@@ -5,6 +5,7 @@ import { type TryoutAttempt } from "../../types";
 import { loadBackup, getPendingEvents } from "@/lib/tryout-storage";
 import type { AnswerMap, FlagMap, ExamStatus, ExamState } from "./useExamState";
 import type { Question } from "@/payload-types";
+import { usePostHog } from "posthog-js/react";
 
 interface UseAttemptRestorationProps {
   attempt: unknown;
@@ -43,6 +44,7 @@ export function useAttemptRestoration({
   currentAttemptId,
   onRestore,
 }: UseAttemptRestorationProps) {
+  const posthog = usePostHog();
   useEffect(() => {
     if (isLoading) return;
     if (!isValidAttempt(attempt)) {
@@ -60,26 +62,43 @@ export function useAttemptRestoration({
     const data = attempt;
 
     const run = async () => {
-      const serverSubtest = data.currentSubtest ?? 0;
-      const serverQuestion = data.currentQuestionIndex ?? 0;
-      const storedAnswers = (data.answers as Record<string, AnswerMap> | null | undefined) || {};
-      const storedFlags = (data.flags as Record<string, FlagMap> | null | undefined) || {};
+      const retakeActive =
+        Boolean(data.allowRetake) && data.retakeStatus === "running";
+      const retakeEligible =
+        Boolean(data.allowRetake) && data.retakeStatus !== "completed";
+      const serverSubtest = retakeActive
+        ? data.retakeCurrentSubtest ?? 0
+        : data.currentSubtest ?? 0;
+      const serverQuestion = retakeActive
+        ? data.retakeCurrentQuestionIndex ?? 0
+        : data.currentQuestionIndex ?? 0;
+      const storedAnswers = (retakeActive ? data.retakeAnswers : data.answers) as
+        | Record<string, AnswerMap>
+        | null
+        | undefined || {};
+      const storedFlags = (retakeActive ? data.retakeFlags : data.flags) as
+        | Record<string, FlagMap>
+        | null
+        | undefined || {};
 
       let finalSubtest = typeof serverSubtest === "number" && !isNaN(serverSubtest) ? serverSubtest : 0;
       let finalQuestion = typeof serverQuestion === "number" && !isNaN(serverQuestion) ? serverQuestion : 0;
       let finalSeconds: number | undefined;
-      let finalSubtestStartedAt =
-        typeof data.subtestStartedAt === "string"
-          ? data.subtestStartedAt
+      const finalSubtestStartedAt =
+        typeof (retakeActive ? data.retakeSubtestStartedAt : data.subtestStartedAt) === "string"
+          ? (retakeActive ? data.retakeSubtestStartedAt : data.subtestStartedAt)
           : undefined;
-      let finalSubtestDeadlineAt =
-        typeof data.subtestDeadlineAt === "string"
-          ? data.subtestDeadlineAt
+      const finalSubtestDeadlineAt =
+        typeof (retakeActive ? data.retakeSubtestDeadlineAt : data.subtestDeadlineAt) === "string"
+          ? (retakeActive ? data.retakeSubtestDeadlineAt : data.subtestDeadlineAt)
           : undefined;
-      let finalStatus: ExamStatus =
-        data.status === "completed"
-          ? "finished"
-          : (data.examState as ExamStatus) || "running";
+      const finalStatus: ExamStatus = retakeActive
+        ? "running"
+        : retakeEligible && data.status === "completed"
+          ? "ready"
+          : data.status === "completed"
+            ? "finished"
+            : (data.examState as ExamStatus) || "running";
 
       const serverDeadlineMs = parseDateMs(finalSubtestDeadlineAt);
       if (serverDeadlineMs !== null) {
@@ -91,7 +110,11 @@ export function useAttemptRestoration({
 
       const mergedAnswers = { ...storedAnswers };
       const mergedFlags = { ...storedFlags };
-      const mergedDurations = { ...((data.subtestDurations as Record<string, number> | undefined) || {}) };
+      const mergedDurations = {
+        ...(((retakeActive ? data.retakeSubtestDurations : data.subtestDurations) as
+          | Record<string, number>
+          | undefined) || {}),
+      };
 
       const backup = await loadBackup(data.id);
       if (backup) {
@@ -111,14 +134,7 @@ export function useAttemptRestoration({
           mergedDurations[sId] = backup.subtestDurations[sId];
         });
 
-        if (Number.isFinite(backup.currentSubtest) && backup.currentSubtest > finalSubtest) {
-          finalSubtest = backup.currentSubtest;
-          finalQuestion = Number.isFinite(backup.currentQuestionIndex) ? backup.currentQuestionIndex ?? 0 : 0;
-          finalSeconds = backup.secondsRemaining;
-          finalSubtestStartedAt = undefined;
-          finalSubtestDeadlineAt = undefined;
-          if (backup.examState) finalStatus = backup.examState as ExamStatus;
-        } else if (backup.currentSubtest === finalSubtest) {
+        if (backup.currentSubtest === finalSubtest) {
           const backupQ = Number.isFinite(backup.currentQuestionIndex) ? backup.currentQuestionIndex ?? 0 : 0;
           finalQuestion = Math.max(finalQuestion, backupQ);
           if (
@@ -147,6 +163,13 @@ export function useAttemptRestoration({
       if (!active) return;
       
       const normalizedStatus = (finalStatus as string) === "paused" ? "running" : finalStatus;
+      if (retakeEligible && !retakeActive && data.status === "completed") {
+        finalSubtest = 0;
+        finalQuestion = 0;
+      }
+      if (!Number.isFinite(finalSubtest) || finalSubtest < 0) finalSubtest = 0;
+      if (subtests.length > 0 && finalSubtest >= subtests.length) finalSubtest = 0;
+      if (!Number.isFinite(finalQuestion) || finalQuestion < 0) finalQuestion = 0;
 
       onRestore({
         attemptId: data.id,
@@ -160,11 +183,19 @@ export function useAttemptRestoration({
         subtestDeadlineAt: finalSubtestDeadlineAt,
         subtestDurations: mergedDurations,
       });
+      posthog.capture("tryout_restore", {
+        attempt_id: data.id,
+        used_backup: Boolean(backup),
+        pending_events: pendingEvents.length,
+        current_subtest: finalSubtest,
+        current_question: finalQuestion,
+        status: normalizedStatus,
+      });
     };
 
     run();
     return () => {
       active = false;
     };
-  }, [attempt, isLoading, subtests, currentAttemptId, onRestore]);
+  }, [attempt, isLoading, subtests, currentAttemptId, onRestore, posthog]);
 }
