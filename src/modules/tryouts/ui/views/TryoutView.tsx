@@ -22,21 +22,31 @@ export const TryoutView = ({ tryoutId }: Props) => {
   const queryClient = useQueryClient();
   const router = useRouter();
   
-  const { data, isLoading: isMetadataLoading, isError: isMetadataError } = useQuery(
+  const { data, isLoading: isMetadataLoading, isError: isMetadataError, error: metadataErr } = useQuery(
     trpc.tryouts.getMetadata.queryOptions({ tryoutId }, { retry: false })
   );
   const { data: session } = useQuery(trpc.auth.session.queryOptions());
 
-  const { data: existingAttempt, isLoading: isAttemptLoading, isError: isAttemptError } = useQuery(
+  const { data: existingAttempt, isLoading: isAttemptLoading, isError: isAttemptError, error: attemptErr } = useQuery(
     trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId }, { retry: false })
   );
+
+  const isSessionError = isMetadataError || isAttemptError;
+
+  const isUnauthorized = 
+    metadataErr?.data?.code === "UNAUTHORIZED" || attemptErr?.data?.code === "UNAUTHORIZED";
+  const isNotFound = 
+    metadataErr?.data?.code === "NOT_FOUND" || attemptErr?.data?.code === "NOT_FOUND";
+
+  useEffect(() => {
+    if (metadataErr) console.error("Metadata fetch error:", metadataErr);
+    if (attemptErr) console.error("Attempt fetch error:", attemptErr);
+  }, [metadataErr, attemptErr]);
 
   const [view, setView] = useState<"loading" | "intro" | "exam" | "result" | "thankyou" | "scores">("loading");
   const [holdResult, setHoldResult] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const tryout = data as unknown as Tryout;
-  
-  const isSessionError = isMetadataError || isAttemptError;
 
   useEffect(() => {
     if (isMetadataLoading) return;
@@ -71,14 +81,29 @@ export const TryoutView = ({ tryoutId }: Props) => {
     }
   }, [existingAttempt, isAttemptLoading, view, holdResult, isUpgrading, isMetadataLoading]);
 
-  if (isSessionError) {
+  if (isUnauthorized) {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center gap-4 text-center px-4">
         <div className="p-4 bg-red-50 text-red-600 rounded-full"><Loader2 className="w-8 h-8 animate-spin" /></div>
         <h2 className="text-xl font-bold text-gsb-maroon">Sesi Berakhir</h2>
-        <p className="text-muted-foreground">Silakan login kembali untuk melanjutkan ujian.</p>
+        <p className="text-muted-foreground whitespace-pre-wrap max-w-xl text-left bg-gray-100 p-4 rounded-xl font-mono text-xs text-red-600">
+          Sesi Anda telah berakhir atau profil belum lengkap. Silakan login kembali.
+        </p>
         <Button onClick={() => window.location.href = "/sign-in"} variant="default" className="mt-2 text-white bg-gsb-orange hover:bg-gsb-orange/90">
           Login Ulang
+        </Button>
+      </div>
+    );
+  }
+
+  if (isNotFound || isMetadataError || isAttemptError) {
+    return (
+      <div className="flex flex-col h-[60vh] items-center justify-center gap-4 text-center px-4">
+        <div className="p-4 bg-orange-50 text-orange-600 rounded-full">⚠️</div>
+        <h2 className="text-xl font-bold text-gsb-maroon">Tryout Tidak Ditemukan</h2>
+        <p className="text-muted-foreground">Maaf, Tryout yang Anda cari tidak tersedia atau terjadi kesalahan sistem.</p>
+        <Button onClick={() => router.push("/tryout")} variant="outline" className="mt-2">
+          Kembali ke Daftar Tryout
         </Button>
       </div>
     );

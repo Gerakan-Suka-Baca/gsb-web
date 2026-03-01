@@ -4,6 +4,7 @@ import { useCallback, useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
+import { usePostHog } from 'posthog-js/react';
 import { toast } from "sonner";
 import type { Tryout, Question } from "@/payload-types";
 import type { TryoutAttempt } from "../../types";
@@ -56,6 +57,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const { state, dispatch } = useExamState();
   const queryClient = useQueryClient();
+  const posthog = usePostHog();
   const [subtestStartedAt, setSubtestStartedAt] = useState<string | null>(
     typeof initialAttempt?.subtestStartedAt === "string"
       ? initialAttempt.subtestStartedAt
@@ -176,7 +178,16 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   useNavigationProtection({
     isEnabled: state.status === "running",
-    onPopState: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "exit", open: true }), [dispatch]),
+    onPopState: useCallback(() => {
+      if (currentSubtestId) {
+        posthog.capture("subtest_abandoned", {
+          tryout_id: tryout.id,
+          attempt_id: state.attemptId,
+          subtest_id: currentSubtestId,
+        });
+      }
+      dispatch({ type: "SET_DIALOG", dialog: "exit", open: true });
+    }, [dispatch, posthog, tryout.id, state.attemptId, currentSubtestId]),
   });
 
   const { isLoading: isAttemptLoading } = useQuery(
@@ -190,6 +201,15 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       applyServerTimingFromRecord(data as unknown as Record<string, unknown>);
       setTimeLeft((currentSubtest?.duration ?? 0) * 60);
       toast.success("Ujian dimulai!");
+      
+      posthog.capture("tryout_started", { tryout_id: tryout.id, attempt_id: data.id });
+      posthog.capture("subtest_started", { 
+        tryout_id: tryout.id, 
+        attempt_id: data.id, 
+        subtest_id: currentSubtest?.id,
+        subtest_duration_minutes: currentSubtest?.duration 
+      });
+
       await queryClient.invalidateQueries({
         queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId: tryout.id }, type: "query" }],
       });
@@ -251,6 +271,12 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     const elapsedSeconds = Math.max(0, initialSeconds - timeLeft);
     if (currentSubtestId) {
       dispatch({ type: "SET_SUBTEST_DURATION", subtestId: currentSubtestId, elapsedSeconds });
+      posthog.capture("subtest_completed", {
+        tryout_id: tryout.id,
+        attempt_id: state.attemptId,
+        subtest_id: currentSubtestId,
+        time_spent_seconds: elapsedSeconds
+      });
     }
 
     if (state.currentSubtestIndex < subtests.length - 1) {
@@ -292,6 +318,14 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     setServerNow(nowIso);
     setTimeLeft(nextSeconds);
     window.scrollTo({ top: 0, behavior: "smooth" });
+    
+    posthog.capture("subtest_started", {
+      tryout_id: tryout.id,
+      attempt_id: state.attemptId,
+      subtest_id: subtests[nextIdx]?.id,
+      subtest_duration_minutes: nextDuration
+    });
+    
     await flushEvents(true);
   }, [state.currentSubtestIndex, subtests, flushEvents, dispatch, setTimeLeft]);
 

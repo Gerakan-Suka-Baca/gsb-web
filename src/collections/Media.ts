@@ -33,11 +33,29 @@ export const Media: CollectionConfig = {
       }
     },
     {
+      name: 'relatedQuestion',
+      type: 'relationship',
+      relationTo: 'questions',
+      admin: {
+        position: 'sidebar',
+        description: 'Terkait dengan Subtest/Soal (Durable Link)'
+      }
+    },
+    {
+      name: 'relatedUniversity',
+      type: 'relationship',
+      relationTo: 'universities',
+      admin: {
+        position: 'sidebar',
+        description: 'Terkait dengan Universitas (Jika ada)'
+      }
+    },
+    {
       name: 'relatedSubtest',
       type: 'text',
       admin: {
         position: 'sidebar',
-        description: 'ID atau Nama Subtest Terkait (Opsional)'
+        description: 'ID atau Nama Subtest Terkait (Opsional - Legacy)'
       }
     },
     {
@@ -51,33 +69,8 @@ export const Media: CollectionConfig = {
   ],
   upload: {
     staticDir: 'media',
-    adminThumbnail: 'thumbnail',
     mimeTypes: ['image/*'],
-    imageSizes: [
-      {
-        name: 'thumbnail',
-        width: 400,
-        height: 300,
-        position: 'centre',
-      },
-      {
-        name: 'card',
-        width: 768,
-        height: 1024,
-        position: 'centre',
-      },
-      {
-        name: 'tablet',
-        width: 1024,
-        height: undefined,
-        position: 'centre',
-      }
-    ],
-    formatOptions: {
-      format: 'webp',
-      options: {
-        quality: 75,
-      }
-    }
+    // Removed imageSizes to prevent auto-conversion to WebP and ensure original format (JPG/PNG) is preserved.
+    // This also fixes the missing thumbnail issue by using the original image.
   },
 }

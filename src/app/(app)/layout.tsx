@@ -7,6 +7,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "@/components/ui/sonner";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { PostHogProvider } from "@/components/analytics/PostHogProvider";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
@@ -37,10 +39,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <ClerkProvider localization={idID}>
       <html lang="id" suppressHydrationWarning>
         <body className={`${montserrat.variable} ${openSans.variable} antialiased`}>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-            <TRPCReactProvider>{children}</TRPCReactProvider>
-            <Toaster />
-          </ThemeProvider>
+          <PostHogProvider>
+            <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+              <GoogleAnalytics />
+              <TRPCReactProvider>{children}</TRPCReactProvider>
+              <Toaster />
+            </ThemeProvider>
+          </PostHogProvider>
         </body>
       </html>
     </ClerkProvider>

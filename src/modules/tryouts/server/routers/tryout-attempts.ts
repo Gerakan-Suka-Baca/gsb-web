@@ -22,7 +22,7 @@ const eventSchema = z.object({
   clientTs: z.number(),
 });
 
-const SUBTEST_QUERY_LIMIT = 200;
+const SUBTEST_QUERY_LIMIT = 1000;
 
 type TryoutWindowDoc = Pick<Tryout, "id" | "dateOpen" | "dateClose">;
 
@@ -121,8 +121,9 @@ const getSubtestDurationSeconds = async (
 
   const docs = Array.isArray(result.docs) ? result.docs : [];
   const target = docs[subtestIndex];
-  const durationMinutes = typeof target?.duration === "number" ? target.duration : 0;
-  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return 0;
+  // Safety: If duration is missing, default to 20 minutes to prevent instant submission
+  const durationMinutes = typeof target?.duration === "number" ? target.duration : 20;
+  if (!Number.isFinite(durationMinutes) || durationMinutes <= 0) return 20 * 60;
   return Math.max(0, Math.round(durationMinutes * 60));
 };
 
@@ -368,10 +369,23 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           input.currentSubtest !== undefined && nextSubtest !== attemptSubtest,
       });
 
-      await payload.update({
-        collection: "tryout-attempts",
-        id: input.attemptId,
-        data: {
+      const subtestsResult = await payload.find({
+        collection: "questions",
+        where: { tryout: { equals: tryoutId } },
+        limit: SUBTEST_QUERY_LIMIT,
+        sort: "createdAt",
+        depth: 2,
+      });
+      const subtests = (subtestsResult.docs as unknown as Question[]) || [];
+      const results = calculateSubmissionResults(subtests, input.answers);
+      
+      // Ensure we don't overwrite existing results with empty ones if calculation fails transiently
+      // unless it's a genuine empty state
+      const hasAnswers = Object.keys(input.answers).length > 0;
+      const calculatedResultsCount = results.questionResults.length;
+      
+      // Force update questionResults to ensure durability
+      const updateData: any = {
           answers: input.answers,
           flags: input.flags,
           currentSubtest: nextSubtest,
@@ -385,7 +399,19 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           ...(input.currentQuestionIndex !== undefined && {
             currentQuestionIndex: input.currentQuestionIndex,
           }),
-        },
+      };
+
+      if (calculatedResultsCount > 0 || !hasAnswers) {
+         updateData.questionResults = results.questionResults;
+         updateData.score = results.score;
+         updateData.correctAnswersCount = results.correctCount;
+         updateData.totalQuestionsCount = results.totalQuestions;
+      }
+
+      await payload.update({
+        collection: "tryout-attempts",
+        id: input.attemptId,
+        data: updateData,
       });
       return {
         success: true,
@@ -485,10 +511,20 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         input.batchId,
       ].slice(-MAX_PROCESSED_BATCHES);
 
-      await payload.update({
-        collection: "tryout-attempts",
-        id: input.attemptId,
-        data: {
+      const subtestsResult = await payload.find({
+        collection: "questions",
+        where: { tryout: { equals: tryoutId } },
+        limit: SUBTEST_QUERY_LIMIT,
+        sort: "createdAt",
+        depth: 2,
+      });
+      const subtests = (subtestsResult.docs as unknown as Question[]) || [];
+      const results = calculateSubmissionResults(subtests, nextAnswers);
+
+      const hasAnswers = Object.keys(nextAnswers).length > 0;
+      const calculatedResultsCount = results.questionResults.length;
+
+      const updateData: any = {
           answers: nextAnswers,
           flags: nextFlags,
           processedBatchIds: nextProcessed,
@@ -500,7 +536,19 @@ export const tryoutAttemptsRouter = createTRPCRouter({
           ...(input.currentQuestionIndex !== undefined && {
             currentQuestionIndex: input.currentQuestionIndex,
           }),
-        },
+      };
+
+      if (calculatedResultsCount > 0 || !hasAnswers) {
+         updateData.questionResults = results.questionResults;
+         updateData.score = results.score;
+         updateData.correctAnswersCount = results.correctCount;
+         updateData.totalQuestionsCount = results.totalQuestions;
+      }
+
+      await payload.update({
+        collection: "tryout-attempts",
+        id: input.attemptId,
+        data: updateData,
       });
 
       return {
@@ -547,15 +595,19 @@ export const tryoutAttemptsRouter = createTRPCRouter({
         now
       );
 
-      const tryoutRecord = tryout as unknown as Record<string, unknown>;
-      const subtests = Array.isArray(tryoutRecord.questions)
-        ? (tryoutRecord.questions as Question[])
-        : [];
+      const subtestsResult = await payload.find({
+        collection: "questions",
+        where: { tryout: { equals: tryoutId } },
+        limit: SUBTEST_QUERY_LIMIT,
+        sort: "createdAt",
+        depth: 2,
+      });
+      const subtests = (subtestsResult.docs as unknown as Question[]) || [];
 
-      if (!Array.isArray(subtests)) {
+      if (subtests.length === 0) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Tryout data invalid: questions not populated",
+          message: "Tryout data invalid: questions not found",
         });
       }
 
