@@ -88,6 +88,10 @@ export const SignInView = () => {
                     }}
                   />
                 </div>
+
+                <div className="text-center text-xs text-muted-foreground">
+                    Dengan masuk, Anda menyetujui <Link href="/legal/privacy-policy" className="text-gsb-orange hover:text-gsb-orange/80">Privacy Policy</Link> dan <Link href="/legal/tos" className="text-gsb-orange hover:text-gsb-orange/80">Terms of Service</Link>.
+                </div>
             </div>
         </div>
     </div>

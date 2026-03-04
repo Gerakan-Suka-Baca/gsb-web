@@ -93,7 +93,7 @@ export const SignUpView = () => {
             </div>
 
             <div className="mt-6 text-center text-xs text-muted-foreground">
-                Dengan mendaftar, Anda menyetujui Syarat & Ketentuan GSB.
+                Dengan mendaftar, Anda menyetujui <Link href="/legal/privacy-policy" className="text-gsb-orange hover:text-gsb-orange/80">Privacy Policy</Link> dan <Link href="/legal/tos" className="text-gsb-orange hover:text-gsb-orange/80">Terms of Service</Link>.
             </div>
         </div>
       </div>
