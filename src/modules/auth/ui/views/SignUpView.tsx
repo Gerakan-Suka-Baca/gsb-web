@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SignUp } from "@clerk/nextjs";
 import { ArrowLeft } from "lucide-react";
 import { dark } from "@clerk/themes";
@@ -9,7 +9,12 @@ import { useTheme } from "next-themes";
 
 export const SignUpView = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { resolvedTheme } = useTheme();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/complete-profile";
+  const signInUrl = callbackUrl
+    ? `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : "/sign-in";
 
   return (
     <div className="min-h-screen w-full bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -58,6 +63,9 @@ export const SignUpView = () => {
 
             <div className="flex justify-center">
               <SignUp
+                forceRedirectUrl={callbackUrl || undefined}
+                fallbackRedirectUrl="/complete-profile"
+                signInUrl={signInUrl}
                 appearance={{
                   baseTheme: resolvedTheme === "dark" ? dark : undefined,
                   elements: {
@@ -79,22 +87,13 @@ export const SignUpView = () => {
                     dividerLine: "bg-border",
                     dividerText: "text-muted-foreground",
                     identityPreviewEditButton: "text-gsb-orange",
-                    footer: "hidden",
                   },
                 }}
-                fallbackRedirectUrl="/complete-profile"
               />
             </div>
 
             <div className="mt-6 text-center text-xs text-muted-foreground">
                 Dengan mendaftar, Anda menyetujui Syarat & Ketentuan GSB.
-            </div>
-
-            <div className="mt-6 text-center text-sm">
-                <span className="text-muted-foreground">Sudah punya akun? </span>
-                <Link href="/sign-in" className="font-bold text-responsive-orange hover:opacity-90 transition-opacity">
-                    Masuk di sini
-                </Link>
             </div>
         </div>
       </div>

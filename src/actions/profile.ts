@@ -9,11 +9,12 @@ interface UpdateProfileInput {
   fullName: string;
   whatsapp: string;
   schoolOrigin: string;
+  schoolType: "SMA" | "SMK";
   grade: "10" | "11" | "12" | "gap_year";
   targetPTN: string;
   targetMajor: string;
-  targetPTN2?: string;
-  targetMajor2?: string;
+  targetPTN2: string;
+  targetMajor2: string;
   targetPTN3?: string;
   targetMajor3?: string;
   dateOfBirth?: Date;
@@ -53,18 +54,24 @@ export const updateProfile = async (data: UpdateProfileInput) => {
         }
     }
 
+    const normalizeOptional = (value?: string) => {
+      const trimmed = value?.trim() ?? "";
+      return trimmed.length > 0 ? trimmed : undefined;
+    };
+
     const updateData: Record<string, unknown> = {
       username: data.username,
       fullName: data.fullName,
-      whatsapp: data.whatsapp,
+      whatsapp: data.whatsapp.replace(/\D/g, ""),
       schoolOrigin: data.schoolOrigin,
+      schoolType: data.schoolType,
       grade: data.grade,
-      targetPTN: data.targetPTN,
-      targetMajor: data.targetMajor,
-      targetPTN2: data.targetPTN2,
-      targetMajor2: data.targetMajor2,
-      targetPTN3: data.targetPTN3,
-      targetMajor3: data.targetMajor3,
+      targetPTN: data.targetPTN.trim(),
+      targetMajor: data.targetMajor.trim(),
+      targetPTN2: data.targetPTN2.trim(),
+      targetMajor2: data.targetMajor2.trim(),
+      targetPTN3: normalizeOptional(data.targetPTN3),
+      targetMajor3: normalizeOptional(data.targetMajor3),
       dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth).toISOString() : null,
     };
 

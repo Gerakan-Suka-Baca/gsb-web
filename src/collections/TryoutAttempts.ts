@@ -1,6 +1,11 @@
 import type { CollectionConfig } from "payload";
 import { isAdminOrAbove } from "./accessHelpers";
 
+const resolveAccountType = () =>
+  (process.env.APP_ENV || "").toLowerCase() === "development"
+    ? "development"
+    : "production";
+
 export const TryoutAttempts: CollectionConfig = {
   slug: "tryout-attempts",
   access: {
@@ -30,28 +35,29 @@ export const TryoutAttempts: CollectionConfig = {
       index: true,
     },
     {
+      name: "accountType",
+      type: "select",
+      options: [
+        { label: "Production", value: "production" },
+        { label: "Development", value: "development" },
+      ],
+      admin: {
+        position: "sidebar",
+        readOnly: true,
+      },
+      index: true,
+    },
+    {
       name: "answers",
       type: "json",
       defaultValue: {},
+      admin: { hidden: true },
     },
     {
       name: "flags",
       type: "json",
       defaultValue: {},
-    },
-    {
-      name: "questionResults",
-      type: "array",
-      label: "Hasil Per Soal",
-      admin: { initCollapsed: true },
-      fields: [
-        { name: "subtestId", type: "text", required: true },
-        { name: "questionId", type: "text", required: true },
-        { name: "questionNumber", type: "number", required: true },
-        { name: "selectedLetter", type: "text" },
-        { name: "correctLetter", type: "text" },
-        { name: "isCorrect", type: "checkbox", defaultValue: false },
-      ],
+      admin: { hidden: true },
     },
     {
       name: "status",
@@ -203,38 +209,42 @@ export const TryoutAttempts: CollectionConfig = {
       name: "processedBatchIds",
       type: "json",
       defaultValue: [],
+      admin: { hidden: true },
     },
     {
       name: "retakeProcessedBatchIds",
       type: "json",
       defaultValue: [],
+      admin: { hidden: true },
     },
     {
       name: "eventRevisions",
       type: "json",
       defaultValue: {},
-      admin: { description: "Latest applied revision per event key." },
+      admin: { description: "Latest applied revision per event key.", hidden: true },
     },
     {
       name: "retakeEventRevisions",
       type: "json",
       defaultValue: {},
+      admin: { hidden: true },
     },
     {
       name: "subtestStates",
       type: "json",
       defaultValue: {},
-      admin: { description: "Subtest state map (idle/running/finished)." },
+      admin: { description: "Subtest state map (idle/running/finished).", hidden: true },
     },
     {
       name: "retakeSubtestStates",
       type: "json",
       defaultValue: {},
+      admin: { hidden: true },
     },
     {
       name: "subtestSnapshots",
       type: "array",
-      admin: { initCollapsed: true },
+      admin: { initCollapsed: true, hidden: true },
       fields: [
         { name: "subtestId", type: "text", required: true },
         { name: "capturedAt", type: "date", required: true },
@@ -246,7 +256,7 @@ export const TryoutAttempts: CollectionConfig = {
     {
       name: "retakeSubtestSnapshots",
       type: "array",
-      admin: { initCollapsed: true },
+      admin: { initCollapsed: true, hidden: true },
       fields: [
         { name: "subtestId", type: "text", required: true },
         { name: "capturedAt", type: "date", required: true },
@@ -271,26 +281,64 @@ export const TryoutAttempts: CollectionConfig = {
       name: "subtestDurations",
       type: "json",
       defaultValue: {},
-      admin: { description: "Elapsed time (seconds) per subtest, mapped by subtestId." }
+      admin: { description: "Elapsed time (seconds) per subtest, mapped by subtestId.", hidden: true }
     },
     {
       name: "retakeSubtestDurations",
       type: "json",
       defaultValue: {},
+      admin: { hidden: true },
     },
     {
       name: "retakeAnswers",
       type: "json",
       defaultValue: {},
+      admin: { hidden: true },
     },
     {
       name: "retakeFlags",
       type: "json",
       defaultValue: {},
+      admin: { hidden: true },
     },
     {
       name: "retakeSecondsRemaining",
       type: "number",
     },
+    {
+      name: "questionResults",
+      type: "array",
+      label: "Hasil Per Soal",
+      admin: { initCollapsed: true },
+      fields: [
+        { name: "subtestId", type: "text", required: true },
+        { name: "questionId", type: "text", required: true },
+        { name: "questionNumber", type: "number", required: true },
+        { name: "selectedLetter", type: "text" },
+        { name: "correctLetter", type: "text" },
+        { name: "isCorrect", type: "checkbox", defaultValue: false },
+      ],
+    },
   ],
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === "create" && data.user) {
+          try {
+            const userId = typeof data.user === "object" ? data.user.id : data.user;
+            const user = await req.payload.findByID({
+              collection: "users",
+              id: userId,
+            });
+            if (user) {
+              data.accountType = user.accountType || resolveAccountType();
+            }
+          } catch (error) {
+            console.error("Error setting accountType for attempt:", error);
+          }
+        }
+        return data;
+      },
+    ],
+  },
 };

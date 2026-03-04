@@ -118,8 +118,9 @@ export function HeroSection() {
                           fill
                           priority={index === 0}
                           fetchPriority={index === 0 ? 'high' : 'auto'}
-                          quality={60}
-                          sizes="(max-width: 1024px) 100vw, 50vw"
+                          loading={index === 0 ? 'eager' : 'lazy'}
+                          quality={55}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 60vw, 50vw"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/30 to-transparent" />
                       </div>

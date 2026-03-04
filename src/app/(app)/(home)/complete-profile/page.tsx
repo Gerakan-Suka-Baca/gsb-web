@@ -10,7 +10,7 @@ export const metadata = {
 
 export default async function CompleteProfilePage() {
   const [{ userId }, payload] = await Promise.all([auth(), getPayloadCached()]);
-  if (!userId) redirect("/sign-in");
+  if (!userId) redirect(`/sign-in?callbackUrl=${encodeURIComponent("/complete-profile")}`);
   const existingUsers = await payload.find({
     collection: "users",
     where: { clerkUserId: { equals: userId } },

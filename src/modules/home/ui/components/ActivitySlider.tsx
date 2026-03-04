@@ -99,6 +99,8 @@ export function ActivitySlider() {
                                                     alt={item.title}
                                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                     fill
+                                                    sizes="(max-width: 768px) 40vw, (max-width: 1024px) 30vw, 20vw"
+                                                    quality={60}
                                                 />
                                             </div>
                                             <div className="w-2/3 p-4 flex flex-col justify-center">
@@ -138,7 +140,7 @@ export function ActivitySlider() {
                                             className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-500 scale-105 group-hover:scale-100"
                                             fill
                                             sizes="(max-width: 1024px) 100vw, 50vw"
-                                            unoptimized
+                                            quality={60}
                                         />
                                     ) : (
                                         <Image
@@ -146,6 +148,8 @@ export function ActivitySlider() {
                                             alt={podcastTitle}
                                             className="w-full h-full object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-500 scale-105 group-hover:scale-100"
                                             fill
+                                            sizes="(max-width: 1024px) 100vw, 50vw"
+                                            quality={60}
                                         />
                                     )}
                                     <div className="absolute inset-0 bg-linear-to-t from-gsb-maroon via-gsb-maroon/80 to-transparent" />

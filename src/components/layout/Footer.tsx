@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { Mail, MapPin, Phone, Instagram, Linkedin, Youtube, Twitter, Music, Video } from "lucide-react";
 import Image from "next/image";
@@ -15,7 +13,7 @@ export function Footer() {
   ];
 
   return (
-    <footer id="kontak" className="bg-[#1a1a1a] text-white min-h-[280px]">
+    <footer id="kontak" className="bg-[#1a1a1a] text-white min-h-[320px]">
       <div className="container mx-auto px-4 lg:px-6 py-5 md:py-8">
 
         {/* Main grid */}

@@ -187,19 +187,27 @@ export const authRouter = createTRPCRouter({
         user = created;
       }
 
+      const normalizeOptional = (value?: string | null) => {
+        const trimmed = value?.trim() ?? "";
+        return trimmed.length > 0 ? trimmed : undefined;
+      };
+
       await ctx.db.update({
         collection: "users",
         id: user.id,
         data: {
           fullName: input.fullName,
-          whatsapp: input.whatsapp,
+          whatsapp: input.whatsapp.replace(/\D/g, ""),
           dateOfBirth: input.dateOfBirth.toISOString(),
           schoolOrigin: input.schoolOrigin,
+          schoolType: input.schoolType,
           grade: input.grade,
-          targetPTN: input.targetPTN,
-          targetMajor: input.targetMajor,
-          targetPTN2: input.targetPTN2 ?? undefined,
-          targetMajor2: input.targetMajor2 ?? undefined,
+          targetPTN: input.targetPTN.trim(),
+          targetMajor: input.targetMajor.trim(),
+          targetPTN2: input.targetPTN2.trim(),
+          targetMajor2: input.targetMajor2.trim(),
+          targetPTN3: normalizeOptional(input.targetPTN3),
+          targetMajor3: normalizeOptional(input.targetMajor3),
           profileCompleted: true,
         },
       });

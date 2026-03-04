@@ -70,7 +70,7 @@ export const UserMenu = ({ mobile, onClose }: UserMenuProps) => {
   }
 
   const dbUser = session?.user;
-  const displayName = dbUser?.username || clerkUser.username || clerkUser.firstName || "User";
+  const displayName = dbUser?.username || clerkUser.username || clerkUser.firstName || "Pengguna";
   const email = clerkUser.emailAddresses[0]?.emailAddress || "";
   const initials = displayName.slice(0, 2).toUpperCase();
   const avatarUrl = clerkUser.imageUrl;

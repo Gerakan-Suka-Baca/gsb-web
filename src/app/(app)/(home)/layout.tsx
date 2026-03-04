@@ -91,12 +91,13 @@ export default async function HomeLayout({
     // (/complete-profile is inside this layout's route group)
     if (user && !user.profileCompleted) {
       const headersList = await headers();
-      const pathname =
+      const rawPath =
         headersList.get("x-nextjs-page") ||
         headersList.get("x-matched-path") ||
         headersList.get("x-invoke-path") ||
         "";
-      if (!pathname.includes("complete-profile")) {
+      const pathname = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+      if (rawPath && !pathname.includes("complete-profile")) {
         redirect("/complete-profile");
       }
     }

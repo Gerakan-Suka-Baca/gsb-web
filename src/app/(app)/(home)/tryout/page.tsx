@@ -1,5 +1,6 @@
 import { TryoutListView } from "@/modules/tryouts/ui/views/TryoutListView";
 import { getQueryClient, trpc } from "@/trpc/server";
+import { getPayloadCached } from "@/lib/payload";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
@@ -39,6 +40,17 @@ const Page = async () => {
 
   if (!userId) {
     redirect(`/sign-in?callbackUrl=${encodeURIComponent("/tryout")}`);
+  }
+
+  const payload = await getPayloadCached();
+  const { docs: users } = await payload.find({
+    collection: "users",
+    where: { clerkUserId: { equals: userId } },
+    limit: 1,
+  });
+  const user = users[0];
+  if (!user || !user.profileCompleted) {
+    redirect("/complete-profile");
   }
 
   void queryClient.prefetchQuery(trpc.tryouts.getMany.queryOptions({}));

@@ -52,18 +52,34 @@ const profileSchema = z.object({
     .string()
     .min(3, "Minimal 3 karakter")
     .max(63, "Maksimal 63 karakter")
-    .regex(/^[^\s]+$/, "Username tidak boleh mengandung spasi.")
-    .refine((val) => val.trim().length === val.length, "Username tidak boleh diawali atau diakhiri spasi"),
+    .regex(/^[a-zA-Z0-9_.]+$/, "Hanya huruf, angka, titik, dan underscore")
+    .refine(
+      (val) => val.trim().length === val.length,
+      "Username tidak boleh diawali atau diakhiri spasi"
+    ),
+  whatsapp: z
+    .string()
+    .min(10, "Nomor WhatsApp tidak valid")
+    .max(24, "Nomor WhatsApp tidak valid")
+    .regex(/^\d+$/, "Nomor WhatsApp hanya boleh angka"),
   fullName: z.string().min(1, "Nama Lengkap wajib diisi"),
-  whatsapp: z.string().min(10, "Nomor WhatsApp tidak valid"),
   schoolOrigin: z.string().min(1, "Asal Sekolah wajib diisi"),
+  schoolType: z.enum(["SMA", "SMK"], { message: "Pilih tipe sekolah" }),
   grade: z.enum(["10", "11", "12", "gap_year"]),
-  targetPTN: z.string().min(3, "Minimal 3 karakter"),
-  targetMajor: z.string().min(3, "Minimal 3 karakter"),
-  targetPTN2: z.string().optional(),
-  targetMajor2: z.string().optional(),
-  targetPTN3: z.string().optional(),
-  targetMajor3: z.string().optional(),
+  targetPTN: z.string().min(3, "Minimal 3 karakter").max(200, "Maksimal 200 karakter"),
+  targetMajor: z.string().min(3, "Minimal 3 karakter").max(200, "Maksimal 200 karakter"),
+  targetPTN2: z.string().min(3, "Minimal 3 karakter").max(200, "Maksimal 200 karakter"),
+  targetMajor2: z.string().min(3, "Minimal 3 karakter").max(200, "Maksimal 200 karakter"),
+  targetPTN3: z
+    .string()
+    .max(200, "Maksimal 200 karakter")
+    .refine((val) => val.length === 0 || val.length >= 3, "Minimal 3 karakter")
+    .optional(),
+  targetMajor3: z
+    .string()
+    .max(200, "Maksimal 200 karakter")
+    .refine((val) => val.length === 0 || val.length >= 3, "Minimal 3 karakter")
+    .optional(),
   dateOfBirth: z.date().optional(),
 });
 
@@ -72,6 +88,7 @@ type ProfileUser = PayloadUser & {
   targetMajor2?: string | null;
   targetPTN3?: string | null;
   targetMajor3?: string | null;
+  schoolType?: "SMA" | "SMK" | null;
   dateOfBirth?: string | Date | null;
 };
 
@@ -90,6 +107,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
       fullName: user.fullName || "",
       whatsapp: user.whatsapp || "",
       schoolOrigin: user.schoolOrigin || "",
+      schoolType: user.schoolType || undefined,
       grade: (user.grade as "10" | "11" | "12" | "gap_year") || "12",
       targetPTN: user.targetPTN || "",
       targetMajor: user.targetMajor || "",
@@ -178,7 +196,13 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                         <FormItem>
                       <FormLabel>Nomor WhatsApp <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input
+                              inputMode="numeric"
+                              value={field.value}
+                              onChange={(e) =>
+                                field.onChange(e.target.value.replace(/\D/g, ""))
+                              }
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -269,6 +293,27 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                     />
                     <FormField
                       control={form.control}
+                      name="schoolType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipe Sekolah <span className="text-destructive">*</span></FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih tipe sekolah" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="SMA">SMA</SelectItem>
+                              <SelectItem value="SMK">SMK</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
                       name="grade"
                       render={({ field }) => (
                         <FormItem>
@@ -334,7 +379,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       name="targetPTN2"
                       render={({ field }) => (
                         <FormItem className="min-h-[120px]">
-                          <FormLabel>Target PTN (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
+                          <FormLabel>Target PTN (Pilihan 2) <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <UniversitySelect 
                                 value={field.value || ""} 
@@ -350,7 +395,7 @@ export function ProfileEditModal({ user }: ProfileEditModalProps) {
                       name="targetMajor2"
                       render={({ field }) => (
                         <FormItem className="min-h-[120px]">
-                          <FormLabel>Target Jurusan (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
+                          <FormLabel>Target Jurusan (Pilihan 2) <span className="text-destructive">*</span></FormLabel>
                           <FormControl>
                             <MajorSelect 
                               value={field.value || ""} 

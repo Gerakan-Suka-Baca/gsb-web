@@ -2,6 +2,7 @@ import z from "zod";
 import { TRPCError } from "@trpc/server";
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { Question } from "@/payload-types";
+import { redisGetJson, redisSetJson } from "@/lib/redis";
 
 const extractId = (val: unknown): string | null => {
   if (!val) return null;
@@ -70,8 +71,11 @@ type CacheEntry<T> = {
 };
 
 const cacheStore = new Map<string, CacheEntry<unknown>>();
+const CACHE_PREFIX = "gsb:cache:";
 
-const getCacheValue = <T,>(key: string): T | null => {
+const getCacheValue = async <T,>(key: string): Promise<T | null> => {
+  const redisValue = await redisGetJson<T>(`${CACHE_PREFIX}${key}`);
+  if (redisValue !== null) return redisValue;
   const hit = cacheStore.get(key);
   if (!hit) return null;
   if (hit.expires < Date.now()) {
@@ -81,8 +85,10 @@ const getCacheValue = <T,>(key: string): T | null => {
   return hit.value as T;
 };
 
-const setCacheValue = <T,>(key: string, value: T, ttlMs: number) => {
+const setCacheValue = async <T,>(key: string, value: T, ttlMs: number) => {
   cacheStore.set(key, { value, expires: Date.now() + ttlMs });
+  const ttlSeconds = Math.max(1, Math.ceil(ttlMs / 1000));
+  await redisSetJson(`${CACHE_PREFIX}${key}`, value, ttlSeconds);
 };
 
 const stripAnswerKeyFromSubtest = (subtest: Question): Question => {
@@ -212,13 +218,19 @@ export const tryoutsRouter = createTRPCRouter({
       if (!input.subtestId || input.subtestId.trim().length === 0) {
         return null;
       }
+      const cachedSubtest = await getCacheValue<Question>(
+        `subtest:${input.subtestId}`
+      );
+      if (cachedSubtest) return cachedSubtest;
       const subtest = await ctx.db.findByID({
         collection: "questions",
         id: input.subtestId,
         depth: 2,
       });
 
-      return stripAnswerKeyFromSubtest(subtest as Question);
+      const payload = stripAnswerKeyFromSubtest(subtest as Question);
+      await setCacheValue(`subtest:${input.subtestId}`, payload, 60 * 60 * 1000);
+      return payload;
     }),
   getMany: baseProcedure
     .input(
@@ -352,7 +364,7 @@ export const tryoutsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session?.user?.id;
       if (!userId) return null;
-      const cachedTarget = getCacheValue<{
+      const cachedTarget = await getCacheValue<{
         finalScore: number;
         choice1: unknown;
         choice2: unknown;
@@ -470,7 +482,7 @@ export const tryoutsRouter = createTRPCRouter({
         choice2: choice2 || { found: false, targetPTN: userData.targetPTN2, targetMajor: userData.targetMajor2 },
         choice3: choice3 || { found: false, targetPTN: userData.targetPTN3, targetMajor: userData.targetMajor3 },
       };
-      setCacheValue(`target:${userId}:${input.tryoutId}`, payload, 3 * 60 * 1000);
+      await setCacheValue(`target:${userId}:${input.tryoutId}`, payload, 3 * 60 * 1000);
       return payload;
     }),
 
@@ -479,7 +491,7 @@ export const tryoutsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session?.user?.id;
       if (!userId) return null;
-      const cachedRecs = getCacheValue<{ finalScore: number; recommendations: unknown[] }>(
+      const cachedRecs = await getCacheValue<{ finalScore: number; recommendations: unknown[] }>(
         `recs:${userId}:${input.tryoutId}`
       );
       if (cachedRecs) return cachedRecs;
@@ -567,14 +579,14 @@ export const tryoutsRouter = createTRPCRouter({
       recs.sort((a, b) => b.chance - a.chance);
 
       const payload = { finalScore, recommendations: recs.slice(0, 20) };
-      setCacheValue(`recs:${userId}:${input.tryoutId}`, payload, 5 * 60 * 1000);
+      await setCacheValue(`recs:${userId}:${input.tryoutId}`, payload, 5 * 60 * 1000);
       return payload;
     }),
 
   getProgramStudyDetail: protectedProcedure
     .input(z.object({ programId: z.string(), tryoutId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const cachedProgram = getCacheValue<Record<string, unknown>>(
+      const cachedProgram = await getCacheValue<Record<string, unknown>>(
         `program:${input.programId}:${input.tryoutId ?? ""}`
       );
       if (cachedProgram) return cachedProgram;
@@ -662,7 +674,7 @@ export const tryoutsRouter = createTRPCRouter({
           image: imageUrl,
         },
       };
-      setCacheValue(`program:${input.programId}:${input.tryoutId ?? ""}`, payload, 10 * 60 * 1000);
+      await setCacheValue(`program:${input.programId}:${input.tryoutId ?? ""}`, payload, 10 * 60 * 1000);
       return payload;
     }),
 });

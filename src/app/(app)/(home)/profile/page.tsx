@@ -36,6 +36,9 @@ export default async function ProfilePage() {
   }
 
   const user = existingUsers.docs[0] as ProfileUser;
+  if (!user.profileCompleted) {
+    redirect("/complete-profile");
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
