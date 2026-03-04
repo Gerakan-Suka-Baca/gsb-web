@@ -11,7 +11,7 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
         api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
         person_profiles: "identified_only",
-        capture_pageview: false, // We use PostHogPageView to handle this manually in Next.js
+        capture_pageview: false, 
         capture_pageleave: true,
       });
     } else {

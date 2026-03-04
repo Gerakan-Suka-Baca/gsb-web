@@ -66,7 +66,7 @@ export const RichText = React.memo(({
   if (!content?.root?.children) return null;
 
   return (
-    <div className={cn("prose dark:prose-invert max-w-none text-foreground break-words", className)}>
+    <div className={cn("prose dark:prose-invert max-w-none text-foreground break-words prose-headings:scroll-mt-24", className)}>
       {serialize(content.root.children)}
     </div>
   );
@@ -109,7 +109,7 @@ function serialize(children: Node[]): React.ReactNode {
 
     // Text Nodes
     if (node.type === 'text') {
-      let text = <span key={i} dangerouslySetInnerHTML={{ __html: escapeHTML(node.text || "") }} />;
+      let text = <span key={i} className="whitespace-pre-wrap">{node.text || ""}</span>;
       
       const format = node.format;
       if (typeof format === 'number') {
@@ -163,33 +163,33 @@ function serialize(children: Node[]): React.ReactNode {
              return <br key={i} />;
          }
          if (hasBlockChildren(node.children)) {
-             return <div key={i} className={classes}>{serialize(node.children || [])}</div>;
+             return <div key={i} className={cn("my-4 leading-8", classes)}>{serialize(node.children || [])}</div>;
          }
-         return <p key={i} className={classes}>{serialize(node.children || [])}</p>;
+         return <p key={i} className={cn("my-4 leading-8 whitespace-pre-wrap", classes)}>{serialize(node.children || [])}</p>;
       case 'h1':
-        return <h1 key={i} className={classes}>{serialize(node.children || [])}</h1>;
+        return <h1 key={i} className={cn("mt-10 mb-4 text-4xl font-extrabold", classes)}>{serialize(node.children || [])}</h1>;
       case 'h2':
-        return <h2 key={i} className={classes}>{serialize(node.children || [])}</h2>;
+        return <h2 key={i} className={cn("mt-8 mb-3 text-3xl font-bold", classes)}>{serialize(node.children || [])}</h2>;
       case 'h3':
-        return <h3 key={i} className={classes}>{serialize(node.children || [])}</h3>;
+        return <h3 key={i} className={cn("mt-6 mb-3 text-2xl font-semibold", classes)}>{serialize(node.children || [])}</h3>;
       case 'h4':
-        return <h4 key={i} className={classes}>{serialize(node.children || [])}</h4>;
+        return <h4 key={i} className={cn("mt-5 mb-2 text-xl font-semibold", classes)}>{serialize(node.children || [])}</h4>;
       case 'h5':
-        return <h5 key={i} className={classes}>{serialize(node.children || [])}</h5>;
+        return <h5 key={i} className={cn("mt-4 mb-2 text-lg font-semibold", classes)}>{serialize(node.children || [])}</h5>;
       case 'h6':
-        return <h6 key={i} className={classes}>{serialize(node.children || [])}</h6>;
+        return <h6 key={i} className={cn("mt-4 mb-2 text-base font-semibold", classes)}>{serialize(node.children || [])}</h6>;
       case 'quote':
-        return <blockquote key={i} className={classes}>{serialize(node.children || [])}</blockquote>;
+        return <blockquote key={i} className={cn("my-5 border-l-4 border-gsb-orange pl-4 italic text-muted-foreground", classes)}>{serialize(node.children || [])}</blockquote>;
       case 'ul':
-        return <ul key={i} className={cn("list-disc pl-5", classes)}>{serialize(node.children || [])}</ul>;
+        return <ul key={i} className={cn("my-4 list-disc pl-6 space-y-2", classes)}>{serialize(node.children || [])}</ul>;
       case 'ol':
-        return <ol key={i} className={cn("list-decimal pl-5", classes)}>{serialize(node.children || [])}</ol>;
+        return <ol key={i} className={cn("my-4 list-decimal pl-6 space-y-2", classes)}>{serialize(node.children || [])}</ol>;
       case 'li':
-        return <li key={i} className={classes}>{serialize(node.children || [])}</li>;
+        return <li key={i} className={cn("leading-8", classes)}>{serialize(node.children || [])}</li>;
       case 'link':
         return (
           <a
-            href={escapeHTML(node.url || "")}
+            href={sanitizeUrl(node.url)}
             key={i}
             target={node.newTab ? '_blank' : undefined}
             rel={node.newTab ? 'noopener noreferrer' : undefined}
@@ -202,23 +202,17 @@ function serialize(children: Node[]): React.ReactNode {
       case 'linebreak':
         return <br key={i} />;
       case 'block':
-          return <div key={i}>{serialize(node.children || [])}</div>;
+          return <div key={i} className="my-4">{serialize(node.children || [])}</div>;
 
       default:
-        return <div key={i}>{serialize(node.children || [])}</div>;
+        return <div key={i} className="my-4">{serialize(node.children || [])}</div>;
     }
   });
 }
 
-const escapeHTML = (str: string) =>
-  str.replace(
-    /[&<>'"]/g,
-    (tag) =>
-      ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;',
-      }[tag] || tag)
-  );
+const sanitizeUrl = (url: unknown) => {
+  if (typeof url !== "string" || url.length === 0) return "#";
+  if (url.startsWith("/") || url.startsWith("#")) return url;
+  if (/^https?:\/\//i.test(url) || /^mailto:/i.test(url) || /^tel:/i.test(url)) return url;
+  return "#";
+};

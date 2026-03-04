@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { Mail, MapPin, Phone, Instagram, Linkedin, Youtube, Twitter, Music, Video } from "lucide-react";
 import Image from "next/image";
+import { getLegalPages } from "@/lib/legal-pages";
+import type { LegalPage } from "@/payload-types";
 
-export function Footer() {
+const legalTypes = ["privacy-policy", "tos", "disclaimer", "cookie-policy"] as const;
+
+export async function Footer() {
   const socialMedia = [
     { icon: Instagram, href: "https://www.instagram.com/komunitasgsb", label: "Instagram" },
     { icon: Linkedin, href: "https://www.linkedin.com/in/komunitas-gerakan-suka-baca-403605248/", label: "LinkedIn" },
@@ -11,6 +15,13 @@ export function Footer() {
     { icon: Music, href: "https://open.spotify.com/show/5uoOFClrYGurElVUN0MKZM", label: "Spotify" },
     { icon: Video, href: "https://www.tiktok.com/@komunitasgsb", label: "TikTok" },
   ];
+  const legalPages = await getLegalPages();
+
+  const legalSlugByType = legalTypes.reduce<Record<string, string>>((acc, type) => {
+    const match = legalPages.find((doc) => (doc as LegalPage).type === type) as LegalPage | undefined;
+    acc[type] = match?.slug || type;
+    return acc;
+  }, {});
 
   return (
     <footer id="kontak" className="bg-[#1a1a1a] text-white min-h-[320px]">
@@ -93,9 +104,11 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-white/10 pt-3 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs text-gray-400">
           <p>© 2026 Gerakan Suka Baca. Hak Cipta Dilindungi.</p>
-          <div className="flex gap-4">
-            <Link href="/privacy" aria-label="Kebijakan Privasi" className="hover:text-white transition-colors">Kebijakan Privasi</Link>
-            <Link href="/terms" aria-label="Syarat dan Ketentuan" className="hover:text-white transition-colors">Syarat dan Ketentuan</Link>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center">
+            <Link href={`/legal/${legalSlugByType["privacy-policy"]}`} aria-label="Privacy Policy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href={`/legal/${legalSlugByType.tos}`} aria-label="Terms of Service" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link href={`/legal/${legalSlugByType.disclaimer}`} aria-label="Disclaimer" className="hover:text-white transition-colors">Disclaimer</Link>
+            <Link href={`/legal/${legalSlugByType["cookie-policy"]}`} aria-label="Cookie Policy" className="hover:text-white transition-colors">Cookie Policy</Link>
           </div>
         </div>
       </div>

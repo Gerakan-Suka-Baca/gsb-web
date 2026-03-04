@@ -25,6 +25,9 @@ import { Universities } from './collections/Universities'
 import { UniversityPrograms } from './collections/UniversityPrograms'
 
 import { UniversityMedia } from './collections/UniversityMedia'
+import { Articles } from './collections/Articles'
+import { LegalPages } from './collections/LegalPages'
+import { ArticleLabels } from './collections/ArticleLabels'
 
 export default buildConfig({
   admin: {
@@ -47,6 +50,9 @@ export default buildConfig({
     TryoutExplanations,
     Universities,
     UniversityPrograms,
+    Articles,
+    ArticleLabels,
+    LegalPages,
   ],
   // @ts-expect-error: rateLimit type definition missing
   rateLimit: {

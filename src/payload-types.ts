@@ -79,6 +79,9 @@ export interface Config {
     'tryout-explanations': TryoutExplanation;
     universities: University;
     'university-programs': UniversityProgram;
+    articles: Article;
+    'article-labels': ArticleLabel;
+    'legal-pages': LegalPage;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -102,6 +105,9 @@ export interface Config {
     'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
     universities: UniversitiesSelect<false> | UniversitiesSelect<true>;
     'university-programs': UniversityProgramsSelect<false> | UniversityProgramsSelect<true>;
+    articles: ArticlesSelect<false> | ArticlesSelect<true>;
+    'article-labels': ArticleLabelsSelect<false> | ArticleLabelsSelect<true>;
+    'legal-pages': LegalPagesSelect<false> | LegalPagesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -800,6 +806,77 @@ export interface TryoutExplanation {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: string;
+  title: string;
+  slug?: string | null;
+  coverImage: string | Media;
+  excerpt?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  labels?: (string | ArticleLabel)[] | null;
+  authors?: (string | User)[] | null;
+  publishedDate?: string | null;
+  status?: ('draft' | 'published') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-labels".
+ */
+export interface ArticleLabel {
+  id: string;
+  name: string;
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal-pages".
+ */
+export interface LegalPage {
+  id: string;
+  title: string;
+  slug?: string | null;
+  type: 'tos' | 'privacy-policy' | 'cookie-policy' | 'disclaimer' | 'refund-policy';
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  lastUpdated?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -869,6 +946,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'university-programs';
         value: string | UniversityProgram;
+      } | null)
+    | ({
+        relationTo: 'articles';
+        value: string | Article;
+      } | null)
+    | ({
+        relationTo: 'article-labels';
+        value: string | ArticleLabel;
+      } | null)
+    | ({
+        relationTo: 'legal-pages';
+        value: string | LegalPage;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1240,6 +1329,46 @@ export interface UniversityProgramsSelect<T extends boolean = true> {
         id?: T;
       };
   legacyProgramId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles_select".
+ */
+export interface ArticlesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  coverImage?: T;
+  excerpt?: T;
+  content?: T;
+  labels?: T;
+  authors?: T;
+  publishedDate?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-labels_select".
+ */
+export interface ArticleLabelsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal-pages_select".
+ */
+export interface LegalPagesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  type?: T;
+  content?: T;
+  lastUpdated?: T;
   updatedAt?: T;
   createdAt?: T;
 }

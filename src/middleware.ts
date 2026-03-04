@@ -10,6 +10,8 @@ const isPublicRoute = createRouteMatcher([
   "/learning-path(.*)",
   "/universitas(.*)",
   "/program-studi(.*)",
+  "/legal(.*)",
+  "/blog(.*)",
   "/admin(.*)",
   "/api(.*)",
 ]);
@@ -19,8 +21,12 @@ export default clerkMiddleware(async (auth, request) => {
     const pathname = request.nextUrl.pathname;
     const search = request.nextUrl.search;
     const callbackUrl = `${pathname}${search}`;
+    const unauthenticatedUrl = new URL(
+      `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+      request.url
+    ).toString();
     await auth.protect({
-      unauthenticatedUrl: `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`,
+      unauthenticatedUrl,
     });
   }
 });
