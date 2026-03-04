@@ -25,7 +25,9 @@ export function MajorSelect({
   const [open, setOpen] = React.useState(false);
   const [inputValue, setInputValue] = React.useState("");
   const [debouncedValue] = useDebounce(inputValue, 500);
-  const [items, setItems] = React.useState<{ value: string; label: string }[]>([]);
+  const [items, setItems] = React.useState<
+    { id?: string; value: string; label: string }[]
+  >([]);
   const [loading, setLoading] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const listboxId = React.useId();
@@ -46,6 +48,7 @@ export function MajorSelect({
       try {
         const results = await searchMajors(debouncedValue, universityName);
         const options = (results as MajorResult[]).map((major) => ({
+          id: major.id,
           value: major.name,
           label: major.name,
         }));
@@ -142,7 +145,7 @@ export function MajorSelect({
                     className="w-full text-left px-3 py-2 text-sm rounded-md bg-muted/50 hover:bg-muted transition-colors flex items-center gap-2"
                   >
                     <span className="text-xs font-semibold text-gsb-orange">+</span>
-                    <span>Use &quot;<span className="font-medium">{inputValue.trim()}</span>&quot;</span>
+                    <span>Tulis Program Studimu: &quot;<span className="font-medium">{inputValue.trim()}</span>&quot;</span>
                   </button>
                 )}
               </div>
@@ -150,9 +153,9 @@ export function MajorSelect({
 
             {!loading && items.length > 0 && (
               <ul className="py-1" role="listbox" id={listboxId}>
-                {items.map((item) => (
+                {items.map((item, index) => (
                   <li
-                    key={item.value}
+                    key={item.id ?? `${item.value}-${index}`}
                     role="option"
                     aria-selected={value === item.value}
                     onClick={() => {

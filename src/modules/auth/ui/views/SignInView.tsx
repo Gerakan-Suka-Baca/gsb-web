@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SignIn } from "@clerk/nextjs";
 import { ArrowLeft } from "lucide-react";
 import { dark } from "@clerk/themes";
@@ -9,7 +9,12 @@ import { useTheme } from "next-themes";
 
 export const SignInView = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { resolvedTheme } = useTheme();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/tryout";
+  const signUpUrl = callbackUrl
+    ? `/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : "/sign-up";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full">
@@ -54,6 +59,9 @@ export const SignInView = () => {
 
                 <div className="flex justify-center">
                   <SignIn
+                    forceRedirectUrl={callbackUrl || undefined}
+                    fallbackRedirectUrl="/tryout"
+                    signUpUrl={signUpUrl}
                     appearance={{
                       baseTheme: resolvedTheme === "dark" ? dark : undefined,
                       elements: {
@@ -76,18 +84,9 @@ export const SignInView = () => {
                         dividerText: "text-muted-foreground",
                         identityPreviewEditButton: "text-gsb-orange",
                         formFieldAction: "text-gsb-orange font-semibold hover:text-gsb-orange/80",
-                        footer: "hidden",
                       },
                     }}
-                    fallbackRedirectUrl="/tryout"
                   />
-                </div>
-
-                <div className="text-center text-sm">
-                    <span className="text-muted-foreground">Belum punya akun? </span>
-                    <Link href="/sign-up" className="font-bold text-responsive-orange hover:opacity-90 transition-opacity">
-                        Daftar Gratis
-                    </Link>
                 </div>
             </div>
         </div>

@@ -29,7 +29,11 @@ export interface TryoutExamProps {
 }
 
 type StartAttemptInput = { tryoutId: string };
-type SubmitAttemptInput = { attemptId: string; answers: Record<string, AnswerMap> };
+type SubmitAttemptInput = {
+  attemptId: string;
+  answers: Record<string, AnswerMap>;
+  submitMode?: "manual" | "timeout";
+};
 
 interface TryoutWithTests extends Tryout {
   tests?: Question[] | null;
@@ -201,9 +205,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     }, [dispatch, posthog, tryout.id, state.attemptId, currentSubtestId]),
   });
 
-  const { isLoading: isAttemptLoading } = useQuery(
-    trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId: tryout.id })
-  );
+  const isAttemptLoading = false;
 
 
   const startAttemptMutation = useMutation<TryoutAttempt, TRPCClientErrorLike<AppRouter>, StartAttemptInput>(
@@ -312,7 +314,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const handleStart = () => startAttemptMutation.mutate({ tryoutId: tryout.id });
 
-  const handleSubtestFinish = useCallback(async () => {
+  const handleSubtestFinish = useCallback(async (submitMode: "manual" | "timeout" = "manual") => {
     if (submitAttemptMutation.isPending) return;
     dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: false });
 
@@ -349,7 +351,8 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
           
           await submitAttemptMutation.mutateAsync({ 
             attemptId: state.attemptId, 
-            answers: safeAnswers
+            answers: safeAnswers,
+            submitMode,
           });
         } catch {
           toast.error("Terjadi kesalahan saat finalisasi ujian. Pastikan koneksi stabil lalu coba lagi.");
@@ -392,7 +395,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       tryout_id: tryout.id,
       attempt_id: state.attemptId,
     });
-    await handleSubtestFinish();
+    await handleSubtestFinish("timeout");
   }, [flushEvents, handleSubtestFinish, hasValidDeadline, posthog, tryout.id, state.attemptId]);
 
   const handleNextSubtest = useCallback(async () => {
@@ -454,7 +457,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     if (answeredCount < questions.length) {
       dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: true });
     } else {
-      handleSubtestFinish();
+      handleSubtestFinish("manual");
     }
   }, [state.answers, currentSubtestId, questions.length, handleSubtestFinish, dispatch]);
 

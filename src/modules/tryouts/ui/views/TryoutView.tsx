@@ -11,7 +11,7 @@ import { Tryout } from "@/payload-types";
 import { TryoutAttempt } from "../../types";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface Props {
   tryoutId: string;
@@ -21,6 +21,9 @@ export const TryoutView = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const callbackUrl = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
   
   const { data, isLoading: isMetadataLoading, isError: isMetadataError, error: metadataErr } = useQuery(
     trpc.tryouts.getMetadata.queryOptions({ tryoutId }, { retry: false })
@@ -92,7 +95,13 @@ export const TryoutView = ({ tryoutId }: Props) => {
         <p className="text-muted-foreground whitespace-pre-wrap max-w-xl text-left bg-gray-100 p-4 rounded-xl font-mono text-xs text-red-600">
           Sesi Anda telah berakhir atau profil belum lengkap. Silakan login kembali.
         </p>
-        <Button onClick={() => window.location.href = "/sign-in"} variant="default" className="mt-2 text-white bg-gsb-orange hover:bg-gsb-orange/90">
+        <Button
+          onClick={() =>
+            (window.location.href = `/sign-in?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+          }
+          variant="default"
+          className="mt-2 text-white bg-gsb-orange hover:bg-gsb-orange/90"
+        >
           Login Ulang
         </Button>
       </div>

@@ -1,6 +1,11 @@
 import type { CollectionConfig } from "payload";
 import { isAdminOrAbove } from "./accessHelpers";
 
+const resolveAccountType = () =>
+  (process.env.APP_ENV || "").toLowerCase() === "development"
+    ? "development"
+    : "production";
+
 export const TryoutPayments: CollectionConfig = {
   slug: "tryout-payments",
   admin: {
@@ -51,6 +56,19 @@ export const TryoutPayments: CollectionConfig = {
       index: true,
     },
     {
+      name: "accountType",
+      type: "select",
+      options: [
+        { label: "Production", value: "production" },
+        { label: "Development", value: "development" },
+      ],
+      admin: {
+        position: "sidebar",
+        readOnly: true,
+      },
+      index: true,
+    },
+    {
       name: "program",
       type: "text",
       defaultValue: "Tryout SNBT Premium",
@@ -74,4 +92,25 @@ export const TryoutPayments: CollectionConfig = {
       label: "Catatan Admin",
     },
   ],
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        if (operation === "create" && data.user) {
+          try {
+            const userId = typeof data.user === "object" ? data.user.id : data.user;
+            const user = await req.payload.findByID({
+              collection: "users",
+              id: userId,
+            });
+            if (user) {
+              data.accountType = user.accountType || resolveAccountType();
+            }
+          } catch (error) {
+            console.error("Error setting accountType for payment:", error);
+          }
+        }
+        return data;
+      },
+    ],
+  },
 };

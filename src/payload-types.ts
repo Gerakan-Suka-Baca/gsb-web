@@ -173,11 +173,16 @@ export interface User {
   id: string;
   email: string;
   clerkUserId?: string | null;
+  /**
+   * Environment where this account was created (Auto-detected from Clerk Key)
+   */
+  accountType?: ('production' | 'development') | null;
   profileCompleted?: boolean | null;
   username?: string | null;
   fullName?: string | null;
   whatsapp?: string | null;
   schoolOrigin?: string | null;
+  schoolType?: ('SMA' | 'SMK') | null;
   grade?: ('10' | '11' | '12' | 'gap_year') | null;
   targetPTN?: string | null;
   targetMajor?: string | null;
@@ -454,6 +459,7 @@ export interface TryoutAttempt {
   id: string;
   user: string | User;
   tryout: string | Tryout;
+  accountType?: ('production' | 'development') | null;
   answers?:
     | {
         [k: string]: unknown;
@@ -472,32 +478,39 @@ export interface TryoutAttempt {
     | number
     | boolean
     | null;
-  questionResults?:
-    | {
-        subtestId: string;
-        questionId: string;
-        questionNumber: number;
-        selectedLetter?: string | null;
-        correctLetter?: string | null;
-        isCorrect?: boolean | null;
-        id?: string | null;
-      }[]
-    | null;
   status: 'started' | 'completed';
+  allowRetake?: boolean | null;
+  /**
+   * Status retake tanpa mengubah status utama.
+   */
+  retakeStatus?: ('idle' | 'running' | 'completed') | null;
+  /**
+   * Batas maksimal retake untuk attempt ini.
+   */
+  maxRetake?: number | null;
+  /**
+   * Total retake yang sudah dimulai.
+   */
+  retakeCount?: number | null;
   startedAt?: string | null;
+  retakeStartedAt?: string | null;
   /**
    * Authoritative server timestamp when the active subtest started.
    */
   subtestStartedAt?: string | null;
+  retakeSubtestStartedAt?: string | null;
   /**
    * Authoritative server deadline for the current active subtest.
    */
   subtestDeadlineAt?: string | null;
+  retakeSubtestDeadlineAt?: string | null;
   completedAt?: string | null;
+  retakeCompletedAt?: string | null;
   /**
    * Index of the currently active subtest (0-based).
    */
   currentSubtest?: number | null;
+  retakeCurrentSubtest?: number | null;
   /**
    * Internal exam state (running vs bridging).
    */
@@ -511,6 +524,10 @@ export interface TryoutAttempt {
    */
   secondsRemaining?: number | null;
   /**
+   * Last server heartbeat time for this attempt.
+   */
+  heartbeatAt?: string | null;
+  /**
    * Percentage of correct answers.
    */
   score?: number | null;
@@ -520,6 +537,7 @@ export interface TryoutAttempt {
    * Index of the current question in the active subtest (0-based).
    */
   currentQuestionIndex?: number | null;
+  retakeCurrentQuestionIndex?: number | null;
   processedBatchIds?:
     | {
         [k: string]: unknown;
@@ -528,6 +546,109 @@ export interface TryoutAttempt {
     | string
     | number
     | boolean
+    | null;
+  retakeProcessedBatchIds?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Latest applied revision per event key.
+   */
+  eventRevisions?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  retakeEventRevisions?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Subtest state map (idle/running/finished).
+   */
+  subtestStates?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  retakeSubtestStates?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  subtestSnapshots?:
+    | {
+        subtestId: string;
+        capturedAt: string;
+        answers?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        flags?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        source?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  retakeSubtestSnapshots?:
+    | {
+        subtestId: string;
+        capturedAt: string;
+        answers?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        flags?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        source?: string | null;
+        id?: string | null;
+      }[]
     | null;
   /**
    * Selected tryout result plan.
@@ -544,6 +665,45 @@ export interface TryoutAttempt {
     | string
     | number
     | boolean
+    | null;
+  retakeSubtestDurations?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  retakeAnswers?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  retakeFlags?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  retakeSecondsRemaining?: number | null;
+  questionResults?:
+    | {
+        subtestId: string;
+        questionId: string;
+        questionNumber: number;
+        selectedLetter?: string | null;
+        correctLetter?: string | null;
+        isCorrect?: boolean | null;
+        id?: string | null;
+      }[]
     | null;
   updatedAt: string;
   createdAt: string;
@@ -563,6 +723,7 @@ export interface TryoutPayment {
   tryout: string | Tryout;
   attempt: string | TryoutAttempt;
   status: 'pending' | 'verified' | 'rejected';
+  accountType?: ('production' | 'development') | null;
   program?: string | null;
   /**
    * Nominal pembayaran
@@ -581,6 +742,7 @@ export interface TryoutScore {
   id: string;
   user: string | User;
   tryout: string | Tryout;
+  accountType?: ('production' | 'development') | null;
   /**
    * PU
    */
@@ -781,11 +943,13 @@ export interface AdminsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   email?: T;
   clerkUserId?: T;
+  accountType?: T;
   profileCompleted?: T;
   username?: T;
   fullName?: T;
   whatsapp?: T;
   schoolOrigin?: T;
+  schoolType?: T;
   grade?: T;
   targetPTN?: T;
   targetMajor?: T;
@@ -899,8 +1063,65 @@ export interface QuestionsSelect<T extends boolean = true> {
 export interface TryoutAttemptsSelect<T extends boolean = true> {
   user?: T;
   tryout?: T;
+  accountType?: T;
   answers?: T;
   flags?: T;
+  status?: T;
+  allowRetake?: T;
+  retakeStatus?: T;
+  maxRetake?: T;
+  retakeCount?: T;
+  startedAt?: T;
+  retakeStartedAt?: T;
+  subtestStartedAt?: T;
+  retakeSubtestStartedAt?: T;
+  subtestDeadlineAt?: T;
+  retakeSubtestDeadlineAt?: T;
+  completedAt?: T;
+  retakeCompletedAt?: T;
+  currentSubtest?: T;
+  retakeCurrentSubtest?: T;
+  examState?: T;
+  bridgingExpiry?: T;
+  secondsRemaining?: T;
+  heartbeatAt?: T;
+  score?: T;
+  correctAnswersCount?: T;
+  totalQuestionsCount?: T;
+  currentQuestionIndex?: T;
+  retakeCurrentQuestionIndex?: T;
+  processedBatchIds?: T;
+  retakeProcessedBatchIds?: T;
+  eventRevisions?: T;
+  retakeEventRevisions?: T;
+  subtestStates?: T;
+  retakeSubtestStates?: T;
+  subtestSnapshots?:
+    | T
+    | {
+        subtestId?: T;
+        capturedAt?: T;
+        answers?: T;
+        flags?: T;
+        source?: T;
+        id?: T;
+      };
+  retakeSubtestSnapshots?:
+    | T
+    | {
+        subtestId?: T;
+        capturedAt?: T;
+        answers?: T;
+        flags?: T;
+        source?: T;
+        id?: T;
+      };
+  resultPlan?: T;
+  subtestDurations?: T;
+  retakeSubtestDurations?: T;
+  retakeAnswers?: T;
+  retakeFlags?: T;
+  retakeSecondsRemaining?: T;
   questionResults?:
     | T
     | {
@@ -912,22 +1133,6 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
         isCorrect?: T;
         id?: T;
       };
-  status?: T;
-  startedAt?: T;
-  subtestStartedAt?: T;
-  subtestDeadlineAt?: T;
-  completedAt?: T;
-  currentSubtest?: T;
-  examState?: T;
-  bridgingExpiry?: T;
-  secondsRemaining?: T;
-  score?: T;
-  correctAnswersCount?: T;
-  totalQuestionsCount?: T;
-  currentQuestionIndex?: T;
-  processedBatchIds?: T;
-  resultPlan?: T;
-  subtestDurations?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -940,6 +1145,7 @@ export interface TryoutPaymentsSelect<T extends boolean = true> {
   tryout?: T;
   attempt?: T;
   status?: T;
+  accountType?: T;
   program?: T;
   amount?: T;
   paymentDate?: T;
@@ -954,6 +1160,7 @@ export interface TryoutPaymentsSelect<T extends boolean = true> {
 export interface TryoutScoresSelect<T extends boolean = true> {
   user?: T;
   tryout?: T;
+  accountType?: T;
   score_PU?: T;
   score_PK?: T;
   score_PM?: T;

@@ -1,6 +1,11 @@
 import type { CollectionConfig } from "payload";
 import { isAdminOrAbove } from "./accessHelpers";
 
+const resolveAccountType = () =>
+  (process.env.APP_ENV || "").toLowerCase() === "development"
+    ? "development"
+    : "production";
+
 export const Users: CollectionConfig = {
   slug: "users",
   admin: {
@@ -33,6 +38,21 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      name: "accountType",
+      type: "select",
+      options: [
+        { label: "Production", value: "production" },
+        { label: "Development", value: "development" },
+      ],
+      defaultValue: resolveAccountType(),
+      admin: {
+        position: "sidebar",
+        readOnly: true,
+        description: "Environment where this account was created (Auto-detected from Clerk Key)",
+      },
+      index: true,
+    },
+    {
       name: "profileCompleted",
       label: "Profil Lengkap",
       type: "checkbox",
@@ -58,6 +78,15 @@ export const Users: CollectionConfig = {
       name: "schoolOrigin",
       label: "Asal Sekolah",
       type: "text",
+    },
+    {
+      name: "schoolType",
+      label: "Tipe Sekolah",
+      type: "select",
+      options: [
+        { label: "SMA", value: "SMA" },
+        { label: "SMK", value: "SMK" },
+      ],
     },
     {
       name: "grade",

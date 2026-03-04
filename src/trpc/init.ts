@@ -39,7 +39,7 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   if (!userId) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
-      message: "User not logged in",
+      message: "Pengguna belum login",
     });
   }
 
@@ -55,7 +55,7 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   if (!dbUser) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "User profile not found. Please complete your profile setup.",
+      message: "Profil pengguna tidak ditemukan. Silakan lengkapi profil.",
     });
   }
 

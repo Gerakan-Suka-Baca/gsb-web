@@ -4,11 +4,18 @@ import { SignUpView } from "@/modules/auth/ui/views/SignUpView";
 
 export const dynamic = "force-dynamic";
 
-const Page = async () => {
+const Page = async ({
+  searchParams,
+}: {
+  searchParams?: Promise<{ callbackUrl?: string }>;
+}) => {
   const { userId } = await auth();
+  const resolvedSearchParams = await searchParams;
+  const callbackUrl =
+    typeof resolvedSearchParams?.callbackUrl === "string" ? resolvedSearchParams.callbackUrl : null;
 
   if (userId) {
-    redirect("/tryout");
+    redirect(callbackUrl || "/tryout");
   }
 
   return <SignUpView />;

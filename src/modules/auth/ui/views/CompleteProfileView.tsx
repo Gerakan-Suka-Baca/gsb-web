@@ -49,12 +49,15 @@ export const CompleteProfileView = () => {
     defaultValues: {
       fullName: "", 
       whatsapp: "",
+      schoolType: undefined,
       grade: undefined,
       schoolOrigin: "",
       targetPTN: "",
       targetMajor: "",
       targetPTN2: "",
       targetMajor2: "",
+      targetPTN3: "",
+      targetMajor3: "",
     },
   });
 
@@ -128,7 +131,14 @@ export const CompleteProfileView = () => {
                   <FormItem>
                     <FormLabel>Nomor WhatsApp <span className="text-destructive">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="08xxxxxxxxxx" {...field} />
+                      <Input
+                        placeholder="08xxxxxxxxxx"
+                        inputMode="numeric"
+                        value={field.value}
+                        onChange={(e) =>
+                          field.onChange(e.target.value.replace(/\D/g, ""))
+                        }
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -205,6 +215,28 @@ export const CompleteProfileView = () => {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="schoolType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipe Sekolah <span className="text-destructive">*</span></FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih tipe sekolah" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="SMA">SMA</SelectItem>
+                        <SelectItem value="SMK">SMK</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               {/* Grade / status */}
               <FormField
                 control={form.control}
@@ -237,7 +269,10 @@ export const CompleteProfileView = () => {
             <div className="space-y-4 pt-4 border-t border-border">
                 <h3 className="font-semibold text-lg">Target Perguruan Tinggi</h3>
                 <p className="text-sm text-muted-foreground">
-                  Ketik minimal 3 huruf untuk mencari kampus.
+                  Pilihan 1 dan 2 wajib diisi. Pilihan 3 opsional.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Jika kampus/jurusan tidak ada, pilih opsi Gunakan yang muncul di daftar.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
@@ -281,7 +316,42 @@ export const CompleteProfileView = () => {
                         name="targetPTN2"
                         render={({ field }) => (
                         <FormItem className="min-h-[120px]">
-                            <FormLabel>Target Kampus (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
+                            <FormLabel>Target Kampus (Pilihan 2) <span className="text-destructive">*</span></FormLabel>
+                            <FormControl>
+                              <UniversitySelect
+                                value={field.value ?? ""}
+                                onValueChange={field.onChange}
+                                placeholder="Cari universitas (min. 3 huruf)..."
+                              />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="targetMajor2"
+                        render={({ field }) => (
+                        <FormItem className="min-h-[120px]">
+                            <FormLabel>Target Jurusan (Pilihan 2) <span className="text-destructive">*</span></FormLabel>
+                            <FormControl>
+                              <MajorSelect
+                                value={field.value ?? ""}
+                                onValueChange={field.onChange}
+                                universityName={form.watch("targetPTN2")}
+                                placeholder="Pilih jurusan..."
+                              />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="targetPTN3"
+                        render={({ field }) => (
+                        <FormItem className="min-h-[120px]">
+                            <FormLabel>Target Kampus (Pilihan 3) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                             <FormControl>
                               <UniversitySelect
                                 value={field.value ?? ""}
@@ -295,15 +365,15 @@ export const CompleteProfileView = () => {
                     />
                     <FormField
                         control={form.control}
-                        name="targetMajor2"
+                        name="targetMajor3"
                         render={({ field }) => (
                         <FormItem className="min-h-[120px]">
-                            <FormLabel>Target Jurusan (Pilihan 2) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
+                            <FormLabel>Target Jurusan (Pilihan 3) <span className="text-muted-foreground font-normal">(Opsional)</span></FormLabel>
                             <FormControl>
                               <MajorSelect
                                 value={field.value ?? ""}
                                 onValueChange={field.onChange}
-                                universityName={form.watch("targetPTN2")}
+                                universityName={form.watch("targetPTN3")}
                                 placeholder="Pilih jurusan (opsional)..."
                               />
                             </FormControl>
