@@ -125,6 +125,10 @@ export const tryoutsRouter = createTRPCRouter({
       })
     )
     .query(async ({ ctx, input }) => {
+      const cacheKey = `tryout:full:${input.tryoutId}`;
+      const cached = await getCacheValue<{ tests: Question[]; [key: string]: unknown }>(cacheKey);
+      if (cached) return cached;
+
       const [tryout, questions] = await Promise.all([
         ctx.db.findByID({
           collection: "tryouts",
@@ -144,15 +148,21 @@ export const tryoutsRouter = createTRPCRouter({
         stripAnswerKeyFromSubtest(doc as Question)
       );
 
-      return {
+      const result = {
         ...tryout,
         tests: runtimeTests,
       };
+      await setCacheValue(cacheKey, result, 30 * 60 * 1000);
+      return result;
     }),
 
   getMetadata: protectedProcedure
     .input(z.object({ tryoutId: z.string() }))
     .query(async ({ ctx, input }) => {
+      const cacheKey = `tryout:meta:${input.tryoutId}`;
+      const cachedMeta = await getCacheValue<{ tests: Question[]; [key: string]: unknown }>(cacheKey);
+      if (cachedMeta) return cachedMeta;
+
       const tryout = await ctx.db.findByID({
         collection: "tryouts",
         id: input.tryoutId,
@@ -177,6 +187,7 @@ export const tryoutsRouter = createTRPCRouter({
             title: true,
             duration: true,
             subtest: true,
+            tryoutQuestions: true,
           },
         });
         const docsMap = new Map(manualDocs.docs.map((d) => [String(d.id), d]));
@@ -196,6 +207,7 @@ export const tryoutsRouter = createTRPCRouter({
             title: true,
             duration: true,
             subtest: true,
+            tryoutQuestions: true,
           },
         });
         finalTests = fallbackDocs.docs as Question[];
@@ -206,10 +218,12 @@ export const tryoutsRouter = createTRPCRouter({
         tryoutQuestions: t.tryoutQuestions || [],
       }));
 
-      return {
+      const metaResult = {
         ...tryout,
         tests: finalTests,
       };
+      await setCacheValue(cacheKey, metaResult, 15 * 60 * 1000);
+      return metaResult;
     }),
 
   getSubtest: protectedProcedure
@@ -238,18 +252,28 @@ export const tryoutsRouter = createTRPCRouter({
         year: z.string().nullable().optional(),
       })
     )
-    .query(async ({ ctx }) => {
+    .query(async ({ ctx, input }) => {
+      const cacheKey = `tryouts:list:${input.year ?? "all"}`;
+      const cached = await getCacheValue<{
+        docs: unknown[];
+        totalDocs: number;
+        [key: string]: unknown;
+      }>(cacheKey);
+      if (cached) {
+        return cached;
+      }
       const data = await ctx.db.find({
         collection: "tryouts",
-        depth: 0,
+        depth: 1,
         pagination: false,
         limit: 100,
       });
-
-      return {
+      const payload = {
         ...data,
         totalDocs: data.totalDocs,
       };
+      await setCacheValue(cacheKey, payload, 2 * 60 * 1000);
+      return payload;
     }),
 
   getScoreResults: protectedProcedure

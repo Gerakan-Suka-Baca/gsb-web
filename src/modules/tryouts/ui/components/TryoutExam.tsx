@@ -92,8 +92,15 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
                   <p className="text-gsb-blue font-medium mt-1">{nextLabel}</p>
                   <div className="w-16 h-1 bg-gsb-orange rounded-full mx-auto mt-3" />
                 </div>
-                <div className="flex justify-center mb-6">
-                  <div className="text-sm font-semibold text-orange-600 bg-orange-100 px-4 py-1.5 rounded-full">Waktu jeda: {exam.bridgingSeconds} detik</div>
+                <div className="flex flex-col items-center mb-6 gap-2">
+                  <div className="relative w-20 h-20 flex items-center justify-center">
+                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
+                      <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" className="text-muted-foreground/20" />
+                      <circle cx="40" cy="40" r="36" fill="none" stroke="currentColor" strokeWidth="4" className="text-gsb-orange transition-all duration-1000 ease-linear" strokeDasharray={Math.PI * 72} strokeDashoffset={Math.PI * 72 * (1 - exam.bridgingSeconds / 60)} strokeLinecap="round" />
+                    </svg>
+                    <span className="text-2xl font-bold text-gsb-orange">{exam.bridgingSeconds}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Otomatis lanjut dalam {exam.bridgingSeconds} detik</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col gap-1 text-center">
@@ -247,6 +254,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
         showExitDialog={exam.showExitDialog}
         setShowExitDialog={exam.setShowExitDialog}
         unansweredCount={unansweredCount}
+        totalQuestions={exam.questions.length}
         onConfirmFinish={exam.handleSubtestFinish}
         onTimeUpConfirm={exam.handleTimeUpConfirm}
       />

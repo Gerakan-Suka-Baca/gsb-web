@@ -44,6 +44,21 @@ export const Tryouts: CollectionConfig = {
       required: true,
     },
     {
+      name: "description",
+      type: "textarea",
+      admin: {
+        description: "Short description shown on the tryout card",
+      },
+    },
+    {
+      name: "coverImage",
+      type: "upload",
+      relationTo: "media",
+      admin: {
+        description: "Banner image for tryout card (recommended: 800x400px)",
+      },
+    },
+    {
       name: "slugField",
       type: "text",
       admin: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useEffect, useState } from "react";
+import { useCallback, useMemo, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TRPCClientErrorLike } from "@trpc/client";
@@ -140,12 +140,19 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const subtestDuration = currentSubtest?.duration ? currentSubtest.duration * 60 : 0;
 
+  const statusRef = useRef(state.status);
+  useEffect(() => { statusRef.current = state.status; }, [state.status]);
+
   const { timeLeft, setTimeLeft, formatTime, hasValidDeadline } = useExamTimer({
     initialSeconds: subtestDuration,
     isRunning: state.status === "running" && subtestDuration > 0,
     deadlineAt: subtestDeadlineAt,
     serverNow,
-    onTimeUp: useCallback(() => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true }), [dispatch]),
+    onTimeUp: useCallback(() => {
+      // Only show timeUp dialog if actually running — ignore during bridging/loading
+      if (statusRef.current !== "running") return;
+      dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true });
+    }, [dispatch]),
   });
 
   const applyServerTiming = useCallback((payload?: ServerTimingSyncPayload | null) => {
@@ -365,6 +372,11 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, state.subtestDurations, onFinish, submitAttemptMutation, flushEvents, dispatch, currentSubtest?.duration, currentSubtestId, timeLeft, posthog, tryout.id]);
 
   const handleTimeUpConfirm = useCallback(async () => {
+    // Guard: do nothing if we're not running (stale dialog from previous subtest)
+    if (state.status !== "running") {
+      dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: false });
+      return;
+    }
     if (!hasValidDeadline) {
       posthog.capture("timeup_blocked_invalid_deadline", {
         tryout_id: tryout.id,
@@ -396,12 +408,16 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       attempt_id: state.attemptId,
     });
     await handleSubtestFinish("timeout");
-  }, [flushEvents, handleSubtestFinish, hasValidDeadline, posthog, tryout.id, state.attemptId]);
+  }, [state.status, flushEvents, handleSubtestFinish, hasValidDeadline, posthog, tryout.id, state.attemptId, dispatch]);
 
   const handleNextSubtest = useCallback(async () => {
     const nextIdx = state.currentSubtestIndex + 1;
     const nextDuration = subtests[nextIdx]?.duration ?? 0;
     const fallbackSeconds = Math.max(0, Math.round(nextDuration * 60));
+    // Dismiss ALL dialogs before transitioning
+    dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: false });
+    dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: false });
+    dispatch({ type: "SET_DIALOG", dialog: "exit", open: false });
     dispatch({ type: "SET_STATUS", status: "loading" });
     setSubtestStartedAt(null);
     setSubtestDeadlineAt(null);
@@ -450,6 +466,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     status: state.status,
     bridgingSeconds: state.bridgingSeconds,
     dispatch,
+    onBridgingComplete: handleNextSubtest,
   });
 
   const triggerFinishCheck = useCallback(() => {

@@ -64,7 +64,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     .filter((label): label is string => Boolean(label));
 
   return (
-    <div className="container max-w-4xl py-12 px-4 md:px-6">
+    <div className="w-full py-6 md:py-10">
       <ArticleAnalyticsTracker
         title={article.title}
         slug={article.slug || slug}
@@ -75,48 +75,54 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         wordCount={wordCount}
       />
 
-      <div className="mb-8">
-        <div className="flex gap-2 mb-4 flex-wrap">
-          {labels.map((label, i) => (
-            <Badge key={i} variant="secondary" className="bg-gsb-orange/10 text-gsb-orange hover:bg-gsb-orange/20">
-              {label}
-            </Badge>
-          ))}
+      <div className="w-full bg-card border-y sm:border sm:rounded-3xl border-border shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-gsb-maroon to-gsb-red text-white px-4 sm:px-6 md:px-10 py-6 md:py-9">
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {labels.map((label, i) => (
+              <Badge key={i} variant="secondary" className="bg-white/15 text-white hover:bg-white/25 border-transparent">
+                {label}
+              </Badge>
+            ))}
+          </div>
+
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 leading-tight">
+            {article.title}
+          </h1>
+
+          <div className="flex items-center gap-4 text-white/85 text-sm">
+            <span>{authors}</span>
+            <span>•</span>
+            {article.publishedDate && (
+              <span>{format(new Date(article.publishedDate), "d MMMM yyyy", { locale: id })}</span>
+            )}
+          </div>
         </div>
 
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl mb-4 leading-tight">
-          {article.title}
-        </h1>
-
-        <div className="flex items-center gap-4 text-muted-foreground text-sm">
-          <span>{authors}</span>
-          <span>•</span>
-          {article.publishedDate && (
-            <span>{format(new Date(article.publishedDate), "d MMMM yyyy", { locale: id })}</span>
+        <div className="px-4 sm:px-6 md:px-10 py-6 md:py-10 max-w-4xl mx-auto">
+          {coverImageUrl && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-8 shadow-lg">
+              <Image
+                src={coverImageUrl}
+                alt={article.title}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+              />
+            </div>
           )}
-        </div>
-      </div>
 
-      {coverImageUrl && (
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-10 shadow-lg">
-          <Image
-            src={coverImageUrl}
-            alt={article.title}
-            fill
-            className="object-cover"
-            priority
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        </div>
-      )}
-
-      <div className="prose prose-lg prose-slate dark:prose-invert max-w-none">
-        {article.excerpt && (
-            <div className="text-xl text-muted-foreground leading-relaxed font-medium mb-8 border-l-4 border-gsb-orange pl-4">
+          {article.excerpt && (
+            <div className="text-lg md:text-xl text-muted-foreground leading-relaxed font-medium mb-8 border-l-4 border-gsb-orange pl-4">
                 {article.excerpt}
             </div>
-        )}
-        <RichText content={article.content} />
+          )}
+
+          <RichText
+            content={article.content}
+            className="prose-base md:prose-lg prose-slate dark:prose-invert max-w-none prose-p:text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-li:marker:text-gsb-orange prose-img:rounded-xl prose-a:text-gsb-orange prose-a:no-underline hover:prose-a:underline prose-blockquote:border-gsb-orange prose-code:bg-muted prose-code:rounded prose-code:px-1.5 prose-code:py-0.5 prose-pre:bg-muted prose-hr:border-border"
+          />
+        </div>
       </div>
     </div>
   );

@@ -19,6 +19,13 @@ import {
 import type { PayloadLike } from "@/modules/tryouts/server/helpers/tryout-window.helpers";
 import type { TryoutAttempt } from "@/modules/tryouts/types";
 
+const hasNestedEntries = (
+  value: Record<string, Record<string, unknown>> | null | undefined
+) =>
+  Object.values(value ?? {}).some(
+    (inner) => typeof inner === "object" && inner !== null && Object.keys(inner).length > 0
+  );
+
 export const startAttempt = protectedProcedure
   .input(z.object({ tryoutId: z.string() }))
   .mutation(async ({ ctx, input }) => {
@@ -26,8 +33,8 @@ export const startAttempt = protectedProcedure
     const now = new Date();
     const nowIso = now.toISOString();
     const tryoutWindow = await getTryoutWindow(payload as PayloadLike, input.tryoutId);
-    assertTryoutWindowOpen(tryoutWindow, "memulai tryout", now);
 
+    // Find existing attempt BEFORE checking window — allow resume even after close
     const existing = await payload.find({
       collection: "tryout-attempts",
       where: {
@@ -41,6 +48,12 @@ export const startAttempt = protectedProcedure
     if (existing.docs.length > 0) {
       const attempt = existing.docs[0] as unknown as TryoutAttempt;
       if (attempt.status !== "completed") {
+        const shouldForceReset =
+          getAttemptSubtestIndex(attempt) === 0 &&
+          !hasNestedEntries(attempt.answers as Record<string, Record<string, unknown>> | undefined) &&
+          !hasNestedEntries(attempt.flags as Record<string, Record<string, unknown>> | undefined) &&
+          typeof attempt.subtestDeadlineAt === "string" &&
+          Date.parse(attempt.subtestDeadlineAt) <= now.getTime();
         const resumedTimer = await buildServerTimerWindow({
           payload: payload as PayloadLike,
           attempt,
@@ -48,6 +61,7 @@ export const startAttempt = protectedProcedure
           targetSubtest: getAttemptSubtestIndex(attempt),
           now,
           allowLegacySecondsFallback: true,
+          forceReset: shouldForceReset,
         });
         const shouldPersistTimer =
           attempt.subtestStartedAt !== resumedTimer.subtestStartedAt ||
@@ -144,6 +158,9 @@ export const startAttempt = protectedProcedure
         serverNow: nowIso,
       } as TryoutAttempt;
     }
+
+    // Only enforce window check for BRAND NEW attempts — not resume/retake
+    assertTryoutWindowOpen(tryoutWindow, "memulai tryout", now);
 
     const tryoutId = input.tryoutId;
     const timerWindow = await buildServerTimerWindow({

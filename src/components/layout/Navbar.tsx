@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import Image from "next/image"
 import { useTheme } from "next-themes"
 import { flushSync } from "react-dom"
@@ -77,6 +78,19 @@ const menuItems: MenuItem[] = [
   { title: "Universitas", url: "/universitas" },
 ]
 
+const learningPathMenuItems: MenuItem[] = [
+  { title: "Learning Path", url: "/learning-path" },
+  { title: "Tryout SNBT", url: "/learning-path/tryout-snbt" },
+  { title: "Universitas", url: "/universitas" },
+]
+
+const tryoutMenuItems: MenuItem[] = [
+  { title: "Dashboard", url: "/tryout" },
+  { title: "Tryout SNBT", url: "/learning-path/tryout-snbt" },
+  { title: "Universitas", url: "/universitas" },
+  { title: "Hasil & Pembahasan", url: "/tryout?tab=registered" },
+]
+
 const ease: Easing = [0.0, 0.0, 0.2, 1]
 const easeIn: Easing = [0.4, 0.0, 1, 1]
 
@@ -139,12 +153,22 @@ const MobileMenuItem = ({ item, onClose }: { item: MenuItem; onClose: () => void
 
 // Main Component
 export function Navbar() {
+  const pathname = usePathname()
   const [isScrolled, setIsScrolled] = React.useState(false)
   const [mounted, setMounted] = React.useState(false)
   const [activeMenu, setActiveMenu] = React.useState<string | null>(null)
   const [isOpen, setIsOpen] = React.useState(false)
   const { theme, setTheme } = useTheme()
   const { examNavbarContent } = useExamNavbar()
+  const isTryoutContext =
+    pathname.startsWith("/tryout") || pathname.startsWith("/learning-path/tryout-snbt") || pathname.startsWith("/universitas") || pathname.startsWith("/program-studi")
+  const isLearningPathContext =
+    !isTryoutContext && pathname.startsWith("/learning-path")
+  const activeMenuItems = isTryoutContext
+    ? tryoutMenuItems
+    : isLearningPathContext
+      ? learningPathMenuItems
+      : menuItems
 
   React.useEffect(() => {
     setMounted(true)
@@ -179,13 +203,13 @@ export function Navbar() {
       <div className="w-full min-h-[80px] h-20 flex items-center justify-between px-4 md:px-8 lg:px-12">
         {/* Logo + Navigation */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center shrink-0 gap-2">
+          <Link href={isTryoutContext ? "/tryout" : isLearningPathContext ? "/learning-path" : "/"} className="flex items-center shrink-0 gap-2">
             <Image src="/home/logo-gsb.png" alt="GSB Logo" width={120} height={48} className="h-12 w-[120px] object-contain" />
           </Link>
 
           {/* Desktop Menu */}
           <div className="hidden xl:flex items-center gap-1">
-            {menuItems.map((item) =>
+            {activeMenuItems.map((item) =>
               item.items ? (
                 <div key={item.title} className="relative" onMouseEnter={() => setActiveMenu(item.title)}>
                   <button
@@ -238,9 +262,11 @@ export function Navbar() {
 
         {/* Desktop CTA */}
         <div className="hidden xl:flex items-center gap-4 ml-auto">
-          <Button asChild className="bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full px-6 shadow-md transition-all hover:scale-105">
-            <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer">Jadi Relawan</Link>
-          </Button>
+          {!isTryoutContext && !isLearningPathContext && (
+            <Button asChild className="bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full px-6 shadow-md transition-all hover:scale-105">
+              <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer">Jadi Relawan</Link>
+            </Button>
+          )}
           <UserMenu />
           <ThemeButton />
         </div>
@@ -267,14 +293,16 @@ export function Navbar() {
 
               <motion.div className="flex flex-col gap-8" variants={containerVariants} initial="hidden" animate="show">
                 <Accordion type="single" collapsible className="flex w-full flex-col gap-3">
-                  {menuItems.map((item) => <MobileMenuItem key={item.title} item={item} onClose={closeMenu} />)}
+                  {activeMenuItems.map((item) => <MobileMenuItem key={item.title} item={item} onClose={closeMenu} />)}
                 </Accordion>
 
-                <motion.div className="flex flex-col gap-4 mt-6 pt-4 border-t border-border/50" variants={itemVariants}>
-                  <Button asChild className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full h-14 text-lg shadow-md">
-                    <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>Jadi Relawan</Link>
-                  </Button>
-                </motion.div>
+                {!isTryoutContext && !isLearningPathContext && (
+                  <motion.div className="flex flex-col gap-4 mt-6 pt-4 border-t border-border/50" variants={itemVariants}>
+                    <Button asChild className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-semibold rounded-full h-14 text-lg shadow-md">
+                      <Link href="https://www.indorelawan.org/organization/5c07e2741c15322842719f0a" target="_blank" rel="noopener noreferrer" onClick={closeMenu}>Jadi Relawan</Link>
+                    </Button>
+                  </motion.div>
+                )}
               </motion.div>
             </SheetContent>
           </Sheet>

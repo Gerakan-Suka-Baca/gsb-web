@@ -295,7 +295,7 @@ export function useExamSync({
     if (!attemptId) return;
     const timer = setInterval(() => {
       flushEvents(false);
-    }, 12000);
+    }, 30000);
     return () => clearInterval(timer);
   }, [attemptId, flushEvents, posthog, tryoutId]);
 

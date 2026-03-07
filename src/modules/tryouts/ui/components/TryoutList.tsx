@@ -15,9 +15,11 @@ import {
   BookOpen,
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Tryout, TryoutAttempt } from "@/payload-types";
+import type { Tryout, TryoutAttempt, Media } from "@/payload-types";
+import { useSearchParams } from "next/navigation";
 
 const TABS = [
   { key: "current", label: "Aktif", icon: Play },
@@ -26,6 +28,9 @@ const TABS = [
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
+const TAB_KEYS = new Set<TabKey>(["current", "registered", "others"]);
+const resolveTab = (value: string | null): TabKey =>
+  value && TAB_KEYS.has(value as TabKey) ? (value as TabKey) : "others";
 
 const isOpenNow = (openDate: string | Date, closeDate: string | Date): boolean => {
   const now = new Date();
@@ -66,18 +71,24 @@ import {
 
 export const TryoutList = () => {
   const trpc = useTRPC();
+  const searchParams = useSearchParams();
+  const queryTab = searchParams.get("tab");
   const { data } = useSuspenseQuery(trpc.tryouts.getMany.queryOptions({}));
   const { data: myAttempts, isLoading: attemptsLoading } = useQuery(
     trpc.tryoutAttempts.getMyAttempts.queryOptions()
   );
   const session = useQuery(trpc.auth.session.queryOptions());
   
-  const [activeTab, setActiveTab] = useState<TabKey>("others");
+  const [activeTab, setActiveTab] = useState<TabKey>(resolveTab(queryTab));
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setActiveTab(resolveTab(queryTab));
+  }, [queryTab]);
 
   const allTryouts = data.docs as Tryout[];
   const attempts = (myAttempts || []) as TryoutAttempt[];
@@ -104,6 +115,9 @@ export const TryoutList = () => {
   }
 
   useEffect(() => {
+    if (queryTab && TAB_KEYS.has(queryTab as TabKey)) {
+      return;
+    }
     if (!attemptsLoading && mounted) {
       if (currentTryouts.length > 0) {
         setActiveTab("current");
@@ -113,27 +127,56 @@ export const TryoutList = () => {
         setActiveTab("others");
       }
     }
-  }, [attemptsLoading, mounted, currentTryouts.length, registeredTryouts.length]);
+  }, [attemptsLoading, mounted, currentTryouts.length, registeredTryouts.length, queryTab]);
+
 
 
   const renderCard = (tryout: Tryout, badge: StatusBadge, subtitle?: string) => {
     const descriptionValue = (tryout as unknown as Record<string, unknown>).description;
     const descriptionText = typeof descriptionValue === "string" ? descriptionValue : "";
+
+    // Extract cover image URL from the tryout's coverImage field
+    const coverImageRaw = (tryout as unknown as Record<string, unknown>).coverImage;
+    const coverImageUrl =
+      typeof coverImageRaw === "object" && coverImageRaw !== null
+        ? (coverImageRaw as Media).url ?? null
+        : null;
+
     return (
     <motion.div key={tryout.id} variants={fadeCard}>
       <Link href={`/tryout/${tryout.id}`} className="block group">
-        <Card className="p-6 border-2 border-border/50 hover:border-gsb-orange/30 hover:shadow-lg transition-all duration-300 rounded-2xl bg-card/50 hover:bg-card">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-lg md:text-xl font-heading font-bold text-foreground group-hover:text-gsb-orange transition-colors line-clamp-2">
-                {tryout.title}
-              </h3>
-              <span className={cn("text-xs font-bold px-3 py-1 rounded-full border shrink-0", badgeStyles[badge])}>
+        <Card className="overflow-hidden border-2 border-border/50 hover:border-gsb-orange/30 hover:shadow-xl transition-all duration-300 rounded-2xl bg-card/50 hover:bg-card">
+          {/* Banner — cover image from CMS, or fallback gradient */}
+          <div className="relative h-36 md:h-44 overflow-hidden">
+            {coverImageUrl ? (
+              <Image
+                src={coverImageUrl}
+                alt={tryout.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-br from-[#2ebfa5] via-[#3b82f6] to-[#f97316]">
+                <div className="absolute inset-0 bg-[url('/home/logo-gsb.png')] bg-no-repeat bg-center bg-contain opacity-15" />
+              </div>
+            )}
+            <div className="absolute top-3 right-3 z-10">
+              <span className={cn("text-xs font-bold px-3 py-1 rounded-full border backdrop-blur-sm bg-white/90 shadow-sm", badgeStyles[badge])}>
                 {badgeLabels[badge]}
               </span>
             </div>
+          </div>
 
-            <p className="text-muted-foreground text-sm line-clamp-2">{descriptionText}</p>
+          {/* Card body — title, description, meta */}
+          <div className="p-4 md:p-5 flex flex-col gap-2.5">
+            <h3 className="text-lg md:text-xl font-heading font-extrabold text-foreground group-hover:text-gsb-orange transition-colors line-clamp-2">
+              {tryout.title}
+            </h3>
+
+            {descriptionText && (
+              <p className="text-muted-foreground text-sm line-clamp-2">{descriptionText}</p>
+            )}
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
@@ -149,7 +192,7 @@ export const TryoutList = () => {
             </div>
 
             <div className="flex justify-end mt-1">
-              <span className="text-sm font-medium text-responsive-orange flex items-center gap-1 group-hover:gap-2 transition-all">
+              <span className="text-sm font-semibold text-responsive-orange flex items-center gap-1 group-hover:gap-2 transition-all">
                 {badge === "in-progress" ? "Lanjutkan" : badge === "finished" ? "Lihat Hasil" : "Mulai"}
                 <ArrowRight className="w-4 h-4" />
               </span>
@@ -191,6 +234,8 @@ export const TryoutList = () => {
         </p>
       </motion.div>
 
+
+
       <div className="mb-6 md:mb-8">
         <div className="w-full sm:w-64">
           <Select
@@ -206,7 +251,7 @@ export const TryoutList = () => {
                 const count =
                   tab.key === "current" ? currentTryouts.length :
                   tab.key === "registered" ? registeredTryouts.length :
-                  availableTryouts.length;
+                  allTryouts.length;
                 return (
                   <SelectItem key={tab.key} value={tab.key}>
                     <div className="flex items-center gap-2">
@@ -257,9 +302,17 @@ export const TryoutList = () => {
             )}
 
             {activeTab === "others" && (
-              availableTryouts.length > 0
-                ? availableTryouts.map((tryout) => renderCard(tryout, "available"))
-                : renderEmpty("Tidak ada tryout baru tersedia saat ini.")
+              allTryouts.length > 0
+                ? allTryouts.map((tryout) => {
+                    const attempt = attemptMap.get(tryout.id);
+                    const badge: StatusBadge = attempt?.status === "started"
+                      ? "in-progress"
+                      : attempt?.status === "completed"
+                        ? "finished"
+                        : "available";
+                    return renderCard(tryout, badge);
+                  })
+                : renderEmpty("Tidak ada tryout tersedia saat ini.")
             )}
           </motion.div>
         </AnimatePresence>

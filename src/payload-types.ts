@@ -251,6 +251,14 @@ export interface Tryout {
   id: string;
   title: string;
   /**
+   * Short description shown on the tryout card
+   */
+  description?: string | null;
+  /**
+   * Banner image for tryout card (recommended: 800x400px)
+   */
+  coverImage?: (string | null) | Media;
+  /**
    * Auto-generated from title if empty
    */
   slugField?: string | null;
@@ -1102,6 +1110,8 @@ export interface UniversityMediaSelect<T extends boolean = true> {
  */
 export interface TryoutsSelect<T extends boolean = true> {
   title?: T;
+  description?: T;
+  coverImage?: T;
   slugField?: T;
   dateOpen?: T;
   dateClose?: T;

@@ -18,7 +18,7 @@ export default async function CompleteProfilePage() {
   });
   const user = existingUsers.docs[0];
   if (user?.profileCompleted) {
-    redirect("/profile");
+    redirect("/tryout");
   }
   return <CompleteProfileView />;
 }

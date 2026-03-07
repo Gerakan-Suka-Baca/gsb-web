@@ -104,7 +104,15 @@ function examReducer(state: ExamState, action: ExamAction): ExamState {
     case "PREV_QUESTION":
       return { ...state, currentQuestionIndex: Math.max(0, state.currentQuestionIndex - 1) };
     case "SET_BRIDGING_SECONDS":
-      return { ...state, bridgingSeconds: action.seconds };
+      // When seconds is -1, decrement by 1 (for countdown timer)
+      // Otherwise, set to the absolute value (for reset)
+      return {
+        ...state,
+        bridgingSeconds:
+          action.seconds === -1
+            ? Math.max(0, state.bridgingSeconds - 1)
+            : action.seconds,
+      };
     case "SET_DIALOG":
       return {
         ...state,

@@ -57,7 +57,12 @@ export const saveProgressBatch = protectedProcedure
     const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
     const tryoutId = getTryoutId(attempt.tryout);
     const tryoutWindow = await getTryoutWindow(payload as PayloadLike, tryoutId);
-    assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
+    // Only enforce window check for attempts that haven't started yet.
+    // Active attempts (status === "started") can always save progress
+    // even after the tryout window has closed.
+    if (attempt.status !== "started") {
+      assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
+    }
     const retakeActive = isRetakeActive(attempt);
     const cached = await loadAttemptProgress(attempt.id, retakeActive);
     const baseAnswers =

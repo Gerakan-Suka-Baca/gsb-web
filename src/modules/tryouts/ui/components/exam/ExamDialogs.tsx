@@ -19,6 +19,7 @@ interface ExamDialogsProps {
   showExitDialog: boolean;
   setShowExitDialog: (open: boolean) => void;
   unansweredCount: number;
+  totalQuestions: number;
   onConfirmFinish: () => void;
   onTimeUpConfirm: () => void;
 }
@@ -31,6 +32,7 @@ export const ExamDialogs = ({
   showExitDialog,
   setShowExitDialog,
   unansweredCount,
+  totalQuestions,
   onConfirmFinish,
   onTimeUpConfirm,
 }: ExamDialogsProps) => {
@@ -45,7 +47,9 @@ export const ExamDialogs = ({
               <Timer className="h-5 w-5" />Waktu Habis!
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Subtes ini telah berakhir. Klik lanjutkan untuk menyimpan jawaban.
+              {unansweredCount >= totalQuestions
+                ? "Waktu subtes habis dan kamu belum menjawab soal apapun. Jawaban kosong akan tersimpan. Klik lanjutkan untuk ke subtes berikutnya."
+                : "Subtes ini telah berakhir. Klik lanjutkan untuk menyimpan jawaban."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

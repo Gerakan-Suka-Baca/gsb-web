@@ -37,6 +37,13 @@ export const getTryoutWindow = async (
   })) as unknown as TryoutWindowDoc;
 };
 
+/**
+ * Grace period after dateClose (24 hours).
+ * Users who started an attempt before the window closed can still
+ * save progress and submit during this grace period.
+ */
+const CLOSE_GRACE_MS = 24 * 60 * 60 * 1000;
+
 export const assertTryoutWindowOpen = (
   tryout: TryoutWindowDoc,
   action: string,
@@ -58,7 +65,8 @@ export const assertTryoutWindowOpen = (
       message: `Tryout belum dibuka. Tidak bisa ${action}.`,
     });
   }
-  if (nowMs > closeMs) {
+  // Allow a grace period after close for users with active attempts
+  if (nowMs > closeMs + CLOSE_GRACE_MS) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: `Tryout sudah ditutup. Tidak bisa ${action}.`,

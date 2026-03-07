@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, type JSX } from "react";
 import { cn } from "@/lib/utils";
 import { ImageOff } from "lucide-react";
 
@@ -160,12 +160,26 @@ function serialize(children: Node[]): React.ReactNode {
     switch (node.type) {
       case 'paragraph':
          if (node.children?.length === 0 || (node.children?.length === 1 && node.children[0].text === '')) {
-             return <br key={i} />;
+             return <div key={i} className="h-4" />;
          }
          if (hasBlockChildren(node.children)) {
              return <div key={i} className={cn("my-4 leading-8", classes)}>{serialize(node.children || [])}</div>;
          }
          return <p key={i} className={cn("my-4 leading-8 whitespace-pre-wrap", classes)}>{serialize(node.children || [])}</p>;
+      case 'heading': {
+        const HeadingTag = (node.tag || 'h2') as keyof JSX.IntrinsicElements;
+        const headingClasses: Record<string, string> = {
+          h1: "mt-10 mb-4 text-4xl font-extrabold",
+          h2: "mt-8 mb-3 text-3xl font-bold",
+          h3: "mt-6 mb-3 text-2xl font-semibold",
+          h4: "mt-5 mb-2 text-xl font-semibold",
+          h5: "mt-4 mb-2 text-lg font-semibold",
+          h6: "mt-4 mb-2 text-base font-semibold",
+        };
+        return <HeadingTag key={i} className={cn(headingClasses[node.tag as string] || headingClasses.h2, classes)}>{serialize(node.children || [])}</HeadingTag>;
+      }
+      case 'horizontalrule':
+        return <hr key={i} className="my-8 border-border" />;
       case 'h1':
         return <h1 key={i} className={cn("mt-10 mb-4 text-4xl font-extrabold", classes)}>{serialize(node.children || [])}</h1>;
       case 'h2':
@@ -201,6 +215,27 @@ function serialize(children: Node[]): React.ReactNode {
       case 'br':
       case 'linebreak':
         return <br key={i} />;
+      case 'list':
+        if (node.listType === 'number') {
+          return <ol key={i} className={cn("my-4 list-decimal pl-6 space-y-2", classes)}>{serialize(node.children || [])}</ol>;
+        }
+        return <ul key={i} className={cn("my-4 list-disc pl-6 space-y-2", classes)}>{serialize(node.children || [])}</ul>;
+      case 'listitem':
+        return <li key={i} className={cn("leading-8", classes)}>{serialize(node.children || [])}</li>;
+      case 'table':
+        return (
+          <div key={i} className="my-6 overflow-x-auto rounded-lg border border-border">
+            <table className="w-full border-collapse text-sm">{serialize(node.children || [])}</table>
+          </div>
+        );
+      case 'tablerow':
+        return <tr key={i} className="border-b border-border last:border-0">{serialize(node.children || [])}</tr>;
+      case 'tablecell': {
+        const isHeader = node.headerState === 1 || node.headerState === 3;
+        return isHeader
+          ? <th key={i} className="px-4 py-2.5 text-left font-semibold bg-muted/50">{serialize(node.children || [])}</th>
+          : <td key={i} className="px-4 py-2.5">{serialize(node.children || [])}</td>;
+      }
       case 'block':
           return <div key={i} className="my-4">{serialize(node.children || [])}</div>;
 
