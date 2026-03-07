@@ -50,11 +50,10 @@ const stagger = {
 type StatusBadge = "available" | "in-progress" | "finished";
 
 const badgeStyles: Record<StatusBadge, string> = {
-  available: "bg-gsb-tosca/10 text-gsb-tosca border-gsb-tosca/20",
-  "in-progress": "bg-gsb-yellow/10 text-gsb-yellow border-gsb-yellow/20",
-  finished: "bg-gsb-blue/10 text-gsb-blue border-gsb-blue/20",
+  available: "bg-gsb-tosca text-white border-gsb-tosca shadow-sm ring-1 ring-white/70",
+  "in-progress": "bg-gsb-yellow text-black border-gsb-yellow shadow-sm ring-1 ring-white/70",
+  finished: "bg-gsb-blue text-white border-gsb-blue shadow-sm ring-1 ring-white/70",
 };
-
 const badgeLabels: Record<StatusBadge, string> = {
   available: "Tersedia",
   "in-progress": "Sedang Dikerjakan",
@@ -73,9 +72,18 @@ export const TryoutList = () => {
   const trpc = useTRPC();
   const searchParams = useSearchParams();
   const queryTab = searchParams.get("tab");
-  const { data } = useSuspenseQuery(trpc.tryouts.getMany.queryOptions({}));
+  const tryoutQueryOptions = trpc.tryouts.getMany.queryOptions({});
+  const { data } = useSuspenseQuery({
+    ...tryoutQueryOptions,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
   const { data: myAttempts, isLoading: attemptsLoading } = useQuery(
-    trpc.tryoutAttempts.getMyAttempts.queryOptions()
+    {
+      ...trpc.tryoutAttempts.getMyAttempts.queryOptions(),
+      staleTime: 30 * 1000,
+      gcTime: 10 * 60 * 1000,
+    }
   );
   const session = useQuery(trpc.auth.session.queryOptions());
   
@@ -142,10 +150,19 @@ export const TryoutList = () => {
         ? (coverImageRaw as Media).url ?? null
         : null;
 
+    const actionLabel =
+      badge === "in-progress" ? "Lanjutkan" : badge === "finished" ? "Lihat Hasil" : "Mulai";
+    const actionClass =
+      badge === "in-progress"
+        ? "bg-gsb-yellow text-black"
+        : badge === "finished"
+          ? "bg-gsb-blue text-white"
+          : "bg-gsb-orange text-white";
+
     return (
     <motion.div key={tryout.id} variants={fadeCard}>
       <Link href={`/tryout/${tryout.id}`} className="block group">
-        <Card className="overflow-hidden border-2 border-border/50 hover:border-gsb-orange/30 hover:shadow-xl transition-all duration-300 rounded-2xl bg-card/50 hover:bg-card">
+        <Card className="overflow-hidden border border-border/60 hover:border-gsb-orange/40 hover:shadow-2xl transition-all duration-300 rounded-2xl bg-card/70 hover:bg-card group-hover:-translate-y-0.5">
           {/* Banner — cover image from CMS, or fallback gradient */}
           <div className="relative h-36 md:h-44 overflow-hidden">
             {coverImageUrl ? (
@@ -153,7 +170,7 @@ export const TryoutList = () => {
                 src={coverImageUrl}
                 alt={tryout.title}
                 fill
-                className="object-cover"
+                className="object-cover group-hover:scale-[1.02] transition-transform duration-300"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
             ) : (
@@ -161,8 +178,9 @@ export const TryoutList = () => {
                 <div className="absolute inset-0 bg-[url('/home/logo-gsb.png')] bg-no-repeat bg-center bg-contain opacity-15" />
               </div>
             )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/0 to-black/0" />
             <div className="absolute top-3 right-3 z-10">
-              <span className={cn("text-xs font-bold px-3 py-1 rounded-full border backdrop-blur-sm bg-white/90 shadow-sm", badgeStyles[badge])}>
+              <span className={cn("text-xs font-bold px-3 py-1 rounded-full border backdrop-blur-sm", badgeStyles[badge])}>
                 {badgeLabels[badge]}
               </span>
             </div>
@@ -192,8 +210,8 @@ export const TryoutList = () => {
             </div>
 
             <div className="flex justify-end mt-1">
-              <span className="text-sm font-semibold text-responsive-orange flex items-center gap-1 group-hover:gap-2 transition-all">
-                {badge === "in-progress" ? "Lanjutkan" : badge === "finished" ? "Lihat Hasil" : "Mulai"}
+              <span className={cn("text-xs font-semibold inline-flex items-center gap-1 px-3 py-1 rounded-full shadow-sm transition-all group-hover:gap-2", actionClass)}>
+                {actionLabel}
                 <ArrowRight className="w-4 h-4" />
               </span>
             </div>
@@ -271,7 +289,7 @@ export const TryoutList = () => {
         </div>
       </div>
 
-      {attemptsLoading || !mounted ? (
+      {!mounted ? (
         <div className="flex justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-gsb-orange" />
         </div>
@@ -286,7 +304,9 @@ export const TryoutList = () => {
             className="grid grid-cols-1 md:grid-cols-2 gap-4"
           >
             {activeTab === "current" && (
-              currentTryouts.length > 0
+              attemptsLoading
+                ? renderEmpty("Memuat status tryout aktif...")
+                : currentTryouts.length > 0
                 ? currentTryouts.map(({ tryout, attempt }) =>
                     renderCard(tryout, "in-progress", `Dimulai ${attempt.startedAt ? formatDate(attempt.startedAt) : ""}`)
                   )
@@ -294,7 +314,9 @@ export const TryoutList = () => {
             )}
 
             {activeTab === "registered" && (
-              registeredTryouts.length > 0
+              attemptsLoading
+                ? renderEmpty("Memuat status tryout selesai...")
+                : registeredTryouts.length > 0
                 ? registeredTryouts.map(({ tryout, attempt }) =>
                     renderCard(tryout, "finished", `Selesai ${attempt.completedAt ? formatDate(attempt.completedAt) : ""}`)
                   )

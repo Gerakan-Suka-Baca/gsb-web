@@ -127,9 +127,14 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
 
   if (!result?.released) {
     const releaseDate = result?.releaseDate
-      ? new Date(result.releaseDate).toLocaleDateString("id-ID", {
-          day: "numeric", month: "long", year: "numeric",
-          hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
+      ? new Date(result.releaseDate).toLocaleString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "Asia/Jakarta",
         })
       : null;
 

@@ -30,12 +30,13 @@ export const TryoutThankYou = ({ tryoutId, plan, onChangePlan, onViewScores }: P
   const hasScores = scoreData?.released === true && scoreData.scores !== null;
   const isNotReleased = !scoreData?.released;
   const releaseDate = scoreData?.releaseDate
-    ? new Date(scoreData.releaseDate).toLocaleDateString("id-ID", {
+    ? new Date(scoreData.releaseDate).toLocaleString("id-ID", {
         day: "numeric",
         month: "long",
         year: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+        hour12: false,
         timeZone: "Asia/Jakarta",
       })
     : null;

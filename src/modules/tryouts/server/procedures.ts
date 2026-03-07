@@ -273,7 +273,7 @@ export const tryoutsRouter = createTRPCRouter({
         ...data,
         totalDocs: data.totalDocs,
       };
-      await setCacheValue(cacheKey, payload, 2 * 60 * 1000);
+      await setCacheValue(cacheKey, payload, 10 * 60 * 1000);
       return payload;
     }),
 
