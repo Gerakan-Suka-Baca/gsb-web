@@ -63,6 +63,7 @@ type TryoutScoreDoc = {
   score_LBI?: number;
   score_PPU?: number;
   score_KMBM?: number;
+  paymentType?: "free" | "paid";
 };
 
 type CacheEntry<T> = {
@@ -296,7 +297,7 @@ export const tryoutsRouter = createTRPCRouter({
         return { released: false, releaseDate, scores: null, subtestStats: [], finalScore: null, tryoutTitle: tryout.title || "" };
       }
 
-      const [scoreResult, attemptResult] = await Promise.all([
+      const [scoreResult, attemptResult, paymentResult] = await Promise.all([
         ctx.db.find({
           collection: "tryout-scores",
           where: {
@@ -320,10 +321,23 @@ export const tryoutsRouter = createTRPCRouter({
           limit: 1,
           depth: 0,
         }),
+        ctx.db.find({
+          collection: "tryout-payments",
+          where: {
+            and: [
+              { user: { equals: userId } },
+              { tryout: { equals: input.tryoutId } },
+            ],
+          },
+          limit: 1,
+          sort: "-createdAt",
+          depth: 0,
+        }),
       ]);
 
       const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
       const attemptDoc = (attemptResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
+      const paymentDoc = (paymentResult.docs[0] ?? undefined) as { status?: "pending" | "verified" | "rejected" } | undefined;
 
       const questionResults = Array.isArray(attemptDoc?.questionResults) ? attemptDoc.questionResults : [];
 
@@ -380,6 +394,8 @@ export const tryoutsRouter = createTRPCRouter({
         totalCorrect: attemptDoc?.correctAnswersCount as number ?? 0,
         totalQuestions: attemptDoc?.totalQuestionsCount as number ?? 0,
         subtestDurations: (attemptDoc?.subtestDurations as Record<string, number>) || {},
+        paymentType: (scoreDoc?.paymentType as "free" | "paid" | undefined) ?? "free",
+        paymentReviewStatus: ((paymentDoc as { status?: "pending" | "verified" | "rejected" } | undefined)?.status ?? null),
       };
     }),
 
@@ -388,23 +404,12 @@ export const tryoutsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session?.user?.id;
       if (!userId) return null;
-      const cachedTarget = await getCacheValue<{
-        finalScore: number;
-        choice1: unknown;
-        choice2: unknown;
-        choice3: unknown;
-      }>(`target:${userId}:${input.tryoutId}`);
-      if (cachedTarget) return cachedTarget;
-
-      const user = await ctx.db.findByID({
-        collection: "users",
-        id: userId,
-        depth: 0,
-      });
-
-      if (!user) return null;
-
-      const [scoreResult] = await Promise.all([
+      const [user, scoreResult] = await Promise.all([
+        ctx.db.findByID({
+          collection: "users",
+          id: userId,
+          depth: 0,
+        }),
         ctx.db.find({
           collection: "tryout-scores",
           where: {
@@ -415,11 +420,37 @@ export const tryoutsRouter = createTRPCRouter({
           },
           limit: 1,
           depth: 0,
-        })
+        }),
       ]);
+
+      if (!user) return null;
 
       const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
       const finalScore = (scoreDoc?.finalScore as number) ?? 0;
+      const userData = user as {
+        targetPTN?: string;
+        targetMajor?: string;
+        targetPTN2?: string;
+        targetMajor2?: string;
+        targetPTN3?: string;
+        targetMajor3?: string;
+      };
+      const targetSignature = [
+        userData.targetPTN ?? "",
+        userData.targetMajor ?? "",
+        userData.targetPTN2 ?? "",
+        userData.targetMajor2 ?? "",
+        userData.targetPTN3 ?? "",
+        userData.targetMajor3 ?? "",
+      ].join("|");
+      const targetCacheKey = `target:${userId}:${input.tryoutId}:score:${finalScore}:targets:${targetSignature}`;
+      const cachedTarget = await getCacheValue<{
+        finalScore: number;
+        choice1: unknown;
+        choice2: unknown;
+        choice3: unknown;
+      }>(targetCacheKey);
+      if (cachedTarget) return cachedTarget;
 
       const searchProgram = async (univName: string, majorName: string) => {
         if (!univName || !majorName) return null;
@@ -488,14 +519,6 @@ export const tryoutsRouter = createTRPCRouter({
         };
       };
 
-      const userData = user as {
-        targetPTN?: string;
-        targetMajor?: string;
-        targetPTN2?: string;
-        targetMajor2?: string;
-        targetPTN3?: string;
-        targetMajor3?: string;
-      };
       const choice1 = await searchProgram(userData.targetPTN ?? "", userData.targetMajor ?? "");
       const choice2 = await searchProgram(userData.targetPTN2 ?? "", userData.targetMajor2 ?? "");
       const choice3 = await searchProgram(userData.targetPTN3 ?? "", userData.targetMajor3 ?? "");
@@ -506,7 +529,7 @@ export const tryoutsRouter = createTRPCRouter({
         choice2: choice2 || { found: false, targetPTN: userData.targetPTN2, targetMajor: userData.targetMajor2 },
         choice3: choice3 || { found: false, targetPTN: userData.targetPTN3, targetMajor: userData.targetMajor3 },
       };
-      await setCacheValue(`target:${userId}:${input.tryoutId}`, payload, 3 * 60 * 1000);
+      await setCacheValue(targetCacheKey, payload, 3 * 60 * 1000);
       return payload;
     }),
 
@@ -515,32 +538,29 @@ export const tryoutsRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session?.user?.id;
       if (!userId) return null;
-      const cachedRecs = await getCacheValue<{ finalScore: number; recommendations: unknown[] }>(
-        `recs:${userId}:${input.tryoutId}`
-      );
-      if (cachedRecs) return cachedRecs;
-
-      const user = await ctx.db.findByID({
-        collection: "users",
-        id: userId,
-        depth: 0,
-      });
+      const [user, scoreResult] = await Promise.all([
+        ctx.db.findByID({
+          collection: "users",
+          id: userId,
+          depth: 0,
+        }),
+        ctx.db.find({
+          collection: "tryout-scores",
+          where: {
+            and: [
+              { user: { equals: userId } },
+              { tryout: { equals: input.tryoutId } },
+            ],
+          },
+          limit: 1,
+          depth: 0,
+        }),
+      ]);
 
       if (!user) return null;
 
-      const [scoreResult] = await ctx.db.find({
-        collection: "tryout-scores",
-        where: {
-          and: [
-            { user: { equals: userId } },
-            { tryout: { equals: input.tryoutId } },
-          ],
-        },
-        limit: 1,
-        depth: 0,
-      }).then(res => res.docs);
-
-      const finalScore = (scoreResult as TryoutScoreDoc | undefined)?.finalScore ?? 0;
+      const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
+      const finalScore = (scoreDoc?.finalScore as number) ?? 0;
 
       const getKeywords = (major: string | undefined | null) => {
         if (!major) return [];
@@ -557,6 +577,11 @@ export const tryoutsRouter = createTRPCRouter({
       const kw1 = getKeywords(userProfile.targetMajor ?? "");
       const kw2 = getKeywords(userProfile.targetMajor2 ?? "");
       const allKws = Array.from(new Set([...kw1, ...kw2])).filter(Boolean);
+      const recsCacheKey = `recs:${userId}:${input.tryoutId}:score:${finalScore}:kws:${allKws.join(",")}`;
+      const cachedRecs = await getCacheValue<{ finalScore: number; recommendations: unknown[] }>(
+        recsCacheKey
+      );
+      if (cachedRecs) return cachedRecs;
 
       if (allKws.length === 0) {
         return { finalScore, recommendations: [] };
@@ -603,7 +628,7 @@ export const tryoutsRouter = createTRPCRouter({
       recs.sort((a, b) => b.chance - a.chance);
 
       const payload = { finalScore, recommendations: recs.slice(0, 20) };
-      await setCacheValue(`recs:${userId}:${input.tryoutId}`, payload, 5 * 60 * 1000);
+      await setCacheValue(recsCacheKey, payload, 5 * 60 * 1000);
       return payload;
     }),
 
@@ -700,5 +725,97 @@ export const tryoutsRouter = createTRPCRouter({
       };
       await setCacheValue(`program:${input.programId}:${input.tryoutId ?? ""}`, payload, 10 * 60 * 1000);
       return payload;
+    }),
+
+  getExplanation: protectedProcedure
+    .input(z.object({ tryoutId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session?.user?.id;
+      if (!userId) {
+        return { allowed: false as const, pdfUrl: null, paymentType: "free" as const, paymentReviewStatus: null };
+      }
+
+      const [attemptResult, scoreResult, paymentResult] = await Promise.all([
+        ctx.db.find({
+          collection: "tryout-attempts",
+          where: {
+            and: [
+              { user: { equals: userId } },
+              { tryout: { equals: input.tryoutId } },
+              { status: { equals: "completed" } },
+            ],
+          },
+          limit: 1,
+          sort: "-createdAt",
+          depth: 0,
+        }),
+        ctx.db.find({
+          collection: "tryout-scores",
+          where: {
+            and: [
+              { user: { equals: userId } },
+              { tryout: { equals: input.tryoutId } },
+            ],
+          },
+          limit: 1,
+          depth: 0,
+        }),
+        ctx.db.find({
+          collection: "tryout-payments",
+          where: {
+            and: [
+              { user: { equals: userId } },
+              { tryout: { equals: input.tryoutId } },
+            ],
+          },
+          limit: 1,
+          sort: "-createdAt",
+          depth: 0,
+        }),
+      ]);
+
+      const attempt = (attemptResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
+      const scoreDoc = (scoreResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
+      const paymentDoc = (paymentResult.docs[0] ?? undefined) as { status?: "pending" | "verified" | "rejected" } | undefined;
+      const paymentType = (scoreDoc?.paymentType as "free" | "paid" | undefined) ?? "free";
+
+      if (!attempt) {
+        return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? null };
+      }
+
+      if (paymentType !== "paid") {
+        return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? null };
+      }
+
+      const explanationResult = await ctx.db.find({
+        collection: "tryout-explanations",
+        where: { tryout: { equals: input.tryoutId } },
+        limit: 1,
+        depth: 1,
+      });
+
+      const explanationDoc = (explanationResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
+      if (!explanationDoc) {
+        return {
+          allowed: true as const,
+          pdfUrl: null,
+          paymentType,
+          paymentReviewStatus: paymentDoc?.status ?? null,
+        };
+      }
+
+      const pdf = explanationDoc.pdf as Record<string, unknown> | string | undefined;
+      let pdfUrl: string | null = null;
+      if (pdf && typeof pdf === "object" && "url" in pdf) {
+        pdfUrl = (pdf as { url?: string }).url ?? null;
+      }
+
+      return {
+        allowed: true as const,
+        pdfUrl,
+        title: (explanationDoc.title as string) || "Pembahasan Tryout",
+        paymentType,
+        paymentReviewStatus: paymentDoc?.status ?? null,
+      };
     }),
 });

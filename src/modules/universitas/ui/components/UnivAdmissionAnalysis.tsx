@@ -11,6 +11,7 @@ import Link from "next/link";
 
 interface Props {
   tryoutId: string;
+  finalScore?: number | null;
 }
 
 type TargetChoice = {
@@ -33,10 +34,11 @@ type TargetAnalysisResponse = {
   choice3: TargetChoice;
 } | null;
 
-export const UnivAdmissionAnalysis = ({ tryoutId }: Props) => {
+export const UnivAdmissionAnalysis = ({ tryoutId, finalScore }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
-  const cacheKey = `admission-analysis:${tryoutId}`;
+  const scoreKey = typeof finalScore === "number" ? finalScore : "unknown";
+  const cacheKey = `admission-analysis:${tryoutId}:${scoreKey}`;
   const readCache = (key: string): { data: TargetAnalysisResponse; ts: number } | null => {
     if (typeof window === "undefined") return null;
     const raw = window.localStorage.getItem(key);
@@ -49,13 +51,15 @@ export const UnivAdmissionAnalysis = ({ tryoutId }: Props) => {
       return null;
     }
   };
-  const cached = readCache(cacheKey);
+  // cache by score
+  const cached = scoreKey === "unknown" ? null : readCache(cacheKey);
   const queryOptions = trpc.tryouts.getTargetAnalysis.queryOptions({ tryoutId });
   const { data, isLoading } = useQuery({
     ...queryOptions,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
     initialData: cached?.data ?? undefined,
     initialDataUpdatedAt: cached?.ts,
   });

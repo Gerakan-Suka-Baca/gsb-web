@@ -22,7 +22,15 @@ type RecommendationsResponse = {
 export const UnivRecommendations = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
-  const cacheKey = `recommendations:${tryoutId}`;
+  const scoreQueryOptions = trpc.tryouts.getScoreResults.queryOptions({ tryoutId });
+  const { data: scoreData } = useQuery({
+    ...scoreQueryOptions,
+    staleTime: 30 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const scoreKey = typeof scoreData?.finalScore === "number" ? scoreData.finalScore : "unknown";
+  const cacheKey = `recommendations:${tryoutId}:${scoreKey}`;
   const readCache = (key: string): { data: RecommendationsResponse; ts: number } | null => {
     if (typeof window === "undefined") return null;
     const raw = window.localStorage.getItem(key);
@@ -35,14 +43,16 @@ export const UnivRecommendations = ({ tryoutId }: Props) => {
       return null;
     }
   };
-  const cached = readCache(cacheKey);
+  // cache by score
+  const cached = scoreKey === "unknown" ? null : readCache(cacheKey);
   
   const queryOptions = trpc.tryouts.getRecommendations.queryOptions({ tryoutId });
   const { data, isLoading } = useQuery({
     ...queryOptions,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
     initialData: cached?.data ?? undefined,
     initialDataUpdatedAt: cached?.ts,
   });

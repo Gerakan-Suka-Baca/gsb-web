@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { isVolunteerOrAbove } from "./accessHelpers";
+import { isVolunteerOrAbove } from "../accessHelpers";
 
 const toSlug = (val: string): string =>
   val

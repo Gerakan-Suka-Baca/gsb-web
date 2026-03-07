@@ -1,5 +1,5 @@
 import { CollectionConfig } from 'payload'
-import formatSlug from '../utils/formatSlug'
+import formatSlug from '../../utils/formatSlug'
 
 export const ArticleLabels: CollectionConfig = {
   slug: 'article-labels',

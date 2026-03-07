@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, RefreshCw, BarChart3, Clock } from "lucide-react";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 interface Props {
   tryoutId: string;
@@ -17,6 +18,9 @@ interface Props {
 export const TryoutThankYou = ({ tryoutId, plan, onChangePlan, onViewScores }: Props) => {
   const router = useRouter();
   const trpc = useTRPC();
+  useEffect(() => {
+    router.prefetch(`/tryout/${tryoutId}/results`);
+  }, [router, tryoutId]);
 
   // Prefetch score results — used to conditionally show "Lihat Skor"
   const { data: scoreData, isLoading: isScoreLoading } = useQuery(

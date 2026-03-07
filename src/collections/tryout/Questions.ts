@@ -1,7 +1,7 @@
 import type { CollectionConfig } from "payload";
-import { TryoutQuestion } from "../blocks/tryoutQuestion";
-import { isVolunteerOrAbove } from "./accessHelpers";
-import { SUBTEST_OPTIONS } from "./subtestOptions";
+import { TryoutQuestion } from "../../blocks/tryoutQuestion";
+import { isVolunteerOrAbove } from "../accessHelpers";
+import { SUBTEST_OPTIONS } from "../subtestOptions";
 
 export const Questions: CollectionConfig = {
   slug: "questions",

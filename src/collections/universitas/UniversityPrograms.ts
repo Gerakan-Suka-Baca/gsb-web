@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { isAdminOrAbove, isVolunteerOrAbove } from "./accessHelpers";
+import { isAdminOrAbove, isVolunteerOrAbove } from "../accessHelpers";
 
 export const UniversityPrograms: CollectionConfig = {
   slug: "university-programs",

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { isAdminOrAbove } from './accessHelpers'
+import { isAdminOrAbove } from '../accessHelpers'
 
 export const UniversityMedia: CollectionConfig = {
   slug: 'university-media',
@@ -8,7 +8,7 @@ export const UniversityMedia: CollectionConfig = {
     plural: 'University Media',
   },
   admin: {
-    group: 'Universities',
+    group: 'Media',
   },
   access: {
     read: () => true,

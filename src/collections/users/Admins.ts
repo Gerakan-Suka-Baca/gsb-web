@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { isAdminOrAbove, isSuperAdmin } from "./accessHelpers";
+import { isAdminOrAbove, isSuperAdmin } from "../accessHelpers";
 
 export const Admins: CollectionConfig = {
   slug: "admins",

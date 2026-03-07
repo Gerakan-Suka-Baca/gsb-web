@@ -7,7 +7,7 @@ const toSlug = (val: string): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 
-import { isVolunteerOrAbove } from './accessHelpers'
+import { isVolunteerOrAbove } from '../accessHelpers'
 
 export const Universities: CollectionConfig = {
   slug: 'universities',

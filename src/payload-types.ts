@@ -74,6 +74,7 @@ export interface Config {
     tryouts: Tryout;
     questions: Question;
     'tryout-attempts': TryoutAttempt;
+    'explanation-media': ExplanationMedia;
     'tryout-payments': TryoutPayment;
     'tryout-scores': TryoutScore;
     'tryout-explanations': TryoutExplanation;
@@ -100,6 +101,7 @@ export interface Config {
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
+    'explanation-media': ExplanationMediaSelect<false> | ExplanationMediaSelect<true>;
     'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
     'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
     'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
@@ -471,6 +473,10 @@ export interface UniversityProgram {
  */
 export interface TryoutAttempt {
   id: string;
+  /**
+   * Auto-generated: Nama User — Nama Tryout
+   */
+  displayTitle?: string | null;
   user: string | User;
   tryout: string | Tryout;
   accountType?: ('production' | 'development') | null;
@@ -723,6 +729,28 @@ export interface TryoutAttempt {
   createdAt: string;
 }
 /**
+ * File PDF pembahasan tryout.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "explanation-media".
+ */
+export interface ExplanationMedia {
+  id: string;
+  alt: string;
+  _key?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
  * List user yang sudah melakukan pembayaran manual (untuk verifikasi).
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -756,7 +784,7 @@ export interface TryoutScore {
   id: string;
   user: string | User;
   tryout: string | Tryout;
-  accountType?: ('production' | 'development') | null;
+  paymentType: 'free' | 'paid';
   /**
    * PU
    */
@@ -806,9 +834,9 @@ export interface TryoutExplanation {
    */
   tryout: string | Tryout;
   /**
-   * Upload the PDF file containing the explanations.
+   * Upload file PDF pembahasan.
    */
-  pdf: string | Media;
+  pdf: string | ExplanationMedia;
   updatedAt: string;
   createdAt: string;
 }
@@ -934,6 +962,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tryout-attempts';
         value: string | TryoutAttempt;
+      } | null)
+    | ({
+        relationTo: 'explanation-media';
+        value: string | ExplanationMedia;
       } | null)
     | ({
         relationTo: 'tryout-payments';
@@ -1160,6 +1192,7 @@ export interface QuestionsSelect<T extends boolean = true> {
  * via the `definition` "tryout-attempts_select".
  */
 export interface TryoutAttemptsSelect<T extends boolean = true> {
+  displayTitle?: T;
   user?: T;
   tryout?: T;
   accountType?: T;
@@ -1237,6 +1270,25 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "explanation-media_select".
+ */
+export interface ExplanationMediaSelect<T extends boolean = true> {
+  alt?: T;
+  _key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tryout-payments_select".
  */
 export interface TryoutPaymentsSelect<T extends boolean = true> {
@@ -1259,7 +1311,7 @@ export interface TryoutPaymentsSelect<T extends boolean = true> {
 export interface TryoutScoresSelect<T extends boolean = true> {
   user?: T;
   tryout?: T;
-  accountType?: T;
+  paymentType?: T;
   score_PU?: T;
   score_PK?: T;
   score_PM?: T;

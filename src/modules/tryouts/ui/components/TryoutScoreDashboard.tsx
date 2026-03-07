@@ -1,14 +1,19 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, XCircle, MinusCircle, Loader2, Clock, Trophy } from "lucide-react";
+import { ArrowLeft, CheckCircle2, XCircle, MinusCircle, Loader2, Clock, Trophy, FileText, Lock, MessageCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { SUBTEST_OPTIONS } from "@/collections/subtestOptions";
 import { UnivAdmissionAnalysis } from "@/modules/universitas/ui/components/UnivAdmissionAnalysis";
+import { PdfViewerModal } from "./PdfViewerModal";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import Image from "next/image";
+import { toast } from "sonner";
 
 interface Props {
   tryoutId: string;
@@ -42,6 +47,8 @@ type ScoreResults = {
   totalCorrect?: number;
   totalQuestions?: number;
   subtestDurations?: Record<string, number>;
+  paymentType?: "free" | "paid";
+  paymentReviewStatus?: "pending" | "verified" | "rejected" | null;
 };
 
 const TPS_CODES = ["PU", "PPU", "PK", "KMBM"];
@@ -74,11 +81,41 @@ function formatDuration(seconds: number): string {
 export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery(
     trpc.tryouts.getScoreResults.queryOptions({ tryoutId })
   );
   const result = data as ScoreResults | undefined;
+
+  const { data: explanationData, isLoading: isExplanationLoading } = useQuery(
+    trpc.tryouts.getExplanation.queryOptions({ tryoutId })
+  );
+  const { data: sessionData } = useQuery(trpc.auth.session.queryOptions());
+  const { data: attemptData } = useQuery(
+    trpc.tryoutAttempts.getAttempt.queryOptions({ tryoutId })
+  );
+  const [showPdfViewer, setShowPdfViewer] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+
+  const updatePlanMutation = useMutation(
+    trpc.tryoutAttempts.updatePlan.mutationOptions({
+      onSuccess: async () => {
+        await queryClient.invalidateQueries({
+          queryKey: [["tryouts", "getExplanation"], { input: { tryoutId }, type: "query" }],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [["tryouts", "getScoreResults"], { input: { tryoutId }, type: "query" }],
+        });
+        await queryClient.invalidateQueries({
+          queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId }, type: "query" }],
+        });
+        toast.success("Konfirmasi diterima. Status pembayaran Anda sedang di-review.");
+        setShowPaymentDialog(false);
+      },
+      onError: (err) => toast.error("Gagal mengirim konfirmasi pembayaran: " + err.message),
+    })
+  );
 
   if (isLoading) {
     return (
@@ -177,6 +214,23 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
 
   const tpsEntries = entries.filter((e) => TPS_CODES.includes(e.code));
   const litEntries = entries.filter((e) => LIT_CODES.includes(e.code));
+  const isPaymentUnderReview = explanationData?.paymentReviewStatus === "pending";
+  const canRequestReview = !isPaymentUnderReview && Boolean(attemptData?.id);
+
+  const handleWAConfirm = () => {
+    if (!attemptData?.id) {
+      toast.error("Data attempt tidak ditemukan. Silakan refresh halaman.");
+      return;
+    }
+    const username = sessionData?.user?.username || "peserta";
+    const fullName = sessionData?.user?.fullName || sessionData?.user?.username || "Peserta";
+    const tryoutTitle = result.tryoutTitle || "Tryout SNBT";
+    const message = encodeURIComponent(
+      `Halo Admin GSB, saya ${fullName} (@${username}) sudah melakukan pembayaran untuk pembahasan premium ${tryoutTitle} sebesar Rp 5.000. Mohon verifikasi. (Mohon sertakan bukti transfer)`
+    );
+    window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
+    updatePlanMutation.mutate({ attemptId: attemptData.id, plan: "paid" });
+  };
 
   return (
     <motion.div
@@ -219,7 +273,134 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
         </Card>
       </div>
 
-      <UnivAdmissionAnalysis tryoutId={tryoutId} />
+      {/* Pembahasan Section */}
+      {isExplanationLoading ? (
+        <Card className="p-6 border-border bg-muted/30 animate-pulse">
+          <div className="h-5 w-40 bg-muted rounded mb-4" />
+          <div className="h-4 w-64 bg-muted rounded mb-2" />
+          <div className="h-10 w-32 bg-muted rounded" />
+        </Card>
+      ) : explanationData ? (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <FileText className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">Pembahasan Tryout</h2>
+          </div>
+
+          {explanationData.allowed && explanationData.pdfUrl ? (
+            <Card className="p-6 border-primary/20 bg-primary/5 dark:bg-primary/10">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-bold text-foreground text-lg">
+                    {(explanationData as { title?: string }).title || "Pembahasan Tryout"}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Buka pembahasan lengkap dalam format PDF.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => setShowPdfViewer(true)}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold gap-2 rounded-xl shrink-0"
+                >
+                  <FileText className="w-4 h-4" />
+                  Lihat Pembahasan
+                </Button>
+              </div>
+            </Card>
+          ) : explanationData.allowed && !explanationData.pdfUrl ? (
+            <Card className="p-6 border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20">
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <p className="text-sm text-amber-700 dark:text-amber-300">
+                  Pembahasan sedang diproses dan akan segera tersedia. Silakan cek kembali nanti.
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <Card className="p-6 border-border bg-muted/30">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <Lock className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+                  <div>
+                    <h3 className="font-bold text-foreground">Pembahasan Hanya untuk Premium</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Lihat pembahasan hanya tersedia untuk user berbayar.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowPaymentDialog(true)}
+                  variant="outline"
+                  className="font-semibold gap-2 rounded-xl shrink-0 border-gsb-orange text-gsb-orange hover:bg-gsb-orange/10"
+                  disabled={!canRequestReview || updatePlanMutation.isPending}
+                >
+                  {isPaymentUnderReview ? "Status: Sedang Di-review" : "Buka Pembahasan"}
+                </Button>
+              </div>
+            </Card>
+          )}
+        </div>
+      ) : null}
+
+      <UnivAdmissionAnalysis tryoutId={tryoutId} finalScore={result.finalScore ?? null} />
+
+      {/* PDF Viewer Modal */}
+      {explanationData?.pdfUrl && (
+        <PdfViewerModal
+          open={showPdfViewer}
+          onOpenChange={setShowPdfViewer}
+          pdfUrl={explanationData.pdfUrl}
+          title={(explanationData as { title?: string }).title}
+          tryoutId={tryoutId}
+        />
+      )}
+
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Instruksi Pembayaran Pembahasan Premium</DialogTitle>
+            <DialogDescription>
+              Scan QRIS lalu konfirmasi via WhatsApp. Status Anda akan berubah menjadi sedang di-review.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid md:grid-cols-2 gap-8 items-center mt-4">
+            <div className="flex justify-center bg-muted/50 p-4 rounded-lg">
+              <div className="relative w-64 aspect-[3/4]">
+                <Image
+                  src="/home/qris.jpeg"
+                  alt="QRIS GSB"
+                  fill
+                  sizes="(max-width: 768px) 80vw, 256px"
+                  className="object-contain"
+                />
+              </div>
+            </div>
+            <div className="space-y-6">
+              <div>
+                <p className="text-muted-foreground text-sm">
+                  Scan QRIS di samping menggunakan GoPay, OVO, Dana, ShopeePay,
+                  atau Mobile Banking apa pun.
+                </p>
+              </div>
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm font-semibold mb-1">Nominal Transfer</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-mono font-bold text-gsb-orange">Rp 5.000</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleWAConfirm}
+                className="w-full bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold h-12 gap-2"
+                disabled={!canRequestReview || updatePlanMutation.isPending}
+              >
+                <MessageCircle className="w-5 h-5" />
+                {updatePlanMutation.isPending ? "Memproses..." : "Konfirmasi via WhatsApp"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="mb-6">
         <h2 className="text-xl font-bold mb-4 px-1 text-foreground">Rekap Hasil Tryout</h2>

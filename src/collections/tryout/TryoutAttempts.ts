@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { isAdminOrAbove } from "./accessHelpers";
+import { isAdminOrAbove } from "../accessHelpers";
 
 const resolveAccountType = () =>
   (process.env.APP_ENV || "").toLowerCase() === "development"
@@ -15,11 +15,21 @@ export const TryoutAttempts: CollectionConfig = {
     delete: ({ req: { user } }) => isAdminOrAbove(user),
   },
   admin: {
-    useAsTitle: "id",
+    useAsTitle: "displayTitle",
     group: "Tryout",
-    defaultColumns: ["user", "tryout", "status", "resultPlan", "score", "correctAnswersCount", "totalQuestionsCount", "createdAt"],
+    listSearchableFields: ["displayTitle"],
+    defaultColumns: ["displayTitle", "tryout", "status", "resultPlan", "score", "correctAnswersCount", "totalQuestionsCount", "createdAt"],
   },
   fields: [
+    {
+      name: "displayTitle",
+      type: "text",
+      admin: {
+        position: "sidebar",
+        readOnly: true,
+        description: "Auto-generated: Nama User — Nama Tryout",
+      },
+    },
     {
       name: "user",
       type: "relationship",
@@ -321,20 +331,53 @@ export const TryoutAttempts: CollectionConfig = {
     },
   ],
   hooks: {
+    afterRead: [
+      async ({ doc, req }) => {
+        // Dynamically compute displayTitle on every read — no save needed
+        try {
+          const userRaw = doc.user;
+          const tryoutRaw = doc.tryout;
+
+          // If populated (object), extract directly. If ID string, fetch.
+          let userName = "Unknown";
+          if (typeof userRaw === "object" && userRaw !== null) {
+            userName = userRaw.fullName || userRaw.username || userRaw.email || userRaw.id || "Unknown";
+          } else if (typeof userRaw === "string") {
+            try {
+              const userDoc = await req.payload.findByID({ collection: "users", id: userRaw, depth: 0 });
+              const u = userDoc as unknown as Record<string, unknown>;
+              userName = (u.fullName || u.username || u.email || userRaw) as string;
+            } catch { /* use ID fallback */ userName = userRaw; }
+          }
+
+          let tryoutTitle = "Tryout";
+          if (typeof tryoutRaw === "object" && tryoutRaw !== null) {
+            tryoutTitle = (tryoutRaw as Record<string, unknown>).title as string || tryoutRaw.id || "Tryout";
+          } else if (typeof tryoutRaw === "string") {
+            try {
+              const tryoutDoc = await req.payload.findByID({ collection: "tryouts", id: tryoutRaw, depth: 0 });
+              tryoutTitle = (tryoutDoc as unknown as Record<string, unknown>).title as string || tryoutRaw;
+            } catch { tryoutTitle = tryoutRaw; }
+          }
+
+          doc.displayTitle = `${userName} — ${tryoutTitle}`;
+        } catch {
+          // Fallback: keep whatever was stored
+        }
+        return doc;
+      },
+    ],
     beforeChange: [
       async ({ data, req, operation }) => {
-        if (operation === "create" && data.user) {
+        if (operation === "create" && data?.user) {
           try {
             const userId = typeof data.user === "object" ? data.user.id : data.user;
-            const user = await req.payload.findByID({
-              collection: "users",
-              id: userId,
-            });
+            const user = await req.payload.findByID({ collection: "users", id: userId, depth: 0 });
             if (user) {
-              data.accountType = user.accountType || resolveAccountType();
+              data.accountType = (user as unknown as Record<string, unknown>).accountType || resolveAccountType();
             }
-          } catch (error) {
-            console.error("Error setting accountType for attempt:", error);
+          } catch {
+            data.accountType = resolveAccountType();
           }
         }
         return data;

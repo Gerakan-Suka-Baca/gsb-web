@@ -50,6 +50,7 @@ export function useExamTimer({
   );
   const hasValidDeadline = resolveRemainingByDeadline(deadlineAt) !== null;
 
+  // ── Deadline-based timer ──
   useEffect(() => {
     if (!hasValidDeadline) {
       lastDeadlineRef.current = null;
@@ -81,6 +82,7 @@ export function useExamTimer({
     return () => clearInterval(timer);
   }, [deadlineAt, isRunning, resolveRemainingByDeadline, hasValidDeadline]);
 
+  // ── Fallback countdown (no server deadline) ──
   useEffect(() => {
     if (hasValidDeadline) return;
     if (!isRunning || initialSeconds <= 0) return;
@@ -96,6 +98,12 @@ export function useExamTimer({
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          // Fire onTimeUp when fallback countdown reaches 0!
+          if (!hasTriggeredTimeUpRef.current) {
+            hasTriggeredTimeUpRef.current = true;
+            // Schedule onTimeUp in next microtask to avoid setState-in-setState
+            queueMicrotask(() => onTimeUpRef.current());
+          }
           return 0;
         }
         return prev - 1;
@@ -104,6 +112,30 @@ export function useExamTimer({
 
     return () => clearInterval(timer);
   }, [deadlineAt, initialSeconds, isRunning, resolveRemainingByDeadline, hasValidDeadline]);
+
+  // ── Re-sync on tab visibility change (catches throttled timers) ──
+  useEffect(() => {
+    if (!isRunning) return;
+
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+
+      if (hasValidDeadline) {
+        // Immediately re-check deadline when returning to tab
+        const remaining = resolveRemainingByDeadline(deadlineAt);
+        if (remaining !== null) {
+          setTimeLeft(remaining);
+          if (remaining <= 0 && !hasTriggeredTimeUpRef.current) {
+            hasTriggeredTimeUpRef.current = true;
+            onTimeUpRef.current();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [isRunning, hasValidDeadline, deadlineAt, resolveRemainingByDeadline]);
 
   const formatTime = (seconds: number) => {
     if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
@@ -119,3 +151,4 @@ export function useExamTimer({
     hasValidDeadline,
   };
 }
+

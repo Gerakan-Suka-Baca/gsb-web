@@ -42,12 +42,15 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
 
   const updatePlanMutation = useMutation(
     trpc.tryoutAttempts.updatePlan.mutationOptions({
-      onSuccess: async () => {
+      onSuccess: async (response) => {
         await queryClient.invalidateQueries({ 
             queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId }, type: "query" }] 
         });
-        
-        toast.success("Paket berhasil disimpan!");
+        if (selectedPlan === "paid" || response.paymentStatus === "pending") {
+          toast.success("Konfirmasi diterima. Status pembayaran Anda sedang di-review.");
+        } else {
+          toast.success("Paket berhasil disimpan!");
+        }
         if (selectedPlan) onPlanSelected(selectedPlan);
       },
       onError: (err) => toast.error("Gagal menyimpan paket: " + err.message),

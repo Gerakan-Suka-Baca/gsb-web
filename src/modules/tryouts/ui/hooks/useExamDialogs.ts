@@ -26,7 +26,7 @@ export function useExamDialogs({
   useEffect(() => {
     // Reset bridging seconds when NOT in bridging state
     if (status !== "bridging") {
-      if (bridgingSeconds !== 60) dispatch({ type: "SET_BRIDGING_SECONDS", seconds: 60 });
+      dispatch({ type: "SET_BRIDGING_SECONDS", seconds: 60 });
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -45,7 +45,7 @@ export function useExamDialogs({
         timerRef.current = null;
       }
     };
-  }, [status, dispatch]); // Note: don't include bridgingSeconds to avoid resetting timer
+  }, [status, dispatch]);
 
   // Auto-advance when countdown reaches 0
   useEffect(() => {

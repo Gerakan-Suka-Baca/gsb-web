@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { isAdminOrAbove } from './accessHelpers';
+import { isAdminOrAbove } from '../accessHelpers';
 
 export const TryoutExplanations: CollectionConfig = {
   slug: 'tryout-explanations',
@@ -38,14 +38,11 @@ export const TryoutExplanations: CollectionConfig = {
     {
       name: 'pdf',
       type: 'upload',
-      relationTo: 'media',
+      relationTo: 'explanation-media',
       required: true,
       label: 'File PDF Pembahasan',
       admin: {
-        description: 'Upload the PDF file containing the explanations.',
-      },
-      filterOptions: {
-        mimeType: { contains: 'application/pdf' },
+        description: 'Upload file PDF pembahasan.',
       }
     },
   ],

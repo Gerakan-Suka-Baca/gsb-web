@@ -1,11 +1,6 @@
 import type { CollectionConfig } from "payload";
-import { isVolunteerOrAbove, isAdminOrAbove } from "./accessHelpers";
-import { SUBTEST_OPTIONS } from "./subtestOptions";
-
-const resolveAccountType = () =>
-  (process.env.APP_ENV || "").toLowerCase() === "development"
-    ? "development"
-    : "production";
+import { isVolunteerOrAbove, isAdminOrAbove } from "../accessHelpers";
+import { SUBTEST_OPTIONS } from "../subtestOptions";
 
 const subtestFields = SUBTEST_OPTIONS.map((opt) => ({
   name: `score_${opt.value}`,
@@ -54,15 +49,17 @@ export const TryoutScores: CollectionConfig = {
       },
     },
     {
-      name: "accountType",
+      name: "paymentType",
       type: "select",
+      label: "Tipe Pembayaran",
+      required: true,
+      defaultValue: "free",
       options: [
-        { label: "Production", value: "production" },
-        { label: "Development", value: "development" },
+        { label: "Gratis", value: "free" },
+        { label: "Berbayar", value: "paid" },
       ],
       admin: {
         position: "sidebar",
-        readOnly: true,
       },
       index: true,
     },
@@ -106,25 +103,7 @@ export const TryoutScores: CollectionConfig = {
     },
   ],
   hooks: {
-    beforeChange: [
-      async ({ data, req, operation }) => {
-        if (operation === "create" && data.user) {
-          try {
-            const userId = typeof data.user === "object" ? data.user.id : data.user;
-            const user = await req.payload.findByID({
-              collection: "users",
-              id: userId,
-            });
-            if (user) {
-              data.accountType = user.accountType || resolveAccountType();
-            }
-          } catch (error) {
-            console.error("Error setting accountType for score:", error);
-          }
-        }
-        return data;
-      },
-    ],
+    beforeChange: [],
     beforeValidate: [
       async ({ data, req, operation }) => {
         if (!data?.user || !data?.tryout || !req.payload) return data;

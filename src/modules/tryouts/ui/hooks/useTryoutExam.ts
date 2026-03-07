@@ -352,7 +352,19 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
             toast.error("Gagal menyimpan progres. Coba lagi sebelum submit.");
             return;
           }
-          const safeAnswers = state.answers || {};
+          // Deep clone and sanitize answers to strip any accidental DOM references
+          // that can cause "Converting circular structure to JSON" errors
+          const rawAnswers = state.answers || {};
+          const safeAnswers: Record<string, Record<string, string>> = {};
+          for (const [subtestId, answerMap] of Object.entries(rawAnswers)) {
+            if (typeof answerMap !== "object" || answerMap === null) continue;
+            const cleanMap: Record<string, string> = {};
+            for (const [qId, val] of Object.entries(answerMap)) {
+              if (typeof val === "string") cleanMap[qId] = val;
+            }
+            safeAnswers[subtestId] = cleanMap;
+          }
+
           const safeDurations = { ...state.subtestDurations };
           if (currentSubtestId) safeDurations[currentSubtestId] = elapsedSeconds;
           
@@ -361,8 +373,9 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
             answers: safeAnswers,
             submitMode,
           });
-        } catch {
-          toast.error("Terjadi kesalahan saat finalisasi ujian. Pastikan koneksi stabil lalu coba lagi.");
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          toast.error("Terjadi kesalahan saat finalisasi ujian: " + msg);
         }
       } else {
         dispatch({ type: "SET_STATUS", status: "finished" });

@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "2mb",
     },
   },
+  turbopack: {
+    root: process.cwd(),
+    resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
+  },
   webpack: (config) => {
     config.ignoreWarnings = [
       { module: /node_modules\/node-fetch\/lib\/index\.js/ },
