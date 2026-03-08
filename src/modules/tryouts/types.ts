@@ -47,6 +47,8 @@ export type TryoutAttempt = {
   totalQuestionsCount?: number;
   questionResults?: unknown[]; 
   resultPlan?: "free" | "paid";
+  paymentMethod?: "none" | "free" | "qris" | "voucher";
+  adminConfirmation?: "none" | "pending" | "approved" | "rejected";
   retakeSubtestDurations?: Record<string, number>;
   serverNow?: string;
   [key: string]: unknown; 

@@ -53,6 +53,40 @@ type SaveProgressBatchOutput = ServerTimingSyncPayload & {
   applied?: number;
 };
 
+const sanitizeOutgoingEvents = (events: TryoutEvent[]): TryoutEvent[] => {
+  const sanitized: TryoutEvent[] = [];
+  for (const event of events) {
+    if (event.kind === "answer") {
+      if (typeof event.answerId !== "string") continue;
+      sanitized.push({
+        id: event.id,
+        attemptId: event.attemptId,
+        kind: "answer",
+        subtestId: event.subtestId,
+        questionId: event.questionId,
+        answerId: event.answerId,
+        revision: event.revision,
+        clientTs: event.clientTs,
+      });
+      continue;
+    }
+    if (event.kind === "flag") {
+      if (typeof event.flag !== "boolean") continue;
+      sanitized.push({
+        id: event.id,
+        attemptId: event.attemptId,
+        kind: "flag",
+        subtestId: event.subtestId,
+        questionId: event.questionId,
+        flag: event.flag,
+        revision: event.revision,
+        clientTs: event.clientTs,
+      });
+    }
+  }
+  return sanitized;
+};
+
 export function useExamSync({
   attemptId,
   state,
@@ -149,7 +183,14 @@ export function useExamSync({
         let pending: TryoutEvent[] = [];
         try {
           pending = await getPendingEvents(attemptId, 20);
+          pending = sanitizeOutgoingEvents(pending);
           const currentState = { ...stateRef.current, ...(overrideState ?? {}) };
+          const currentSubtest = Number.isFinite(currentState.currentSubtestIndex)
+            ? Math.max(0, Math.floor(currentState.currentSubtestIndex))
+            : 0;
+          const currentQuestionIndex = Number.isFinite(currentState.currentQuestionIndex)
+            ? Math.max(0, Math.floor(currentState.currentQuestionIndex))
+            : 0;
           const persistedExamState =
             currentState.status === "running" || currentState.status === "bridging"
               ? currentState.status
@@ -169,12 +210,12 @@ export function useExamSync({
             batchId: createId(),
             clientTime: Date.now(),
             events: pending,
-            currentSubtest: currentState.currentSubtestIndex,
+            currentSubtest,
             examState: persistedExamState,
-            currentQuestionIndex: currentState.currentQuestionIndex,
+            currentQuestionIndex,
           });
           lastSyncedStateRef.current = {
-            currentSubtestIndex: currentState.currentSubtestIndex,
+            currentSubtestIndex: currentSubtest,
             status: currentState.status,
           };
 
@@ -263,11 +304,23 @@ export function useExamSync({
     flushEventsRef.current = flushEvents;
   }, [flushEvents]);
 
+  useEffect(() => {
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const queueEvent = useCallback(
     async (
       event: Omit<TryoutEvent, "id" | "attemptId" | "clientTs" | "revision">
     ) => {
       if (!attemptId) return;
+      if (event.kind === "answer" && typeof event.answerId !== "string") return;
+      if (event.kind === "flag" && typeof event.flag !== "boolean") return;
+      if (typeof event.subtestId !== "string" || typeof event.questionId !== "string") return;
       const key = `${event.kind}-${event.subtestId}-${event.questionId}`;
       const nextRev = (revisionRef.current[key] ?? 0) + 1;
       revisionRef.current[key] = nextRev;
@@ -385,6 +438,12 @@ export function useExamSync({
 
   const clearSyncData = useCallback(async () => {
     if (!attemptId) return;
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+    lastRetryAtRef.current = 0;
+    syncFailedRef.current = false;
     await clearBackup(attemptId);
     await clearEvents(attemptId);
   }, [attemptId]);

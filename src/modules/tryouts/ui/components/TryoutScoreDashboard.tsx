@@ -14,6 +14,7 @@ import { PdfViewerModal } from "./PdfViewerModal";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import Image from "next/image";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 interface Props {
   tryoutId: string;
@@ -97,6 +98,8 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
   );
   const [showPdfViewer, setShowPdfViewer] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<"qris" | "voucher">("qris");
+  const [voucherCode, setVoucherCode] = useState("");
 
   const updatePlanMutation = useMutation(
     trpc.tryoutAttempts.updatePlan.mutationOptions({
@@ -110,7 +113,7 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
         await queryClient.invalidateQueries({
           queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId }, type: "query" }],
         });
-        toast.success("Konfirmasi diterima. Status pembayaran Anda sedang di-review.");
+        toast.success("Permintaan akses premium berhasil diproses.");
         setShowPaymentDialog(false);
       },
       onError: (err) => toast.error("Gagal mengirim konfirmasi pembayaran: " + err.message),
@@ -220,6 +223,7 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
   const tpsEntries = entries.filter((e) => TPS_CODES.includes(e.code));
   const litEntries = entries.filter((e) => LIT_CODES.includes(e.code));
   const isPaymentUnderReview = explanationData?.paymentReviewStatus === "pending";
+  const isPaymentApproved = explanationData?.paymentReviewStatus === "verified";
   const canRequestReview = !isPaymentUnderReview && Boolean(attemptData?.id);
 
   const handleWAConfirm = () => {
@@ -234,7 +238,24 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
       `Halo Admin GSB, saya ${fullName} (@${username}) sudah melakukan pembayaran untuk pembahasan premium ${tryoutTitle} sebesar Rp 5.000. Mohon verifikasi. (Mohon sertakan bukti transfer)`
     );
     window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
-    updatePlanMutation.mutate({ attemptId: attemptData.id, plan: "paid" });
+    updatePlanMutation.mutate({ attemptId: attemptData.id, plan: "paid", paymentMethod: "qris" });
+  };
+
+  const handleRedeemVoucher = () => {
+    if (!attemptData?.id) {
+      toast.error("Data attempt tidak ditemukan. Silakan refresh halaman.");
+      return;
+    }
+    if (!voucherCode.trim()) {
+      toast.error("Masukkan kode voucher terlebih dahulu.");
+      return;
+    }
+    updatePlanMutation.mutate({
+      attemptId: attemptData.id,
+      plan: "paid",
+      paymentMethod: "voucher",
+      voucherCode: voucherCode.trim(),
+    });
   };
 
   return (
@@ -317,7 +338,9 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
                 <p className="text-sm text-amber-700 dark:text-amber-300">
-                  Pembahasan sedang diproses dan akan segera tersedia. Silakan cek kembali nanti.
+                  {isPaymentApproved
+                    ? "Pembayaran telah diterima. Mohon tunggu pembahasan siap."
+                    : "Pembahasan sedang diproses dan akan segera tersedia. Silakan cek kembali nanti."}
                 </p>
               </div>
             </Card>
@@ -329,7 +352,7 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
                   <div>
                     <h3 className="font-bold text-foreground">Pembahasan Hanya untuk Premium</h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Lihat pembahasan hanya tersedia untuk user berbayar.
+                      Lihat pembahasan hanya tersedia untuk user premium.
                     </p>
                   </div>
                 </div>
@@ -365,7 +388,7 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
           <DialogHeader>
             <DialogTitle>Instruksi Pembayaran Pembahasan Premium</DialogTitle>
             <DialogDescription>
-              Scan QRIS lalu konfirmasi via WhatsApp. Status Anda akan berubah menjadi sedang di-review.
+              Pilih QRIS atau tukarkan voucher untuk membuka akses premium.
             </DialogDescription>
           </DialogHeader>
 
@@ -384,24 +407,62 @@ export const TryoutScoreDashboard = ({ tryoutId }: Props) => {
             <div className="space-y-6">
               <div>
                 <p className="text-muted-foreground text-sm">
-                  Scan QRIS di samping menggunakan GoPay, OVO, Dana, ShopeePay,
-                  atau Mobile Banking apa pun.
+                    QRIS memerlukan review admin, voucher valid akan langsung aktif.
                 </p>
               </div>
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm font-semibold mb-1">Nominal Transfer</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-2xl font-mono font-bold text-gsb-orange">Rp 5.000</p>
-                </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={paymentMode === "qris" ? "default" : "outline"}
+                  onClick={() => setPaymentMode("qris")}
+                  className="flex-1"
+                >
+                  QRIS
+                </Button>
+                <Button
+                  type="button"
+                  variant={paymentMode === "voucher" ? "default" : "outline"}
+                  onClick={() => setPaymentMode("voucher")}
+                  className="flex-1"
+                >
+                  Tukarkan Voucher
+                </Button>
               </div>
-              <Button
-                onClick={handleWAConfirm}
-                className="w-full bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold h-12 gap-2"
-                disabled={!canRequestReview || updatePlanMutation.isPending}
-              >
-                <MessageCircle className="w-5 h-5" />
-                {updatePlanMutation.isPending ? "Memproses..." : "Konfirmasi via WhatsApp"}
-              </Button>
+              {paymentMode === "qris" ? (
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <p className="text-sm font-semibold mb-1">Nominal Transfer</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-mono font-bold text-gsb-orange">Rp 5.000</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <Input
+                    value={voucherCode}
+                    onChange={(e) => setVoucherCode(e.target.value)}
+                    placeholder="Masukkan kode voucher"
+                    className="h-11"
+                  />
+                </div>
+              )}
+              {paymentMode === "qris" ? (
+                <Button
+                  onClick={handleWAConfirm}
+                  className="w-full bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold h-12 gap-2"
+                  disabled={!canRequestReview || updatePlanMutation.isPending}
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  {updatePlanMutation.isPending ? "Memproses..." : "Konfirmasi via WhatsApp"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleRedeemVoucher}
+                  className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold h-12"
+                  disabled={updatePlanMutation.isPending}
+                >
+                  {updatePlanMutation.isPending ? "Memproses..." : "Gunakan Voucher"}
+                </Button>
+              )}
             </div>
           </div>
         </DialogContent>

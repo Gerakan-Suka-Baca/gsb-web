@@ -70,6 +70,7 @@ export interface Config {
     admins: Admin;
     users: User;
     media: Media;
+    'article-media': ArticleMedia;
     'university-media': UniversityMedia;
     tryouts: Tryout;
     questions: Question;
@@ -78,6 +79,7 @@ export interface Config {
     'tryout-payments': TryoutPayment;
     'tryout-scores': TryoutScore;
     'tryout-explanations': TryoutExplanation;
+    'tryout-vouchers': TryoutVoucher;
     universities: University;
     'university-programs': UniversityProgram;
     articles: Article;
@@ -89,6 +91,9 @@ export interface Config {
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {
+    users: {
+      paymentHistory: 'tryout-payments';
+    };
     universities: {
       programList: 'university-programs';
     };
@@ -97,6 +102,7 @@ export interface Config {
     admins: AdminsSelect<false> | AdminsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'article-media': ArticleMediaSelect<false> | ArticleMediaSelect<true>;
     'university-media': UniversityMediaSelect<false> | UniversityMediaSelect<true>;
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
@@ -105,6 +111,7 @@ export interface Config {
     'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
     'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
     'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
+    'tryout-vouchers': TryoutVouchersSelect<false> | TryoutVouchersSelect<true>;
     universities: UniversitiesSelect<false> | UniversitiesSelect<true>;
     'university-programs': UniversityProgramsSelect<false> | UniversityProgramsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
@@ -200,6 +207,11 @@ export interface User {
   targetMajor3?: string | null;
   paid?: boolean | null;
   payment?: (string | null) | Media;
+  paymentHistory?: {
+    docs?: (string | TryoutPayment)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   roles?: ('super-admin' | 'admin' | 'user')[] | null;
   dateOfBirth?: string | null;
   updatedAt: string;
@@ -468,6 +480,35 @@ export interface UniversityProgram {
   createdAt: string;
 }
 /**
+ * List user yang sudah melakukan pembayaran manual (untuk verifikasi).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-payments".
+ */
+export interface TryoutPayment {
+  id: string;
+  /**
+   * User yang melakukan pembayaran
+   */
+  user: string | User;
+  tryout: string | Tryout;
+  attempt: string | TryoutAttempt;
+  paymentMethod: 'free' | 'qris' | 'voucher';
+  voucher?: (string | null) | TryoutVoucher;
+  voucherCode?: string | null;
+  status: 'pending' | 'verified' | 'rejected';
+  accountType?: ('production' | 'development') | null;
+  program?: string | null;
+  /**
+   * Nominal pembayaran
+   */
+  amount?: number | null;
+  paymentDate?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tryout-attempts".
  */
@@ -552,6 +593,7 @@ export interface TryoutAttempt {
    */
   score?: number | null;
   correctAnswersCount?: number | null;
+  answeredQuestionsCount?: number | null;
   totalQuestionsCount?: number | null;
   /**
    * Index of the current question in the active subtest (0-based).
@@ -675,6 +717,14 @@ export interface TryoutAttempt {
    */
   resultPlan?: ('none' | 'free' | 'paid') | null;
   /**
+   * Metode pembayaran untuk paket hasil.
+   */
+  paymentMethod?: ('none' | 'free' | 'qris' | 'voucher') | null;
+  /**
+   * Status verifikasi admin untuk akses premium.
+   */
+  adminConfirmation?: ('none' | 'pending' | 'approved' | 'rejected') | null;
+  /**
    * Elapsed time (seconds) per subtest, mapped by subtestId.
    */
   subtestDurations?:
@@ -729,6 +779,94 @@ export interface TryoutAttempt {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-vouchers".
+ */
+export interface TryoutVoucher {
+  id: string;
+  name: string;
+  code: string;
+  active?: boolean | null;
+  isPermanent?: boolean | null;
+  validFrom?: string | null;
+  validUntil?: string | null;
+  quota?: number | null;
+  usedCount?: number | null;
+  lastUsedAt?: string | null;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Media khusus untuk konten artikel.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-media".
+ */
+export interface ArticleMedia {
+  id: string;
+  alt: string;
+  /**
+   * Terkait dengan artikel tertentu (opsional).
+   */
+  relatedArticle?: (string | null) | Article;
+  _key?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "articles".
+ */
+export interface Article {
+  id: string;
+  title: string;
+  slug?: string | null;
+  coverImage: string | ArticleMedia;
+  excerpt?: string | null;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  labels?: (string | ArticleLabel)[] | null;
+  authors?: (string | User)[] | null;
+  publishedDate?: string | null;
+  status?: ('draft' | 'published') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-labels".
+ */
+export interface ArticleLabel {
+  id: string;
+  name: string;
+  slug?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * File PDF pembahasan tryout.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -749,32 +887,6 @@ export interface ExplanationMedia {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
-}
-/**
- * List user yang sudah melakukan pembayaran manual (untuk verifikasi).
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tryout-payments".
- */
-export interface TryoutPayment {
-  id: string;
-  /**
-   * User yang melakukan pembayaran
-   */
-  user: string | User;
-  tryout: string | Tryout;
-  attempt: string | TryoutAttempt;
-  status: 'pending' | 'verified' | 'rejected';
-  accountType?: ('production' | 'development') | null;
-  program?: string | null;
-  /**
-   * Nominal pembayaran
-   */
-  amount?: number | null;
-  paymentDate?: string | null;
-  notes?: string | null;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -837,49 +949,6 @@ export interface TryoutExplanation {
    * Upload file PDF pembahasan.
    */
   pdf: string | ExplanationMedia;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "articles".
- */
-export interface Article {
-  id: string;
-  title: string;
-  slug?: string | null;
-  coverImage: string | Media;
-  excerpt?: string | null;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  labels?: (string | ArticleLabel)[] | null;
-  authors?: (string | User)[] | null;
-  publishedDate?: string | null;
-  status?: ('draft' | 'published') | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "article-labels".
- */
-export interface ArticleLabel {
-  id: string;
-  name: string;
-  slug?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -948,6 +1017,10 @@ export interface PayloadLockedDocument {
         value: string | Media;
       } | null)
     | ({
+        relationTo: 'article-media';
+        value: string | ArticleMedia;
+      } | null)
+    | ({
         relationTo: 'university-media';
         value: string | UniversityMedia;
       } | null)
@@ -978,6 +1051,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tryout-explanations';
         value: string | TryoutExplanation;
+      } | null)
+    | ({
+        relationTo: 'tryout-vouchers';
+        value: string | TryoutVoucher;
       } | null)
     | ({
         relationTo: 'universities';
@@ -1088,6 +1165,7 @@ export interface UsersSelect<T extends boolean = true> {
   targetMajor3?: T;
   paid?: T;
   payment?: T;
+  paymentHistory?: T;
   roles?: T;
   dateOfBirth?: T;
   updatedAt?: T;
@@ -1104,6 +1182,26 @@ export interface MediaSelect<T extends boolean = true> {
   relatedUniversity?: T;
   relatedSubtest?: T;
   relatedQuestionNumber?: T;
+  _key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "article-media_select".
+ */
+export interface ArticleMediaSelect<T extends boolean = true> {
+  alt?: T;
+  relatedArticle?: T;
   _key?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1219,6 +1317,7 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
   heartbeatAt?: T;
   score?: T;
   correctAnswersCount?: T;
+  answeredQuestionsCount?: T;
   totalQuestionsCount?: T;
   currentQuestionIndex?: T;
   retakeCurrentQuestionIndex?: T;
@@ -1249,6 +1348,8 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
         id?: T;
       };
   resultPlan?: T;
+  paymentMethod?: T;
+  adminConfirmation?: T;
   subtestDurations?: T;
   retakeSubtestDurations?: T;
   retakeAnswers?: T;
@@ -1295,6 +1396,9 @@ export interface TryoutPaymentsSelect<T extends boolean = true> {
   user?: T;
   tryout?: T;
   attempt?: T;
+  paymentMethod?: T;
+  voucher?: T;
+  voucherCode?: T;
   status?: T;
   accountType?: T;
   program?: T;
@@ -1331,6 +1435,24 @@ export interface TryoutExplanationsSelect<T extends boolean = true> {
   title?: T;
   tryout?: T;
   pdf?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-vouchers_select".
+ */
+export interface TryoutVouchersSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  active?: T;
+  isPermanent?: T;
+  validFrom?: T;
+  validUntil?: T;
+  quota?: T;
+  usedCount?: T;
+  lastUsedAt?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

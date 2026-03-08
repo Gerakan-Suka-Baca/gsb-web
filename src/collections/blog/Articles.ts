@@ -29,7 +29,7 @@ export const Articles: CollectionConfig = {
     {
       name: 'coverImage',
       type: 'upload',
-      relationTo: 'media',
+      relationTo: 'article-media',
       required: true,
     },
     {

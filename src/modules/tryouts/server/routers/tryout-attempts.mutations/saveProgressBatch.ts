@@ -54,16 +54,35 @@ export const saveProgressBatch = protectedProcedure
       id: input.attemptId,
     })) as unknown as TryoutAttempt;
 
-    const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
+    const attempt = validateTryoutAttempt(attemptRaw, session.user.id, {
+      allowCompleted: true,
+    });
+    const retakeActive = isRetakeActive(attempt);
+
+    if (attempt.status === "completed" && !retakeActive) {
+      return {
+        idempotent: true,
+        applied: 0,
+        duplicates: input.events.length,
+        serverNow: nowIso,
+        subtestStartedAt: attempt.subtestStartedAt ?? null,
+        subtestDeadlineAt: attempt.subtestDeadlineAt ?? null,
+        secondsRemaining:
+          typeof attempt.secondsRemaining === "number" ? attempt.secondsRemaining : 0,
+      };
+    }
+
     const tryoutId = getTryoutId(attempt.tryout);
     const tryoutWindow = await getTryoutWindow(payload as PayloadLike, tryoutId);
+    
     // Only enforce window check for attempts that haven't started yet.
     // Active attempts (status === "started") can always save progress
     // even after the tryout window has closed.
-    if (attempt.status !== "started") {
+    // Retake attempts (retakeStatus === "running") also bypass window check.
+    if (attempt.status !== "started" && !retakeActive) {
       assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
     }
-    const retakeActive = isRetakeActive(attempt);
+    
     const cached = await loadAttemptProgress(attempt.id, retakeActive);
     const baseAnswers =
       cached?.answers ?? (retakeActive ? attempt.retakeAnswers : attempt.answers) ?? {};
@@ -300,6 +319,7 @@ export const saveProgressBatch = protectedProcedure
       updateData.questionResults = results.questionResults;
       updateData.score = results.score;
       updateData.correctAnswersCount = results.correctCount;
+      updateData.answeredQuestionsCount = results.answeredCount;
       updateData.totalQuestionsCount = results.totalQuestions;
     }
 

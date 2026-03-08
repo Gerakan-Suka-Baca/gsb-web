@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { ProfileEditModal } from "@/components/profile/ProfileEditModal";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { GraduationCap, School, Phone, CalendarDays, Mail } from "lucide-react";
 import type { User } from "@/payload-types";
 
@@ -48,6 +50,11 @@ export default async function ProfilePage() {
             <p className="text-muted-foreground">Halo, {user.fullName || user.username}. Kelola informasi akun dan target akademik Anda.</p>
         </div>
         <ProfileEditModal user={user} />
+      </div>
+      <div className="flex justify-end">
+        <Button asChild variant="outline">
+          <Link href="/profile/payments">Lihat Riwayat Pembayaran</Link>
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">

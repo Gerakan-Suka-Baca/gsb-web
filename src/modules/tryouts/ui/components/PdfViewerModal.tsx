@@ -84,7 +84,7 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
         onCopy={(e) => e.preventDefault()}
         onCut={(e) => e.preventDefault()}
       >
-        <DialogHeader className="px-6 py-3 border-b shrink-0 bg-background">
+        <DialogHeader className="px-6 py-3 border-b shrink-0 bg-gradient-to-r from-background via-background to-primary/5">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
               <FileText className="w-5 h-5 text-primary" />
@@ -137,8 +137,9 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
           onDragStart={(e) => e.preventDefault()}
         >
           {isPdfLoading && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-              <div className="w-40 h-5 bg-muted rounded animate-pulse" />
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 pointer-events-none">
+              <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+              <div className="w-44 h-4 bg-muted rounded animate-pulse" />
             </div>
           )}
           <iframe

@@ -78,7 +78,7 @@ export const ExamDialogs = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Periksa Lagi</AlertDialogCancel>
-            <AlertDialogAction onClick={onConfirmFinish} className="bg-gsb-orange hover:bg-gsb-orange/90">
+            <AlertDialogAction onClick={() => onConfirmFinish()} className="bg-gsb-orange hover:bg-gsb-orange/90">
               Ya, Lanjutkan
             </AlertDialogAction>
           </AlertDialogFooter>

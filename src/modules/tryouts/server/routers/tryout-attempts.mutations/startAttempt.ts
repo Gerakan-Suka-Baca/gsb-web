@@ -72,6 +72,9 @@ export const startAttempt = protectedProcedure
             ...attempt,
             secondsRemaining: resumedTimer.secondsRemaining,
             serverNow: nowIso,
+            activeSubtestStartedAt: resumedTimer.subtestStartedAt,
+            activeSubtestDeadlineAt: resumedTimer.subtestDeadlineAt,
+            activeSecondsRemaining: resumedTimer.secondsRemaining,
           } as TryoutAttempt;
         }
 
@@ -88,6 +91,9 @@ export const startAttempt = protectedProcedure
         return {
           ...(resumedAttempt as unknown as TryoutAttempt),
           serverNow: nowIso,
+          activeSubtestStartedAt: resumedTimer.subtestStartedAt,
+          activeSubtestDeadlineAt: resumedTimer.subtestDeadlineAt,
+          activeSecondsRemaining: resumedTimer.secondsRemaining,
         } as TryoutAttempt;
       }
 
@@ -150,6 +156,9 @@ export const startAttempt = protectedProcedure
         return {
           ...(resumedAttempt as unknown as TryoutAttempt),
           serverNow: nowIso,
+          activeSubtestStartedAt: timerWindow.subtestStartedAt,
+          activeSubtestDeadlineAt: timerWindow.subtestDeadlineAt,
+          activeSecondsRemaining: timerWindow.secondsRemaining,
         } as TryoutAttempt;
       }
 
@@ -193,5 +202,8 @@ export const startAttempt = protectedProcedure
     return {
       ...(newAttempt as unknown as TryoutAttempt),
       serverNow: nowIso,
+      activeSubtestStartedAt: timerWindow.subtestStartedAt,
+      activeSubtestDeadlineAt: timerWindow.subtestDeadlineAt,
+      activeSecondsRemaining: timerWindow.secondsRemaining,
     } as TryoutAttempt;
   });

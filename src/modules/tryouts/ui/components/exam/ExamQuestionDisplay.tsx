@@ -95,7 +95,11 @@ export const ExamQuestionDisplay = memo(({ question, index, userAnswer, isFlagge
               Selanjutnya <ChevronRight className="w-4 h-4 ml-1 md:ml-2" />
             </Button>
           ) : (
-            <Button type="button" variant="destructive" onClick={onFinishSubtest} className="h-9 md:h-11 px-5 md:px-8 rounded-full shadow-md bg-gsb-red hover:bg-gsb-red hover:brightness-110 transition-transform hover:scale-105 select-none text-sm">
+            <Button
+              type="button"
+              onClick={onFinishSubtest}
+              className="h-9 md:h-11 px-5 md:px-8 rounded-full shadow-lg bg-gsb-orange hover:bg-gsb-orange hover:brightness-110 text-white border border-gsb-orange/80 transition-all hover:scale-105 select-none text-sm"
+            >
               Selesai Subtes
             </Button>
           )}

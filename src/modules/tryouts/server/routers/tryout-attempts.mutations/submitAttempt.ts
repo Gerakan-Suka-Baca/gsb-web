@@ -94,13 +94,18 @@ export const submitAttempt = protectedProcedure
 
     if (input.submitMode === "manual") {
       const activeSubtestIndex = retakeActive
-        ? typeof attempt.retakeCurrentSubtest === "number"
-          ? attempt.retakeCurrentSubtest
+        ? typeof cached?.currentSubtest === "number"
+          ? cached.currentSubtest
+          : typeof attempt.retakeCurrentSubtest === "number"
+            ? attempt.retakeCurrentSubtest
+            : 0
+        : typeof cached?.currentSubtest === "number"
+          ? cached.currentSubtest
+          : typeof attempt.currentSubtest === "number"
+            ? attempt.currentSubtest
           : 0
-        : typeof attempt.currentSubtest === "number"
-          ? attempt.currentSubtest
-          : 0;
-      if (activeSubtestIndex < subtests.length - 1) {
+      const normalizedActiveSubtest = Math.max(0, Math.floor(activeSubtestIndex));
+      if (normalizedActiveSubtest < subtests.length - 1) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Masih ada subtes berikutnya. Selesaikan semua subtes dulu.",
@@ -126,6 +131,7 @@ export const submitAttempt = protectedProcedure
           answers: finalAnswers,
           score: results.score,
           correctAnswersCount: results.correctCount,
+          answeredQuestionsCount: results.answeredCount,
           totalQuestionsCount: results.totalQuestions,
           questionResults: results.questionResults,
           secondsRemaining: remainingSeconds,

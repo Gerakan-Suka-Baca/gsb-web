@@ -226,6 +226,7 @@ export const saveProgress = protectedProcedure
       updateData.questionResults = results.questionResults;
       updateData.score = results.score;
       updateData.correctAnswersCount = results.correctCount;
+      updateData.answeredQuestionsCount = results.answeredCount;
       updateData.totalQuestionsCount = results.totalQuestions;
     }
 

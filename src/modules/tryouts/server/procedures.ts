@@ -337,7 +337,12 @@ export const tryoutsRouter = createTRPCRouter({
 
       const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
       const attemptDoc = (attemptResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
-      const paymentDoc = (paymentResult.docs[0] ?? undefined) as { status?: "pending" | "verified" | "rejected" } | undefined;
+      const paymentDoc = (paymentResult.docs[0] ?? undefined) as {
+        status?: "pending" | "verified" | "rejected";
+        paymentMethod?: "free" | "qris" | "voucher";
+      } | undefined;
+      const resultPlan = (attemptDoc?.resultPlan as "none" | "free" | "paid" | undefined) ?? "none";
+      const paymentType = resultPlan === "paid" ? "paid" : ((scoreDoc?.paymentType as "free" | "paid" | undefined) ?? "free");
 
       const questionResults = Array.isArray(attemptDoc?.questionResults) ? attemptDoc.questionResults : [];
 
@@ -394,9 +399,41 @@ export const tryoutsRouter = createTRPCRouter({
         totalCorrect: attemptDoc?.correctAnswersCount as number ?? 0,
         totalQuestions: attemptDoc?.totalQuestionsCount as number ?? 0,
         subtestDurations: (attemptDoc?.subtestDurations as Record<string, number>) || {},
-        paymentType: (scoreDoc?.paymentType as "free" | "paid" | undefined) ?? "free",
+        paymentType,
+        paymentMethod: paymentDoc?.paymentMethod ?? (paymentType === "paid" ? "qris" : "free"),
         paymentReviewStatus: ((paymentDoc as { status?: "pending" | "verified" | "rejected" } | undefined)?.status ?? null),
       };
+    }),
+
+  getMyPaymentHistory: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.session?.user?.id;
+      if (!userId) return [];
+      const payments = await ctx.db.find({
+        collection: "tryout-payments",
+        where: { user: { equals: userId } },
+        sort: "-createdAt",
+        depth: 1,
+        limit: 200,
+      });
+      return (payments.docs ?? []).map((doc) => {
+        const p = doc as unknown as Record<string, unknown>;
+        const tryoutValue = p.tryout as Record<string, unknown> | string | undefined;
+        const tryoutTitle = typeof tryoutValue === "object" && tryoutValue !== null
+          ? (tryoutValue.title as string | undefined) ?? "Tryout"
+          : "Tryout";
+        return {
+          id: String(p.id ?? ""),
+          tryoutTitle,
+          program: (p.program as string | undefined) ?? "Tryout SNBT Premium",
+          amount: Number(p.amount ?? 0),
+          status: (p.status as "pending" | "verified" | "rejected" | undefined) ?? "pending",
+          paymentMethod: (p.paymentMethod as "free" | "qris" | "voucher" | undefined) ?? "qris",
+          voucherCode: (p.voucherCode as string | undefined) ?? null,
+          paymentDate: (p.paymentDate as string | undefined) ?? null,
+          createdAt: (p.createdAt as string | undefined) ?? null,
+        };
+      });
     }),
 
   getTargetAnalysis: protectedProcedure
@@ -776,8 +813,12 @@ export const tryoutsRouter = createTRPCRouter({
 
       const attempt = (attemptResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
       const scoreDoc = (scoreResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
-      const paymentDoc = (paymentResult.docs[0] ?? undefined) as { status?: "pending" | "verified" | "rejected" } | undefined;
-      const paymentType = (scoreDoc?.paymentType as "free" | "paid" | undefined) ?? "free";
+      const paymentDoc = (paymentResult.docs[0] ?? undefined) as {
+        status?: "pending" | "verified" | "rejected";
+        paymentMethod?: "free" | "qris" | "voucher";
+      } | undefined;
+      const resultPlan = (attempt?.resultPlan as "none" | "free" | "paid" | undefined) ?? "none";
+      const paymentType = resultPlan === "paid" ? "paid" : ((scoreDoc?.paymentType as "free" | "paid" | undefined) ?? "free");
 
       if (!attempt) {
         return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? null };
@@ -785,6 +826,10 @@ export const tryoutsRouter = createTRPCRouter({
 
       if (paymentType !== "paid") {
         return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? null };
+      }
+
+      if (paymentDoc?.status !== "verified") {
+        return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? "pending" };
       }
 
       const explanationResult = await ctx.db.find({
@@ -815,6 +860,7 @@ export const tryoutsRouter = createTRPCRouter({
         pdfUrl,
         title: (explanationDoc.title as string) || "Pembahasan Tryout",
         paymentType,
+        paymentMethod: paymentDoc?.paymentMethod ?? "qris",
         paymentReviewStatus: paymentDoc?.status ?? null,
       };
     }),

@@ -132,6 +132,16 @@ export const Users: CollectionConfig = {
     { name: "paid", type: "checkbox", defaultValue: false },
     { name: "payment", type: "relationship", relationTo: "media" },
     {
+      name: "paymentHistory",
+      type: "join",
+      collection: "tryout-payments",
+      on: "user",
+      label: "Riwayat Pembayaran",
+      admin: {
+        position: "sidebar",
+      },
+    },
+    {
       admin: {
         position: "sidebar",
       },

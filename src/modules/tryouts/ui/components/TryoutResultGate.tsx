@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { useTRPC } from "@/trpc/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 
 const fadeUp = {
   initial: { opacity: 0, y: 20 },
@@ -39,6 +40,8 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
   const queryClient = useQueryClient();
   const [selectedPlan, setSelectedPlan] = useState<"free" | "paid" | null>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [paymentMode, setPaymentMode] = useState<"qris" | "voucher">("qris");
+  const [voucherCode, setVoucherCode] = useState("");
 
   const updatePlanMutation = useMutation(
     trpc.tryoutAttempts.updatePlan.mutationOptions({
@@ -46,7 +49,9 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
         await queryClient.invalidateQueries({ 
             queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId }, type: "query" }] 
         });
-        if (selectedPlan === "paid" || response.paymentStatus === "pending") {
+        if (selectedPlan === "paid" && paymentMode === "voucher") {
+          toast.success("Voucher valid. Akses premium langsung aktif.");
+        } else if (selectedPlan === "paid" || response.paymentStatus === "pending") {
           toast.success("Konfirmasi diterima. Status pembayaran Anda sedang di-review.");
         } else {
           toast.success("Paket berhasil disimpan!");
@@ -79,7 +84,20 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
     window.open(`https://wa.me/6285156423290?text=${message}`, "_blank");
     
     setShowPaymentDialog(false);
-    updatePlanMutation.mutate({ attemptId, plan: "paid" });
+    updatePlanMutation.mutate({ attemptId, plan: "paid", paymentMethod: "qris" });
+  };
+
+  const handleRedeemVoucher = () => {
+    if (!voucherCode.trim()) {
+      toast.error("Masukkan kode voucher terlebih dahulu.");
+      return;
+    }
+    updatePlanMutation.mutate({
+      attemptId,
+      plan: "paid",
+      paymentMethod: "voucher",
+      voucherCode: voucherCode.trim(),
+    });
   };
 
   return (
@@ -218,25 +236,64 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
               <div className="space-y-6">
                 <div>
                   <p className="text-muted-foreground text-sm">
-                    Scan QRIS di samping menggunakan GoPay, OVO, Dana, ShopeePay,
-                    atau Mobile Banking apa pun.
+                    Pilih metode pembayaran untuk aktivasi premium.
                   </p>
                 </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={paymentMode === "qris" ? "default" : "outline"}
+                    onClick={() => setPaymentMode("qris")}
+                    className="flex-1"
+                  >
+                    QRIS
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={paymentMode === "voucher" ? "default" : "outline"}
+                    onClick={() => setPaymentMode("voucher")}
+                    className="flex-1"
+                  >
+                    Tukarkan Voucher
+                  </Button>
+                </div>
+                {paymentMode === "qris" ? (
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <p className="text-sm font-semibold mb-1">Nominal Transfer</p>
                   <div className="flex items-center gap-2">
                     <p className="text-2xl font-mono font-bold text-gsb-orange">Rp 5.000</p>
                   </div>
                 </div>
+                ) : (
+                <div className="space-y-3">
+                  <Input
+                    value={voucherCode}
+                    onChange={(e) => setVoucherCode(e.target.value)}
+                    placeholder="Masukkan kode voucher"
+                    className="h-11"
+                  />
+                  <p className="text-xs text-muted-foreground">Voucher valid akan mengaktifkan akses premium otomatis.</p>
+                </div>
+                )}
 
-                <Button
-                  onClick={handleWAConfirm}
-                  className="w-full bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold h-12 gap-2"
-                  disabled={updatePlanMutation.isPending}
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  {updatePlanMutation.isPending ? "Memproses..." : "Konfirmasi via WhatsApp"}
-                </Button>
+                {paymentMode === "qris" ? (
+                  <Button
+                    onClick={handleWAConfirm}
+                    className="w-full bg-gsb-tosca hover:bg-gsb-tosca/90 text-white font-bold h-12 gap-2"
+                    disabled={updatePlanMutation.isPending}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    {updatePlanMutation.isPending ? "Memproses..." : "Konfirmasi via WhatsApp"}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleRedeemVoucher}
+                    className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white font-bold h-12"
+                    disabled={updatePlanMutation.isPending}
+                  >
+                    {updatePlanMutation.isPending ? "Memproses..." : "Gunakan Voucher"}
+                  </Button>
+                )}
               </div>
             </div>
             

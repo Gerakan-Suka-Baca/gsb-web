@@ -68,8 +68,21 @@ export const TryoutView = ({ tryoutId }: Props) => {
 
     if (existingAttempt?.status === "completed") {
       if (existingAttempt.allowRetake && existingAttempt.retakeStatus !== "completed") {
-        const target = existingAttempt.retakeStatus === "running" ? "exam" : "intro";
-        if (view !== target) setView(target);
+        const isRunning = existingAttempt.retakeStatus === "running";
+        
+        // If running, force exam view
+        if (isRunning && view !== "exam") {
+            setView("exam");
+            return;
+        }
+
+        // If NOT running, allow intro OR exam (if user clicked start)
+        // But if view is anything else (loading, result, thankyou), default to intro
+        if (!isRunning && view !== "intro" && view !== "exam") {
+            setView("intro");
+            return;
+        }
+        
         return;
       }
       const plan = (existingAttempt as unknown as Record<string, unknown>)?.resultPlan as string | undefined;

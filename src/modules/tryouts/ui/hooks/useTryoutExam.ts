@@ -39,6 +39,51 @@ interface TryoutWithTests extends Tryout {
   tests?: Question[] | null;
 }
 
+type ActiveTiming = {
+  subtestStartedAt?: string;
+  subtestDeadlineAt?: string;
+  secondsRemaining?: number;
+};
+
+const getActiveTimingFromRecord = (record: Record<string, unknown>): ActiveTiming => {
+  const aliasStartedAt =
+    typeof record.activeSubtestStartedAt === "string" ? record.activeSubtestStartedAt : undefined;
+  const aliasDeadlineAt =
+    typeof record.activeSubtestDeadlineAt === "string" ? record.activeSubtestDeadlineAt : undefined;
+  const aliasSeconds =
+    typeof record.activeSecondsRemaining === "number" ? record.activeSecondsRemaining : undefined;
+  if (aliasStartedAt || aliasDeadlineAt || typeof aliasSeconds === "number") {
+    return {
+      subtestStartedAt: aliasStartedAt,
+      subtestDeadlineAt: aliasDeadlineAt,
+      secondsRemaining: aliasSeconds,
+    };
+  }
+  const isRetakeRunning = record.retakeStatus === "running";
+  const subtestStartedAt = isRetakeRunning
+    ? typeof record.retakeSubtestStartedAt === "string"
+      ? record.retakeSubtestStartedAt
+      : undefined
+    : typeof record.subtestStartedAt === "string"
+      ? record.subtestStartedAt
+      : undefined;
+  const subtestDeadlineAt = isRetakeRunning
+    ? typeof record.retakeSubtestDeadlineAt === "string"
+      ? record.retakeSubtestDeadlineAt
+      : undefined
+    : typeof record.subtestDeadlineAt === "string"
+      ? record.subtestDeadlineAt
+      : undefined;
+  const secondsRemaining = isRetakeRunning
+    ? typeof record.retakeSecondsRemaining === "number"
+      ? record.retakeSecondsRemaining
+      : undefined
+    : typeof record.secondsRemaining === "number"
+      ? record.secondsRemaining
+      : undefined;
+  return { subtestStartedAt, subtestDeadlineAt, secondsRemaining };
+};
+
 export const SUBTEST_LABELS: Record<string, string> = {
   PU: "Penalaran Umum", PK: "Pengetahuan Kuantitatif", PM: "Penalaran Matematika",
   LBE: "Literasi Bahasa Inggris", LBI: "Literasi Bahasa Indonesia",
@@ -64,17 +109,21 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   const tryoutData = tryout as TryoutWithTests;
   const subtests = useMemo(() => (Array.isArray(tryoutData.tests) ? tryoutData.tests : []), [tryoutData.tests]);
 
+  const initialRecord = initialAttempt as unknown as Record<string, unknown> | undefined;
+  const initialTiming: ActiveTiming = initialRecord
+    ? getActiveTimingFromRecord(initialRecord)
+    : {};
   const { state, dispatch } = useExamState();
   const queryClient = useQueryClient();
   const posthog = usePostHog();
   const [subtestStartedAt, setSubtestStartedAt] = useState<string | null>(
-    typeof initialAttempt?.subtestStartedAt === "string"
-      ? initialAttempt.subtestStartedAt
+    typeof initialTiming.subtestStartedAt === "string"
+      ? initialTiming.subtestStartedAt
       : null
   );
   const [subtestDeadlineAt, setSubtestDeadlineAt] = useState<string | null>(
-    typeof initialAttempt?.subtestDeadlineAt === "string"
-      ? initialAttempt.subtestDeadlineAt
+    typeof initialTiming.subtestDeadlineAt === "string"
+      ? initialTiming.subtestDeadlineAt
       : null
   );
   const [serverNow, setServerNow] = useState<string | null>(null);
@@ -173,18 +222,12 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const applyServerTimingFromRecord = useCallback(
     (record: Record<string, unknown>) => {
+      const activeTiming = getActiveTimingFromRecord(record);
       applyServerTiming({
-        subtestStartedAt:
-          typeof record.subtestStartedAt === "string"
-            ? record.subtestStartedAt
-            : undefined,
-        subtestDeadlineAt:
-          typeof record.subtestDeadlineAt === "string"
-            ? record.subtestDeadlineAt
-            : undefined,
+        subtestStartedAt: activeTiming.subtestStartedAt,
+        subtestDeadlineAt: activeTiming.subtestDeadlineAt,
         serverNow: typeof record.serverNow === "string" ? record.serverNow : undefined,
-        secondsRemaining:
-          typeof record.secondsRemaining === "number" ? record.secondsRemaining : undefined,
+        secondsRemaining: activeTiming.secondsRemaining,
       });
     },
     [applyServerTiming]
@@ -245,8 +288,8 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
         });
       }
       applyServerTimingFromRecord(record);
-      const secondsRemaining =
-        typeof record.secondsRemaining === "number" ? record.secondsRemaining : undefined;
+      const activeTiming = getActiveTimingFromRecord(record);
+      const secondsRemaining = activeTiming.secondsRemaining;
       if (typeof secondsRemaining === "number" && secondsRemaining > 0) {
         setTimeLeft(secondsRemaining);
       }
@@ -312,7 +355,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       if (restoredState.subtestDeadlineAt !== undefined) {
         setSubtestDeadlineAt(restoredState.subtestDeadlineAt ?? null);
       }
-      setServerNow(new Date().toISOString());
+      setServerNow(null);
       if (restoredState.timeLeft !== undefined) {
         setTimeLeft(restoredState.timeLeft);
       }
@@ -323,6 +366,8 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const handleSubtestFinish = useCallback(async (submitMode: "manual" | "timeout" = "manual") => {
     if (submitAttemptMutation.isPending) return;
+    const normalizedSubmitMode: "manual" | "timeout" =
+      submitMode === "timeout" ? "timeout" : "manual";
     dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: false });
 
     const initialSeconds = currentSubtest?.duration ? currentSubtest.duration * 60 : 0;
@@ -347,11 +392,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     } else {
       if (state.attemptId) {
         try {
-          const timing = await flushEvents(true);
-          if (!timing) {
-            toast.error("Gagal menyimpan progres. Coba lagi sebelum submit.");
-            return;
-          }
+          void flushEvents(false);
           // Deep clone and sanitize answers to strip any accidental DOM references
           // that can cause "Converting circular structure to JSON" errors
           const rawAnswers = state.answers || {};
@@ -371,7 +412,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
           await submitAttemptMutation.mutateAsync({ 
             attemptId: state.attemptId, 
             answers: safeAnswers,
-            submitMode,
+            submitMode: normalizedSubmitMode,
           });
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Unknown error";
@@ -510,6 +551,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
 
   const handleAnswer = useCallback((qId: string, aId: string) => {
     if (!currentSubtestId) return;
+    if (typeof qId !== "string" || typeof aId !== "string") return;
     dispatch({ type: "SET_ANSWER", subtestId: currentSubtestId, questionId: qId, answerId: aId });
     queueEvent({ kind: "answer", subtestId: currentSubtestId, questionId: qId, answerId: aId });
   }, [currentSubtestId, queueEvent, dispatch]);

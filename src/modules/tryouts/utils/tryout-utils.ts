@@ -36,6 +36,7 @@ export const validateTryoutAttempt = (
 type SubmissionResult = {
   score: number;
   correctCount: number;
+  answeredCount: number;
   totalQuestions: number;
   questionResults: {
     subtestId: string;
@@ -54,6 +55,7 @@ export const calculateSubmissionResults = (
 ): SubmissionResult => {
   let totalQuestions = 0;
   let correctCount = 0;
+  let answeredCount = 0;
 
   const questionResults: SubmissionResult["questionResults"] = [];
 
@@ -73,6 +75,7 @@ export const calculateSubmissionResults = (
       totalQuestions++;
 
       const selectedAnswerId = subtestAnswers[qID] || null;
+      if (selectedAnswerId !== null) answeredCount++;
       const qAnswers = q.tryoutAnswers || [];
 
       let correctAnswerId: string | null = null;
@@ -116,6 +119,7 @@ export const calculateSubmissionResults = (
   return {
     score,
     correctCount,
+    answeredCount,
     totalQuestions,
     questionResults,
   };

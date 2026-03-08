@@ -10,7 +10,7 @@ import { uploadthingStorage } from "@payloadcms/storage-uploadthing";
 
 import { Admins } from './collections/users/Admins'
 import { Users } from './collections/users/Users'
-import { Media } from './collections/media/Media'
+import { QuestionMedia, ArticleMedia } from './collections/media/Media'
 import { Tryouts } from './collections/tryout/Tryouts'
 import { Questions } from './collections/tryout/Questions'
 
@@ -21,6 +21,7 @@ import { TryoutAttempts } from './collections/tryout/TryoutAttempts'
 import { TryoutPayments } from './collections/tryout/TryoutPayments'
 import { TryoutScores } from './collections/tryout/TryoutScores'
 import { TryoutExplanations } from './collections/tryout/TryoutExplanations'
+import { TryoutVouchers } from './collections/voucher/TryoutVouchers'
 import { Universities } from './collections/universitas/Universities'
 import { UniversityPrograms } from './collections/universitas/UniversityPrograms'
 
@@ -41,7 +42,8 @@ export default buildConfig({
   collections: [
     Admins,
     Users,
-    Media,
+    QuestionMedia,
+    ArticleMedia,
     UniversityMedia,
     Tryouts,
     Questions,
@@ -50,6 +52,7 @@ export default buildConfig({
     TryoutPayments,
     TryoutScores,
     TryoutExplanations,
+    TryoutVouchers,
     Universities,
     UniversityPrograms,
     Articles,
@@ -87,6 +90,7 @@ export default buildConfig({
     uploadthingStorage({
       collections: {
         media: true,
+        "article-media": true,
         "university-media": true,
         "explanation-media": true,
       },

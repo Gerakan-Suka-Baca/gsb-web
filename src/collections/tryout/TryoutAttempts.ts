@@ -6,6 +6,36 @@ const resolveAccountType = () =>
     ? "development"
     : "production";
 
+const computeAnsweredQuestionsCount = (doc: Record<string, unknown>) => {
+  const questionResults = Array.isArray(doc.questionResults)
+    ? doc.questionResults
+    : [];
+  if (questionResults.length > 0) {
+    return questionResults.reduce((acc, item) => {
+      if (!item || typeof item !== "object") return acc;
+      const selectedLetter = (item as Record<string, unknown>).selectedLetter;
+      if (typeof selectedLetter === "string" && selectedLetter.trim().length > 0) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+  }
+
+  const answersRaw = doc.answers;
+  if (!answersRaw || typeof answersRaw !== "object") return 0;
+
+  let count = 0;
+  for (const subtestAnswers of Object.values(answersRaw as Record<string, unknown>)) {
+    if (!subtestAnswers || typeof subtestAnswers !== "object") continue;
+    for (const answerId of Object.values(subtestAnswers as Record<string, unknown>)) {
+      if (typeof answerId === "string" && answerId.trim().length > 0) {
+        count += 1;
+      }
+    }
+  }
+  return count;
+};
+
 export const TryoutAttempts: CollectionConfig = {
   slug: "tryout-attempts",
   access: {
@@ -18,7 +48,7 @@ export const TryoutAttempts: CollectionConfig = {
     useAsTitle: "displayTitle",
     group: "Tryout",
     listSearchableFields: ["displayTitle"],
-    defaultColumns: ["displayTitle", "tryout", "status", "resultPlan", "score", "correctAnswersCount", "totalQuestionsCount", "createdAt"],
+    defaultColumns: ["displayTitle", "tryout", "status", "resultPlan", "score", "correctAnswersCount", "answeredQuestionsCount", "totalQuestionsCount", "createdAt"],
   },
   fields: [
     {
@@ -200,6 +230,11 @@ export const TryoutAttempts: CollectionConfig = {
       label: "Jawaban Benar",
     },
     {
+      name: "answeredQuestionsCount",
+      type: "number",
+      label: "Soal Terjawab",
+    },
+    {
       name: "totalQuestionsCount",
       type: "number",
       label: "Total Soal",
@@ -288,6 +323,32 @@ export const TryoutAttempts: CollectionConfig = {
       admin: { description: "Selected tryout result plan." },
     },
     {
+      name: "paymentMethod",
+      type: "select",
+      label: "Metode Pembayaran",
+      options: [
+        { label: "Belum Dipilih", value: "none" },
+        { label: "Gratis", value: "free" },
+        { label: "QRIS", value: "qris" },
+        { label: "Voucher", value: "voucher" },
+      ],
+      defaultValue: "none",
+      admin: { description: "Metode pembayaran untuk paket hasil." },
+    },
+    {
+      name: "adminConfirmation",
+      type: "select",
+      label: "Konfirmasi Admin",
+      options: [
+        { label: "Belum Perlu", value: "none" },
+        { label: "Perlu Persetujuan", value: "pending" },
+        { label: "Disetujui", value: "approved" },
+        { label: "Ditolak", value: "rejected" },
+      ],
+      defaultValue: "none",
+      admin: { description: "Status verifikasi admin untuk akses premium." },
+    },
+    {
       name: "subtestDurations",
       type: "json",
       defaultValue: {},
@@ -361,6 +422,9 @@ export const TryoutAttempts: CollectionConfig = {
           }
 
           doc.displayTitle = `${userName} — ${tryoutTitle}`;
+          doc.answeredQuestionsCount = computeAnsweredQuestionsCount(
+            doc as Record<string, unknown>
+          );
         } catch {
           // Fallback: keep whatever was stored
         }
