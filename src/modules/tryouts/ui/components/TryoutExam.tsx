@@ -253,6 +253,7 @@ export const TryoutExam = ({ tryout, initialAttempt, onFinish }: TryoutExamProps
         setShowConfirmFinish={exam.setShowConfirmFinish}
         showExitDialog={exam.showExitDialog}
         setShowExitDialog={exam.setShowExitDialog}
+        isFinishingSubtest={exam.isFinishingSubtest}
         unansweredCount={unansweredCount}
         totalQuestions={exam.questions.length}
         onConfirmFinish={exam.handleSubtestFinish}

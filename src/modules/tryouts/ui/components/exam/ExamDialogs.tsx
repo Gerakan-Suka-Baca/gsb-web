@@ -8,7 +8,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle, Timer } from "lucide-react";
+import { AlertTriangle, Loader2, Timer } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface ExamDialogsProps {
@@ -18,6 +18,7 @@ interface ExamDialogsProps {
   setShowConfirmFinish: (open: boolean) => void;
   showExitDialog: boolean;
   setShowExitDialog: (open: boolean) => void;
+  isFinishingSubtest: boolean;
   unansweredCount: number;
   totalQuestions: number;
   onConfirmFinish: () => void;
@@ -31,6 +32,7 @@ export const ExamDialogs = ({
   setShowConfirmFinish,
   showExitDialog,
   setShowExitDialog,
+  isFinishingSubtest,
   unansweredCount,
   totalQuestions,
   onConfirmFinish,
@@ -78,8 +80,13 @@ export const ExamDialogs = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Periksa Lagi</AlertDialogCancel>
-            <AlertDialogAction onClick={() => onConfirmFinish()} className="bg-gsb-orange hover:bg-gsb-orange/90">
-              Ya, Lanjutkan
+            <AlertDialogAction
+              onClick={() => onConfirmFinish()}
+              className="bg-gsb-orange hover:bg-gsb-orange/90"
+              disabled={isFinishingSubtest}
+            >
+              {isFinishingSubtest && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isFinishingSubtest ? "Menyimpan..." : "Ya, Lanjutkan"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

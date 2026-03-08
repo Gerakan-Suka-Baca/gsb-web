@@ -127,6 +127,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       : null
   );
   const [serverNow, setServerNow] = useState<string | null>(null);
+  const [isFinishingSubtest, setIsFinishingSubtest] = useState(false);
 
   const safeSubtestIndex = useMemo(() => {
     if (!Number.isFinite(state.currentSubtestIndex)) return 0;
@@ -164,9 +165,20 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     }
   }, [state.currentSubtestIndex, subtests, queryClient, trpc]);
 
-  useMemo(() => {
-     if (subtests.length > 0) prefetchNext();
-  }, [prefetchNext, subtests.length]);
+  const prefetchAllSubtests = useCallback(() => {
+    for (const subtest of subtests) {
+      if (!subtest?.id) continue;
+      queryClient.prefetchQuery(
+        trpc.tryouts.getSubtest.queryOptions({ subtestId: subtest.id }, { staleTime: Infinity })
+      );
+    }
+  }, [subtests, queryClient, trpc]);
+
+  useEffect(() => {
+    if (subtests.length === 0) return;
+    prefetchNext();
+    prefetchAllSubtests();
+  }, [subtests.length, prefetchNext, prefetchAllSubtests]);
 
   const questions = useMemo(() => {
     if (subtestContent && subtestContent.id === currentSubtestId) {
@@ -365,9 +377,10 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   const handleStart = () => startAttemptMutation.mutate({ tryoutId: tryout.id });
 
   const handleSubtestFinish = useCallback(async (submitMode: "manual" | "timeout" = "manual") => {
-    if (submitAttemptMutation.isPending) return;
+    if (submitAttemptMutation.isPending || isFinishingSubtest) return;
     const normalizedSubmitMode: "manual" | "timeout" =
       submitMode === "timeout" ? "timeout" : "manual";
+    setIsFinishingSubtest(true);
     dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: false });
 
     const initialSeconds = currentSubtest?.duration ? currentSubtest.duration * 60 : 0;
@@ -386,9 +399,11 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       const timing = await flushEvents(true, { status: "bridging" });
       if (!timing) {
         toast.error("Gagal menyimpan progres. Coba lagi sebelum lanjut.");
+        setIsFinishingSubtest(false);
         return;
       }
       dispatch({ type: "SET_STATUS", status: "bridging" });
+      setIsFinishingSubtest(false);
     } else {
       if (state.attemptId) {
         try {
@@ -417,13 +432,15 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Unknown error";
           toast.error("Terjadi kesalahan saat finalisasi ujian: " + msg);
+          setIsFinishingSubtest(false);
         }
       } else {
         dispatch({ type: "SET_STATUS", status: "finished" });
         onFinish(state.answers || {});
+        setIsFinishingSubtest(false);
       }
     }
-  }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, state.subtestDurations, onFinish, submitAttemptMutation, flushEvents, dispatch, currentSubtest?.duration, currentSubtestId, timeLeft, posthog, tryout.id]);
+  }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, state.subtestDurations, onFinish, submitAttemptMutation, flushEvents, dispatch, currentSubtest?.duration, currentSubtestId, timeLeft, posthog, tryout.id, isFinishingSubtest]);
 
   const handleTimeUpConfirm = useCallback(async () => {
     // Guard: do nothing if we're not running (stale dialog from previous subtest)
@@ -524,13 +541,14 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   });
 
   const triggerFinishCheck = useCallback(() => {
+    if (isFinishingSubtest) return;
     const answeredCount = currentSubtestId ? Object.keys(state.answers[currentSubtestId] || {}).length : 0;
     if (answeredCount < questions.length) {
       dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: true });
     } else {
       handleSubtestFinish("manual");
     }
-  }, [state.answers, currentSubtestId, questions.length, handleSubtestFinish, dispatch]);
+  }, [state.answers, currentSubtestId, questions.length, handleSubtestFinish, dispatch, isFinishingSubtest]);
 
   const handleNextQuestion = useCallback(() => {
     dispatch({ type: "NEXT_QUESTION" });
@@ -593,6 +611,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     setShowExitDialog: (open: boolean) => dispatch({ type: "SET_DIALOG", dialog: "exit", open }),
     showTimeUpDialog: state.dialogs.timeUp, 
     setShowTimeUpDialog: (open: boolean) => dispatch({ type: "SET_DIALOG", dialog: "timeUp", open }),
+    isFinishingSubtest,
 
     startAttemptMutation,
     submitAttemptMutation,

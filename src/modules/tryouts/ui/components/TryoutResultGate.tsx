@@ -190,7 +190,7 @@ export const TryoutResultGate = ({ tryoutId, attemptId, username, fullName, tryo
             <ul className="space-y-4 mb-8">
               <li className="flex gap-3 items-center text-base">
                 <Check className="w-5 h-5 text-gsb-tosca shrink-0" />
-                <span className="font-medium">Skor Langsung Keluar</span>
+                <span className="font-medium">Skor Keluar H+7</span>
               </li>
               <li className="flex gap-3 items-center text-base bg-gsb-orange/5 p-2 -ml-2 rounded-lg border border-gsb-orange/10">
                 <ShieldCheck className="w-5 h-5 text-gsb-orange shrink-0" />
