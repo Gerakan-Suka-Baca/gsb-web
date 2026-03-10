@@ -2,7 +2,7 @@ import z from "zod";
 import { TRPCError } from "@trpc/server";
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { Question } from "@/payload-types";
-import { redisGetJson, redisSetJson } from "@/lib/redis";
+import { getCacheValue, setCacheValue } from "@/modules/tryouts/server/services/tryout-cache.service";
 
 const extractId = (val: unknown): string | null => {
   if (!val) return null;
@@ -66,31 +66,7 @@ type TryoutScoreDoc = {
   paymentType?: "free" | "paid";
 };
 
-type CacheEntry<T> = {
-  expires: number;
-  value: T;
-};
-
-const cacheStore = new Map<string, CacheEntry<unknown>>();
-const CACHE_PREFIX = "gsb:cache:";
-
-const getCacheValue = async <T,>(key: string): Promise<T | null> => {
-  const redisValue = await redisGetJson<T>(`${CACHE_PREFIX}${key}`);
-  if (redisValue !== null) return redisValue;
-  const hit = cacheStore.get(key);
-  if (!hit) return null;
-  if (hit.expires < Date.now()) {
-    cacheStore.delete(key);
-    return null;
-  }
-  return hit.value as T;
-};
-
-const setCacheValue = async <T,>(key: string, value: T, ttlMs: number) => {
-  cacheStore.set(key, { value, expires: Date.now() + ttlMs });
-  const ttlSeconds = Math.max(1, Math.ceil(ttlMs / 1000));
-  await redisSetJson(`${CACHE_PREFIX}${key}`, value, ttlSeconds);
-};
+ 
 
 const stripAnswerKeyFromSubtest = (subtest: Question): Question => {
   const tryoutQuestions = Array.isArray(subtest.tryoutQuestions)

@@ -1,4 +1,6 @@
 import type { CollectionConfig } from "payload";
+import { redisDel, redisScanDel } from "@/lib/redis";
+import { clearTryoutCache } from "@/modules/tryouts/server/services/tryout-cache.service";
 import { isVolunteerOrAbove } from "../accessHelpers";
 
 const toSlug = (val: string): string =>
@@ -42,6 +44,29 @@ export const Tryouts: CollectionConfig = {
           }
         }
         return nextData;
+      },
+    ],
+    afterChange: [
+      async ({ doc }) => {
+        const tryoutId = typeof doc.id === "string" ? doc.id : null;
+        clearTryoutCache(tryoutId ?? undefined);
+        await redisScanDel("gsb:cache:tryouts:*");
+        if (tryoutId) {
+          await redisDel(`tryout:meta:${tryoutId}`);
+          await redisDel(`tryout:full:${tryoutId}`);
+        }
+        return doc;
+      },
+    ],
+    afterDelete: [
+      async ({ id }) => {
+        const tryoutId = typeof id === "string" ? id : null;
+        clearTryoutCache(tryoutId ?? undefined);
+        await redisScanDel("gsb:cache:tryouts:*");
+        if (tryoutId) {
+          await redisDel(`tryout:meta:${tryoutId}`);
+          await redisDel(`tryout:full:${tryoutId}`);
+        }
       },
     ],
   },
