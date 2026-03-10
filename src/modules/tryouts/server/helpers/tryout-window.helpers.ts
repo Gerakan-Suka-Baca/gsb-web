@@ -5,7 +5,7 @@ import type { Tryout } from "@/payload-types";
 export const SUBTEST_QUERY_LIMIT = 1000;
 export const HEARTBEAT_GRACE_MS = 5 * 60 * 1000;
 
-export type TryoutWindowDoc = Pick<Tryout, "id" | "dateOpen" | "dateClose">;
+export type TryoutWindowDoc = Pick<Tryout, "id" | "dateOpen" | "dateClose" | "isPermanent">;
 
 export const parseDateMs = (value: unknown): number | null => {
   if (value instanceof Date) return value.getTime();
@@ -37,11 +37,6 @@ export const getTryoutWindow = async (
   })) as unknown as TryoutWindowDoc;
 };
 
-/**
- * Grace period after dateClose (24 hours).
- * Users who started an attempt before the window closed can still
- * save progress and submit during this grace period.
- */
 const CLOSE_GRACE_MS = 24 * 60 * 60 * 1000;
 
 export const assertTryoutWindowOpen = (
@@ -49,6 +44,7 @@ export const assertTryoutWindowOpen = (
   action: string,
   now: Date
 ) => {
+  if (tryout.isPermanent === true) return;
   const openMs = parseDateMs(tryout.dateOpen);
   const closeMs = parseDateMs(tryout.dateClose);
   if (openMs === null || closeMs === null) {
@@ -65,7 +61,6 @@ export const assertTryoutWindowOpen = (
       message: `Tryout belum dibuka. Tidak bisa ${action}.`,
     });
   }
-  // Allow a grace period after close for users with active attempts
   if (nowMs > closeMs + CLOSE_GRACE_MS) {
     throw new TRPCError({
       code: "BAD_REQUEST",

@@ -32,7 +32,13 @@ export const TryoutIntro = ({ tryout, onStart }: TryoutIntroProps) => {
         </h1>
         <div className="flex gap-3 items-center text-muted-foreground bg-gsb-yellow/10 w-fit px-4 py-2 rounded-full border border-gsb-yellow/20">
           <Calendar className="w-5 h-5 text-gsb-orange" />
-          <p className="font-medium">{formatDate(tryout.dateOpen)}</p>
+          <p className="font-medium">
+            {tryout.isPermanent
+              ? "Terbuka permanen"
+              : tryout.dateOpen
+                ? formatDate(tryout.dateOpen)
+                : "Jadwal belum ditentukan"}
+          </p>
         </div>
       </div>
 

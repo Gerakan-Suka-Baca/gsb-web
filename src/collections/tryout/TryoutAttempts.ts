@@ -36,6 +36,15 @@ const computeAnsweredQuestionsCount = (doc: Record<string, unknown>) => {
   return count;
 };
 
+const getIdValue = (value: unknown): string | number | null => {
+  if (typeof value === "string" || typeof value === "number") return value;
+  if (typeof value === "object" && value !== null) {
+    const id = (value as { id?: unknown }).id;
+    if (typeof id === "string" || typeof id === "number") return id;
+  }
+  return null;
+};
+
 export const TryoutAttempts: CollectionConfig = {
   slug: "tryout-attempts",
   access: {
@@ -394,12 +403,17 @@ export const TryoutAttempts: CollectionConfig = {
   hooks: {
     afterRead: [
       async ({ doc, req }) => {
-        // Dynamically compute displayTitle on every read — no save needed
         try {
+          const hasStoredTitle =
+            typeof doc.displayTitle === "string" && doc.displayTitle.trim().length > 0;
+          if (hasStoredTitle && typeof doc.user === "string" && typeof doc.tryout === "string") {
+            doc.answeredQuestionsCount = computeAnsweredQuestionsCount(
+              doc as Record<string, unknown>
+            );
+            return doc;
+          }
           const userRaw = doc.user;
           const tryoutRaw = doc.tryout;
-
-          // If populated (object), extract directly. If ID string, fetch.
           let userName = "Unknown";
           if (typeof userRaw === "object" && userRaw !== null) {
             userName = userRaw.fullName || userRaw.username || userRaw.email || userRaw.id || "Unknown";
@@ -408,7 +422,9 @@ export const TryoutAttempts: CollectionConfig = {
               const userDoc = await req.payload.findByID({ collection: "users", id: userRaw, depth: 0 });
               const u = userDoc as unknown as Record<string, unknown>;
               userName = (u.fullName || u.username || u.email || userRaw) as string;
-            } catch { /* use ID fallback */ userName = userRaw; }
+            } catch {
+              userName = userRaw;
+            }
           }
 
           let tryoutTitle = "Tryout";
@@ -426,7 +442,6 @@ export const TryoutAttempts: CollectionConfig = {
             doc as Record<string, unknown>
           );
         } catch {
-          // Fallback: keep whatever was stored
         }
         return doc;
       },
@@ -445,6 +460,51 @@ export const TryoutAttempts: CollectionConfig = {
           }
         }
         return data;
+      },
+    ],
+    afterChange: [
+      async ({ doc, req }) => {
+        const payload = req.payload;
+        const attemptId = getIdValue((doc as Record<string, unknown>).id);
+        if (!payload || !attemptId) return doc;
+
+        const plan = (doc as Record<string, unknown>).resultPlan;
+        const paymentMethod = (doc as Record<string, unknown>).paymentMethod;
+        const shouldClearVoucher =
+          plan === "free" ||
+          paymentMethod === "free" ||
+          paymentMethod === "none" ||
+          paymentMethod === "qris";
+        if (!shouldClearVoucher) return doc;
+
+        const payments = await payload.find({
+          collection: "tryout-payments",
+          where: { attempt: { equals: attemptId } },
+          limit: 50,
+          depth: 0,
+        });
+
+        for (const item of payments.docs ?? []) {
+          const payment = item as unknown as Record<string, unknown>;
+          const paymentId = getIdValue(payment.id);
+          if (!paymentId) continue;
+          const hasVoucherData =
+            (payment.voucher !== null && payment.voucher !== undefined) ||
+            (typeof payment.voucherCode === "string" && payment.voucherCode.trim().length > 0) ||
+            payment.paymentMethod === "voucher";
+          if (!hasVoucherData) continue;
+          await payload.update({
+            collection: "tryout-payments",
+            id: paymentId,
+            data: {
+              ...(plan === "free" ? { paymentMethod: "free" } : {}),
+              voucher: null,
+              voucherCode: null,
+            },
+          });
+        }
+
+        return doc;
       },
     ],
   },

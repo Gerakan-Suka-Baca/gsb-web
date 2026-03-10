@@ -34,6 +34,7 @@ import { ArticleLabels } from './collections/blog/ArticleLabels'
 export default buildConfig({
   admin: {
     user: Admins.slug,
+    dateFormat: "dd MMM yyyy HH:mm",
     importMap: {
       baseDir: path.resolve(dirname),
     },

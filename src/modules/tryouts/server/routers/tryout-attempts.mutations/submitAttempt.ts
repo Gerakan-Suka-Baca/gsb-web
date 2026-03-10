@@ -71,7 +71,6 @@ export const submitAttempt = protectedProcedure
       id: tryoutId,
       depth: 2,
     });
-    // Active attempts (status === "started") can submit even after window closes
     if (attempt.status !== "started") {
       assertTryoutWindowOpen(tryout as unknown as TryoutWindowDoc, "submit tryout", now);
     }

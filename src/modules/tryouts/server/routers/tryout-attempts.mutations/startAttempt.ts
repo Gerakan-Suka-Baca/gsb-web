@@ -6,6 +6,7 @@ import { getTryoutId } from "@/modules/tryouts/utils/tryout-utils";
 import {
   assertTryoutWindowOpen,
   getTryoutWindow,
+  SUBTEST_QUERY_LIMIT,
 } from "@/modules/tryouts/server/helpers/tryout-window.helpers";
 import {
   getAttemptSubtestIndex,
@@ -15,6 +16,7 @@ import {
   buildRetakeTimerWindow,
   buildServerTimerWindow,
 } from "@/modules/tryouts/server/helpers/tryout-timer.helpers";
+import { clearAttemptProgress } from "@/modules/tryouts/server/services/tryout-attempts-progress.service";
 
 import type { PayloadLike } from "@/modules/tryouts/server/helpers/tryout-window.helpers";
 import type { TryoutAttempt } from "@/modules/tryouts/types";
@@ -34,7 +36,6 @@ export const startAttempt = protectedProcedure
     const nowIso = now.toISOString();
     const tryoutWindow = await getTryoutWindow(payload as PayloadLike, input.tryoutId);
 
-    // Find existing attempt BEFORE checking window — allow resume even after close
     const existing = await payload.find({
       collection: "tryout-attempts",
       where: {
@@ -106,7 +107,34 @@ export const startAttempt = protectedProcedure
           attempt.retakeFlags && Object.keys(attempt.retakeFlags).length > 0
             ? attempt.retakeFlags
             : attempt.flags || {};
-        const shouldInit = attempt.retakeStatus !== "running";
+        const tryoutId = getTryoutId(attempt.tryout);
+        const subtestsResult = await payload.find({
+          collection: "questions",
+          where: { tryout: { equals: tryoutId } },
+          limit: SUBTEST_QUERY_LIMIT,
+          sort: "createdAt",
+          depth: 0,
+        });
+        const subtestsCount = Array.isArray(subtestsResult.docs)
+          ? subtestsResult.docs.length
+          : 0;
+        const lastSubtestIndex = Math.max(0, subtestsCount - 1);
+        const runningSubtestIndex = getRetakeSubtestIndex(attempt);
+        const deadlineMs =
+          typeof attempt.retakeSubtestDeadlineAt === "string"
+            ? Date.parse(attempt.retakeSubtestDeadlineAt)
+            : NaN;
+        const isExpired =
+          Number.isFinite(deadlineMs) && deadlineMs <= now.getTime();
+        const isStuckAtEnd =
+          attempt.retakeStatus === "running" &&
+          runningSubtestIndex >= lastSubtestIndex &&
+          attempt.examState === "bridging" &&
+          isExpired;
+        const isOutOfRange =
+          subtestsCount > 0 && runningSubtestIndex >= subtestsCount;
+        const shouldInit =
+          attempt.retakeStatus !== "running" || isStuckAtEnd || isOutOfRange;
         const maxRetake = Number.isFinite(attempt.maxRetake)
           ? Math.max(0, Math.floor(attempt.maxRetake as number))
           : 1;
@@ -119,11 +147,11 @@ export const startAttempt = protectedProcedure
             message: "Batas maksimal retake sudah tercapai.",
           });
         }
-        const targetSubtest = shouldInit ? 0 : getRetakeSubtestIndex(attempt);
+        const targetSubtest = shouldInit ? 0 : runningSubtestIndex;
         const timerWindow = await buildRetakeTimerWindow({
           payload: payload as PayloadLike,
           attempt,
-          tryoutId: getTryoutId(attempt.tryout),
+          tryoutId,
           targetSubtest,
           now,
           allowLegacySecondsFallback: true,
@@ -137,6 +165,7 @@ export const startAttempt = protectedProcedure
           heartbeatAt: nowIso,
         };
         if (shouldInit) {
+          await clearAttemptProgress(attempt.id);
           updateData.retakeStartedAt = nowIso;
           updateData.retakeCurrentSubtest = 0;
           updateData.retakeCurrentQuestionIndex = 0;
@@ -168,7 +197,6 @@ export const startAttempt = protectedProcedure
       } as TryoutAttempt;
     }
 
-    // Only enforce window check for BRAND NEW attempts — not resume/retake
     assertTryoutWindowOpen(tryoutWindow, "memulai tryout", now);
 
     const tryoutId = input.tryoutId;

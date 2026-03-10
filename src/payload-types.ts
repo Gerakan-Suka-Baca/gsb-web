@@ -276,14 +276,15 @@ export interface Tryout {
    * Auto-generated from title if empty
    */
   slugField?: string | null;
+  isPermanent?: boolean | null;
   /**
    * WIB (GMT+7)
    */
-  dateOpen: string;
+  dateOpen?: string | null;
   /**
    * WIB (GMT+7)
    */
-  dateClose: string;
+  dateClose?: string | null;
   /**
    * When scores become visible to students. WIB (GMT+7)
    */
@@ -1243,6 +1244,7 @@ export interface TryoutsSelect<T extends boolean = true> {
   description?: T;
   coverImage?: T;
   slugField?: T;
+  isPermanent?: T;
   dateOpen?: T;
   dateClose?: T;
   scoreReleaseDate?: T;

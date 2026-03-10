@@ -57,14 +57,21 @@ export const saveProgress = protectedProcedure
       id: input.attemptId,
     })) as unknown as TryoutAttempt;
 
-    const attempt = validateTryoutAttempt(attemptRaw, session.user.id);
+    const attempt = validateTryoutAttempt(attemptRaw, session.user.id, {
+      allowCompleted: true,
+    });
+    const retakeActive = isRetakeActive(attempt);
+    if (attempt.status === "completed" && !retakeActive) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Tryout already completed",
+      });
+    }
     const tryoutId = getTryoutId(attempt.tryout);
     const tryoutWindow = await getTryoutWindow(payload as PayloadLike, tryoutId);
-    // Active attempts can save progress even after window closes
-    if (attempt.status !== "started") {
+    if (attempt.status !== "started" && !retakeActive) {
       assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
     }
-    const retakeActive = isRetakeActive(attempt);
     const cached = await loadAttemptProgress(attempt.id, retakeActive);
     const baseAnswers =
       cached?.answers ?? (retakeActive ? attempt.retakeAnswers : attempt.answers) ?? {};
@@ -201,6 +208,7 @@ export const saveProgress = protectedProcedure
           retakeSecondsRemaining: timerWindow.secondsRemaining,
           retakeStatus: "running",
           heartbeatAt: nowIso,
+          ...(nextExamState !== undefined && { examState: nextExamState }),
           ...(nextQuestionIndex !== undefined && {
             retakeCurrentQuestionIndex: nextQuestionIndex,
           }),

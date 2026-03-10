@@ -210,7 +210,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     deadlineAt: subtestDeadlineAt,
     serverNow,
     onTimeUp: useCallback(() => {
-      // Only show timeUp dialog if actually running — ignore during bridging/loading
       if (statusRef.current !== "running") return;
       dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: true });
     }, [dispatch]),
@@ -408,8 +407,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
       if (state.attemptId) {
         try {
           void flushEvents(false);
-          // Deep clone and sanitize answers to strip any accidental DOM references
-          // that can cause "Converting circular structure to JSON" errors
           const rawAnswers = state.answers || {};
           const safeAnswers: Record<string, Record<string, string>> = {};
           for (const [subtestId, answerMap] of Object.entries(rawAnswers)) {
@@ -443,7 +440,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   }, [state.currentSubtestIndex, subtests.length, state.attemptId, state.answers, state.subtestDurations, onFinish, submitAttemptMutation, flushEvents, dispatch, currentSubtest?.duration, currentSubtestId, timeLeft, posthog, tryout.id, isFinishingSubtest]);
 
   const handleTimeUpConfirm = useCallback(async () => {
-    // Guard: do nothing if we're not running (stale dialog from previous subtest)
     if (state.status !== "running") {
       dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: false });
       return;
@@ -485,7 +481,6 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     const nextIdx = state.currentSubtestIndex + 1;
     const nextDuration = subtests[nextIdx]?.duration ?? 0;
     const fallbackSeconds = Math.max(0, Math.round(nextDuration * 60));
-    // Dismiss ALL dialogs before transitioning
     dispatch({ type: "SET_DIALOG", dialog: "timeUp", open: false });
     dispatch({ type: "SET_DIALOG", dialog: "confirmFinish", open: false });
     dispatch({ type: "SET_DIALOG", dialog: "exit", open: false });

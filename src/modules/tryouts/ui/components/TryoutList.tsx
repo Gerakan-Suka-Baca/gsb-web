@@ -32,7 +32,13 @@ const TAB_KEYS = new Set<TabKey>(["current", "registered", "others"]);
 const resolveTab = (value: string | null): TabKey =>
   value && TAB_KEYS.has(value as TabKey) ? (value as TabKey) : "others";
 
-const isOpenNow = (openDate: string | Date, closeDate: string | Date): boolean => {
+const isOpenNow = (
+  openDate: string | Date | null | undefined,
+  closeDate: string | Date | null | undefined,
+  isPermanent?: boolean | null
+): boolean => {
+  if (isPermanent) return true;
+  if (!openDate || !closeDate) return false;
   const now = new Date();
   return now >= new Date(openDate) && now <= new Date(closeDate);
 };
@@ -117,10 +123,15 @@ export const TryoutList = () => {
       currentTryouts.push({ tryout, attempt });
     } else if (attempt?.status === "completed") {
       registeredTryouts.push({ tryout, attempt });
-    } else if (isOpenNow(tryout.dateOpen, tryout.dateClose)) {
+    } else if (isOpenNow(tryout.dateOpen, tryout.dateClose, tryout.isPermanent)) {
       availableTryouts.push(tryout);
     }
   }
+  const discoverableTryouts = allTryouts.filter((tryout) => {
+    const attempt = attemptMap.get(tryout.id);
+    if (attempt?.status === "started" || attempt?.status === "completed") return true;
+    return isOpenNow(tryout.dateOpen, tryout.dateClose, tryout.isPermanent);
+  });
 
   useEffect(() => {
     if (queryTab && TAB_KEYS.has(queryTab as TabKey)) {
@@ -199,7 +210,7 @@ export const TryoutList = () => {
             <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" />
-                <span>{formatDate(tryout.dateOpen)}</span>
+                <span>{tryout.dateOpen ? formatDate(tryout.dateOpen) : "Jadwal belum ditentukan"}</span>
               </div>
               {subtitle && (
                 <div className="flex items-center gap-1.5">
@@ -324,8 +335,8 @@ export const TryoutList = () => {
             )}
 
             {activeTab === "others" && (
-              allTryouts.length > 0
-                ? allTryouts.map((tryout) => {
+              discoverableTryouts.length > 0
+                ? discoverableTryouts.map((tryout) => {
                     const attempt = attemptMap.get(tryout.id);
                     const badge: StatusBadge = attempt?.status === "started"
                       ? "in-progress"

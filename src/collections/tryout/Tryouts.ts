@@ -33,6 +33,14 @@ export const Tryouts: CollectionConfig = {
         if (merged?.title && !merged.slugField) {
           nextData.slugField = toSlug(merged.title);
         }
+        if (merged?.isPermanent === true) {
+          if (!merged.dateOpen) {
+            nextData.dateOpen = "2000-01-01T00:00:00.000Z";
+          }
+          if (!merged.dateClose) {
+            nextData.dateClose = "2100-12-31T23:59:59.999Z";
+          }
+        }
         return nextData;
       },
     ],
@@ -67,14 +75,25 @@ export const Tryouts: CollectionConfig = {
       },
     },
     {
+      name: "isPermanent",
+      type: "checkbox",
+      label: "Permanent",
+      defaultValue: false,
+      admin: {
+        position: "sidebar",
+      },
+    },
+    {
       name: "dateOpen",
       type: "date",
       label: "Date Open",
       required: true,
       admin: {
+        condition: (_, siblingData) => !siblingData?.isPermanent,
         date: {
           pickerAppearance: "dayAndTime",
-          displayFormat: "d MMM yyy HH:mm",
+          displayFormat: "dd MMM yyyy HH:mm",
+          timeFormat: "HH:mm",
         },
         description: "WIB (GMT+7)",
       },
@@ -85,9 +104,11 @@ export const Tryouts: CollectionConfig = {
       label: "Date Close",
       required: true,
       admin: {
+        condition: (_, siblingData) => !siblingData?.isPermanent,
         date: {
           pickerAppearance: "dayAndTime",
-          displayFormat: "d MMM yyy HH:mm",
+          displayFormat: "dd MMM yyyy HH:mm",
+          timeFormat: "HH:mm",
         },
         description: "WIB (GMT+7)",
       },
@@ -99,7 +120,8 @@ export const Tryouts: CollectionConfig = {
       admin: {
         date: {
           pickerAppearance: "dayAndTime",
-          displayFormat: "d MMM yyy HH:mm",
+          displayFormat: "dd MMM yyyy HH:mm",
+          timeFormat: "HH:mm",
         },
         description: "When scores become visible to students. WIB (GMT+7)",
         position: "sidebar",

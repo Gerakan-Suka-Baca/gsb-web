@@ -75,10 +75,6 @@ export const saveProgressBatch = protectedProcedure
     const tryoutId = getTryoutId(attempt.tryout);
     const tryoutWindow = await getTryoutWindow(payload as PayloadLike, tryoutId);
     
-    // Only enforce window check for attempts that haven't started yet.
-    // Active attempts (status === "started") can always save progress
-    // even after the tryout window has closed.
-    // Retake attempts (retakeStatus === "running") also bypass window check.
     if (attempt.status !== "started" && !retakeActive) {
       assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
     }
@@ -290,6 +286,7 @@ export const saveProgressBatch = protectedProcedure
           retakeSecondsRemaining: timerWindow.secondsRemaining,
           retakeStatus: "running",
           heartbeatAt: nowIso,
+          ...(nextExamState !== undefined && { examState: nextExamState }),
           retakeEventRevisions: nextEventRevisions,
           retakeSubtestStates: subtestStates,
           retakeSubtestSnapshots: subtestSnapshots,
