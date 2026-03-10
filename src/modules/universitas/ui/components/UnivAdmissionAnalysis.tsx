@@ -53,7 +53,7 @@ export const UnivAdmissionAnalysis = ({ tryoutId, finalScore }: Props) => {
   };
   // cache by score
   const cached = scoreKey === "unknown" ? null : readCache(cacheKey);
-  const queryOptions = trpc.tryouts.getTargetAnalysis.queryOptions({ tryoutId });
+  const queryOptions = trpc.universitas.getTargetAnalysis.queryOptions({ tryoutId });
   const { data, isLoading } = useQuery({
     ...queryOptions,
     staleTime: 0,

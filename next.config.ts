@@ -13,11 +13,6 @@ if (existsSync(envPath) && !process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY) {
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "2mb",
-    },
-  },
   turbopack: {
     root: process.cwd(),
     resolveExtensions: [".mdx", ".tsx", ".ts", ".jsx", ".js", ".mjs", ".json"],
@@ -61,9 +56,6 @@ const nextConfig: NextConfig = {
         search: "",
       },
     ],
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
   async headers() {
     return [

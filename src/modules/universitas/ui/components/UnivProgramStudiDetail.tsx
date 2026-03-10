@@ -73,7 +73,7 @@ export const UnivProgramStudiDetail = ({ programId }: Props) => {
   };
   const cached = readCache<ProgramDetail>(cacheKey);
 
-  const queryOptions = trpc.tryouts.getProgramStudyDetail.queryOptions({ programId });
+  const queryOptions = trpc.universitas.getProgramStudyDetail.queryOptions({ programId });
   const { data, isLoading } = useQuery({
     ...queryOptions,
     staleTime: 5 * 60 * 1000,

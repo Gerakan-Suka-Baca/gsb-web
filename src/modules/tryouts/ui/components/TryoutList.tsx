@@ -32,6 +32,8 @@ const TAB_KEYS = new Set<TabKey>(["current", "registered", "others"]);
 const resolveTab = (value: string | null): TabKey =>
   value && TAB_KEYS.has(value as TabKey) ? (value as TabKey) : "others";
 
+type TryoutAvailability = "not-opened" | "open" | "closed";
+
 const isOpenNow = (
   openDate: string | Date | null | undefined,
   closeDate: string | Date | null | undefined,
@@ -41,6 +43,21 @@ const isOpenNow = (
   if (!openDate || !closeDate) return false;
   const now = new Date();
   return now >= new Date(openDate) && now <= new Date(closeDate);
+};
+
+const getTryoutAvailability = (
+  openDate: string | Date | null | undefined,
+  closeDate: string | Date | null | undefined,
+  isPermanent?: boolean | null
+): TryoutAvailability => {
+  if (isPermanent) return "open";
+  if (!openDate || !closeDate) return "closed";
+  const now = new Date().getTime();
+  const openMs = new Date(openDate).getTime();
+  const closeMs = new Date(closeDate).getTime();
+  if (now < openMs) return "not-opened";
+  if (now > closeMs) return "closed";
+  return "open";
 };
 
 const fadeCard = {
@@ -53,17 +70,19 @@ const stagger = {
   animate: { transition: { staggerChildren: 0.06 } },
 } as const;
 
-type StatusBadge = "available" | "in-progress" | "finished";
+type StatusBadge = "available" | "in-progress" | "finished" | "locked";
 
 const badgeStyles: Record<StatusBadge, string> = {
   available: "bg-gsb-tosca text-white border-gsb-tosca shadow-sm ring-1 ring-white/70",
   "in-progress": "bg-gsb-yellow text-black border-gsb-yellow shadow-sm ring-1 ring-white/70",
   finished: "bg-gsb-blue text-white border-gsb-blue shadow-sm ring-1 ring-white/70",
+  locked: "bg-slate-200 text-slate-800 border-slate-200 shadow-sm ring-1 ring-white/70 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-700",
 };
 const badgeLabels: Record<StatusBadge, string> = {
   available: "Tersedia",
   "in-progress": "Sedang Dikerjakan",
   finished: "Selesai",
+  locked: "Belum Tersedia",
 };
 
 import {
@@ -127,11 +146,7 @@ export const TryoutList = () => {
       availableTryouts.push(tryout);
     }
   }
-  const discoverableTryouts = allTryouts.filter((tryout) => {
-    const attempt = attemptMap.get(tryout.id);
-    if (attempt?.status === "started" || attempt?.status === "completed") return true;
-    return isOpenNow(tryout.dateOpen, tryout.dateClose, tryout.isPermanent);
-  });
+  const discoverableTryouts = allTryouts;
 
   useEffect(() => {
     if (queryTab && TAB_KEYS.has(queryTab as TabKey)) {
@@ -162,12 +177,20 @@ export const TryoutList = () => {
         : null;
 
     const actionLabel =
-      badge === "in-progress" ? "Lanjutkan" : badge === "finished" ? "Lihat Hasil" : "Mulai";
+      badge === "in-progress"
+        ? "Lanjutkan"
+        : badge === "finished"
+          ? "Lihat Hasil"
+          : badge === "locked"
+            ? "Lihat Detail"
+            : "Mulai";
     const actionClass =
       badge === "in-progress"
         ? "bg-gsb-yellow text-black"
         : badge === "finished"
           ? "bg-gsb-blue text-white"
+          : badge === "locked"
+            ? "bg-slate-600 text-white"
           : "bg-gsb-orange text-white";
 
     return (
@@ -342,7 +365,9 @@ export const TryoutList = () => {
                       ? "in-progress"
                       : attempt?.status === "completed"
                         ? "finished"
-                        : "available";
+                        : getTryoutAvailability(tryout.dateOpen, tryout.dateClose, tryout.isPermanent) === "open"
+                          ? "available"
+                          : "locked";
                     return renderCard(tryout, badge);
                   })
                 : renderEmpty("Tidak ada tryout tersedia saat ini.")

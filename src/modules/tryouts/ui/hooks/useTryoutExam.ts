@@ -181,8 +181,9 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
   }, [subtests.length, prefetchNext, prefetchAllSubtests]);
 
   const questions = useMemo(() => {
-    if (subtestContent && subtestContent.id === currentSubtestId) {
-        return (subtestContent.tryoutQuestions || []) as SubtestQuestion[];
+    const fetchedSubtest = subtestContent as Question | null | undefined;
+    if (fetchedSubtest && fetchedSubtest.id === currentSubtestId) {
+        return (fetchedSubtest.tryoutQuestions || []) as SubtestQuestion[];
     }
     return (currentSubtest?.tryoutQuestions || []) as SubtestQuestion[];
   }, [subtestContent, currentSubtest, currentSubtestId]);

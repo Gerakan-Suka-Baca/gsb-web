@@ -46,7 +46,7 @@ export const UnivRecommendations = ({ tryoutId }: Props) => {
   // cache by score
   const cached = scoreKey === "unknown" ? null : readCache(cacheKey);
   
-  const queryOptions = trpc.tryouts.getRecommendations.queryOptions({ tryoutId });
+  const queryOptions = trpc.universitas.getRecommendations.queryOptions({ tryoutId });
   const { data, isLoading } = useQuery({
     ...queryOptions,
     staleTime: 0,

@@ -43,7 +43,7 @@ const ResultsPage = async ({ params }: Props) => {
     trpc.tryouts.getScoreResults.queryOptions({ tryoutId })
   );
   void queryClient.prefetchQuery(
-    trpc.tryouts.getTargetAnalysis.queryOptions({ tryoutId })
+    trpc.universitas.getTargetAnalysis.queryOptions({ tryoutId })
   );
   void queryClient.prefetchQuery(
     trpc.tryouts.getExplanation.queryOptions({ tryoutId })
