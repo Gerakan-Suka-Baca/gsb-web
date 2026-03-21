@@ -87,7 +87,7 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
-    payloadCloudPlugin(),
+    payloadCloudPlugin({ storage: false }),
     uploadthingStorage({
       collections: {
         media: true,
