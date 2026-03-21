@@ -89,7 +89,11 @@ export const getExplanation = protectedProcedure
 
     const pdf = explanationDoc.pdf as Record<string, unknown> | string | undefined;
     let pdfUrl: string | null = null;
-    if (pdf && typeof pdf === "object" && "url" in pdf) {
+    if (pdf && typeof pdf === "object" && "_key" in pdf && pdf._key) {
+      // Construct the direct Uploadthing CDN URL from the file key
+      pdfUrl = `https://hivpn20u1z.ufs.sh/f/${pdf._key}`;
+    } else if (pdf && typeof pdf === "object" && "url" in pdf) {
+      // Fallback to the url field
       pdfUrl = (pdf as { url?: string }).url ?? null;
     }
 
