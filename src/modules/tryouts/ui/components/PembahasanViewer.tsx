@@ -18,9 +18,13 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
   const [zoomIndex, setZoomIndex] = useState(2);
   const zoomLevels = useMemo(() => [75, 90, 100, 110, 125, 150, 175, 200], []);
   const zoomValue = zoomLevels[zoomIndex] ?? 100;
+  
   const [isPdfLoading, setIsPdfLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastTouchYRef = useRef<number | null>(null);
+
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const { data: explanationData, isLoading: isExplanationLoading } = useQuery(
     trpc.tryouts.getExplanation.queryOptions({ tryoutId })
@@ -46,12 +50,13 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
 
   // Full-screen PDF viewer
   const viewerTitle = (explanationData as { title?: string })?.title || scoreData?.tryoutTitle || "Pembahasan Tryout";
+  const rawPdfUrl = explanationData?.pdfUrl;
+
   const pdfUrl = useMemo(() => {
-    const baseUrl = explanationData?.pdfUrl;
-    if (!baseUrl) return "";
-    const joiner = baseUrl.includes("#") ? "&" : "#";
-    return `${baseUrl}${joiner}toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
-  }, [explanationData?.pdfUrl, zoomValue]);
+    if (!blobUrl) return "";
+    return `${blobUrl}#toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
+  }, [blobUrl, zoomValue]);
+
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     const iframeWindow = iframeRef.current?.contentWindow;
     if (!iframeWindow) return;
@@ -74,9 +79,43 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
     event.preventDefault();
     iframeWindow.scrollBy(0, delta);
   };
+
   useEffect(() => {
+    if (!rawPdfUrl) return;
+    
+    let isMounted = true;
     setIsPdfLoading(true);
-  }, [pdfUrl]);
+    setFetchError(null);
+
+    fetch(rawPdfUrl)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Gagal memuat PDF (${res.status})`);
+        const blob = await res.blob();
+        if (isMounted) {
+          const objectUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+          setBlobUrl(objectUrl);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error("PDF Fetch Error:", err);
+          setFetchError("Gagal memuat PDF. File mungkin tidak tersedia atau format salah.");
+          setIsPdfLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [rawPdfUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+      }
+    };
+  }, [blobUrl]);
 
   if (isExplanationLoading) {
     return (
@@ -224,23 +263,31 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
           onTouchMove={handleTouchMove}
           style={{ touchAction: "none", cursor: "default" }}
         />
-        {isPdfLoading && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+        {isPdfLoading && !fetchError && (
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center pointer-events-none z-20">
             <div className="w-40 h-5 bg-muted rounded animate-pulse" />
           </div>
         )}
-        <iframe
-          ref={iframeRef}
-          key={zoomValue}
-          src={pdfUrl}
-          className="w-full h-full border-0"
-          title={viewerTitle}
-          onLoad={() => setIsPdfLoading(false)}
-          style={{
-            userSelect: "none",
-            WebkitUserSelect: "none",
-          }}
-        />
+        {fetchError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-background z-20">
+            <ShieldAlert className="w-16 h-16 text-muted-foreground opacity-50" />
+            <p className="text-destructive font-bold">{fetchError}</p>
+          </div>
+        )}
+        {blobUrl && (
+          <iframe
+            ref={iframeRef}
+            key={zoomValue}
+            src={pdfUrl}
+            className="w-full h-full border-0"
+            title={viewerTitle}
+            onLoad={() => setIsPdfLoading(false)}
+            style={{
+              userSelect: "none",
+              WebkitUserSelect: "none",
+            }}
+          />
+        )}
       </div>
     </div>
   );
