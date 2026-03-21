@@ -74,7 +74,7 @@ export const getExplanation = protectedProcedure
       collection: "tryout-explanations",
       where: { tryout: { equals: input.tryoutId } },
       limit: 1,
-      depth: 1,
+      depth: 0, // Don't populate — get the raw media ID
     });
 
     const explanationDoc = (explanationResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
@@ -87,14 +87,30 @@ export const getExplanation = protectedProcedure
       };
     }
 
-    const pdf = explanationDoc.pdf as Record<string, unknown> | string | undefined;
+    // Get the PDF media document ID (with depth: 0 it's just a string ID)
+    const pdfMediaId = explanationDoc.pdf as string | undefined;
     let pdfUrl: string | null = null;
-    if (pdf && typeof pdf === "object" && "_key" in pdf && pdf._key) {
-      // Construct the direct Uploadthing CDN URL from the file key
-      pdfUrl = `https://hivpn20u1z.ufs.sh/f/${pdf._key}`;
-    } else if (pdf && typeof pdf === "object" && "url" in pdf) {
-      // Fallback to the url field
-      pdfUrl = (pdf as { url?: string }).url ?? null;
+
+    if (pdfMediaId) {
+      try {
+        // Query explanation-media directly to get the _key field
+        const mediaDoc = await ctx.db.findByID({
+          collection: "explanation-media",
+          id: pdfMediaId,
+          depth: 0,
+        }) as unknown as Record<string, unknown> | null;
+
+        if (mediaDoc?._key) {
+          // Direct Uploadthing CDN URL
+          pdfUrl = `https://hivpn20u1z.ufs.sh/f/${mediaDoc._key}`;
+        } else if (mediaDoc?.url) {
+          // Fallback
+          pdfUrl = mediaDoc.url as string;
+        }
+      } catch {
+        // fallback: if findByID fails, try to construct from the old url field
+        pdfUrl = null;
+      }
     }
 
     return {
