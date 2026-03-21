@@ -155,24 +155,26 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
       {/* PDF Viewer */}
       <div
         className="flex-1 relative overflow-hidden"
-        style={{ userSelect: "none", WebkitUserSelect: "none" }}
+        style={{ userSelect: "none", WebkitUserSelect: "none", minHeight: 0 }}
         onDragStart={(e) => e.preventDefault()}
       >
         {pdfUrl && (
-          <PDFViewer
-            config={{
-              src: pdfUrl,
-              theme: { preference: "light" },
-              disabledCategories: ["annotation", "print", "export"],
-              permissions: {
-                enforceDocumentPermissions: false,
-                overrides: {
-                  print: false,
-                  copyContents: false,
+          <div style={{ position: "absolute", inset: 0 }}>
+            <PDFViewer
+              config={{
+                src: pdfUrl,
+                theme: { preference: "light" },
+                disabledCategories: ["annotation", "print", "export"],
+                permissions: {
+                  enforceDocumentPermissions: false,
+                  overrides: {
+                    print: false,
+                    copyContents: false,
+                  },
                 },
-              },
-            }}
-          />
+              }}
+            />
+          </div>
         )}
       </div>
     </div>
