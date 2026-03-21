@@ -3,10 +3,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, FileText, Loader2, Lock, ShieldAlert, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Lock, ShieldAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect } from "react";
+import { PDFViewer } from "@embedpdf/react-pdf-viewer";
 
 interface Props {
   tryoutId: string;
@@ -15,12 +16,6 @@ interface Props {
 export const PembahasanViewer = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
-  const [zoomIndex, setZoomIndex] = useState(2);
-  const zoomLevels = useMemo(() => [75, 90, 100, 110, 125, 150, 175, 200], []);
-  const zoomValue = zoomLevels[zoomIndex] ?? 100;
-  const [isPdfLoading, setIsPdfLoading] = useState(true);
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const lastTouchYRef = useRef<number | null>(null);
 
   const { data: explanationData, isLoading: isExplanationLoading } = useQuery(
     trpc.tryouts.getExplanation.queryOptions({ tryoutId })
@@ -44,39 +39,8 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Full-screen PDF viewer
   const viewerTitle = (explanationData as { title?: string })?.title || scoreData?.tryoutTitle || "Pembahasan Tryout";
-  const pdfUrl = useMemo(() => {
-    const baseUrl = explanationData?.pdfUrl;
-    if (!baseUrl) return "";
-    const joiner = baseUrl.includes("#") ? "&" : "#";
-    return `${baseUrl}${joiner}toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
-  }, [explanationData?.pdfUrl, zoomValue]);
-  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    const iframeWindow = iframeRef.current?.contentWindow;
-    if (!iframeWindow) return;
-    event.preventDefault();
-    iframeWindow.scrollBy(0, event.deltaY);
-  };
-
-  const handleTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    lastTouchYRef.current = event.touches[0]?.clientY ?? null;
-  };
-
-  const handleTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
-    const iframeWindow = iframeRef.current?.contentWindow;
-    if (!iframeWindow) return;
-    const currentY = event.touches[0]?.clientY ?? null;
-    const lastY = lastTouchYRef.current;
-    if (currentY === null || lastY === null) return;
-    const delta = lastY - currentY;
-    lastTouchYRef.current = currentY;
-    event.preventDefault();
-    iframeWindow.scrollBy(0, delta);
-  };
-  useEffect(() => {
-    setIsPdfLoading(true);
-  }, [pdfUrl]);
+  const pdfUrl = explanationData?.pdfUrl || "";
 
   if (isExplanationLoading) {
     return (
@@ -180,29 +144,6 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 rounded-full border border-border bg-background px-1 py-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setZoomIndex((prev) => Math.max(0, prev - 1))}
-                title="Perkecil"
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <span className="text-xs font-semibold text-muted-foreground w-10 text-center">
-                {zoomValue}%
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setZoomIndex((prev) => Math.min(zoomLevels.length - 1, prev + 1))}
-                title="Perbesar"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-            </div>
             <span className="text-xs text-muted-foreground bg-primary/10 text-primary px-3 py-1 rounded-full font-medium hidden sm:inline-flex items-center gap-1">
               <Lock className="w-3 h-3" />
               Premium
@@ -217,30 +158,22 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
         style={{ userSelect: "none", WebkitUserSelect: "none" }}
         onDragStart={(e) => e.preventDefault()}
       >
-        <div
-          className="absolute inset-0 z-10"
-          onWheel={handleWheel}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          style={{ touchAction: "none", cursor: "default" }}
-        />
-        {isPdfLoading && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-            <div className="w-40 h-5 bg-muted rounded animate-pulse" />
-          </div>
+        {pdfUrl && (
+          <PDFViewer
+            config={{
+              src: pdfUrl,
+              theme: { preference: "light" },
+              disabledCategories: ["annotation", "print", "export"],
+              permissions: {
+                enforceDocumentPermissions: false,
+                overrides: {
+                  print: false,
+                  copyContents: false,
+                },
+              },
+            }}
+          />
         )}
-        <iframe
-          ref={iframeRef}
-          key={zoomValue}
-          src={pdfUrl}
-          className="w-full h-full border-0"
-          title={viewerTitle}
-          onLoad={() => setIsPdfLoading(false)}
-          style={{
-            userSelect: "none",
-            WebkitUserSelect: "none",
-          }}
-        />
       </div>
     </div>
   );
