@@ -51,9 +51,7 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
   const pdfUrl = useMemo(() => {
     const baseUrl = explanationData?.pdfUrl;
     if (!baseUrl) return "";
-    const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(baseUrl)}`;
-    const joiner = proxyUrl.includes("#") ? "&" : "#";
-    return `${proxyUrl}${joiner}toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
+    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
   }, [explanationData?.pdfUrl, zoomValue]);
 
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {

@@ -35,9 +35,7 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
 
   const iframeUrl = useMemo(() => {
     if (!pdfUrl) return "";
-    const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`;
-    const joiner = proxyUrl.includes("#") ? "&" : "#";
-    return `${proxyUrl}${joiner}toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
+    return `${pdfUrl}#toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
   }, [pdfUrl, zoomValue]);
 
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
