@@ -18,7 +18,6 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
   const [zoomIndex, setZoomIndex] = useState(2);
   const zoomLevels = useMemo(() => [75, 90, 100, 110, 125, 150, 175, 200], []);
   const zoomValue = zoomLevels[zoomIndex] ?? 100;
-  
   const [isPdfLoading, setIsPdfLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastTouchYRef = useRef<number | null>(null);
@@ -47,14 +46,12 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
 
   // Full-screen PDF viewer
   const viewerTitle = (explanationData as { title?: string })?.title || scoreData?.tryoutTitle || "Pembahasan Tryout";
-
   const pdfUrl = useMemo(() => {
     const baseUrl = explanationData?.pdfUrl;
     if (!baseUrl) return "";
-    const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(baseUrl)}`;
-    return `${proxyUrl}#toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
+    const joiner = baseUrl.includes("#") ? "&" : "#";
+    return `${baseUrl}${joiner}toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
   }, [explanationData?.pdfUrl, zoomValue]);
-
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     const iframeWindow = iframeRef.current?.contentWindow;
     if (!iframeWindow) return;
@@ -77,7 +74,6 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
     event.preventDefault();
     iframeWindow.scrollBy(0, delta);
   };
-
   useEffect(() => {
     setIsPdfLoading(true);
   }, [pdfUrl]);
@@ -229,7 +225,7 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
           style={{ touchAction: "none", cursor: "default" }}
         />
         {isPdfLoading && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center pointer-events-none z-20">
+          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center pointer-events-none">
             <div className="w-40 h-5 bg-muted rounded animate-pulse" />
           </div>
         )}

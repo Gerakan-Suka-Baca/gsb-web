@@ -22,23 +22,18 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
   const [zoomIndex, setZoomIndex] = useState(2);
   const zoomLevels = useMemo(() => [75, 90, 100, 110, 125, 150, 175, 200], []);
   const zoomValue = zoomLevels[zoomIndex] ?? 100;
-  
   const [isPdfLoading, setIsPdfLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const lastTouchYRef = useRef<number | null>(null);
-
   const handleFullScreen = () => {
     if (tryoutId) {
       window.open(`/tryout/${tryoutId}/pembahasan`, "_blank");
     }
   };
-
   const iframeUrl = useMemo(() => {
-    if (!pdfUrl) return "";
-    const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`;
-    return `${proxyUrl}#toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
+    const joiner = pdfUrl.includes("#") ? "&" : "#";
+    return `${pdfUrl}${joiner}toolbar=0&navpanes=0&scrollbar=1&zoom=${zoomValue}`;
   }, [pdfUrl, zoomValue]);
-
   const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
     const iframeWindow = iframeRef.current?.contentWindow;
     if (!iframeWindow) return;
@@ -75,7 +70,6 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
-
   useEffect(() => {
     if (!open) return;
     setIsPdfLoading(true);
@@ -90,7 +84,7 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
         onCopy={(e) => e.preventDefault()}
         onCut={(e) => e.preventDefault()}
       >
-        <DialogHeader className="px-6 py-3 border-b shrink-0 bg-gradient-to-r from-background via-background to-primary/5">
+        <DialogHeader className="px-6 py-3 border-b shrink-0 bg-background">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
               <FileText className="w-5 h-5 text-primary" />
@@ -143,9 +137,8 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
           onDragStart={(e) => e.preventDefault()}
         >
           {isPdfLoading && (
-            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 pointer-events-none z-20">
-              <div className="w-10 h-10 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
-              <div className="w-44 h-4 bg-muted rounded animate-pulse" />
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+              <div className="w-40 h-5 bg-muted rounded animate-pulse" />
             </div>
           )}
           <iframe
