@@ -2,6 +2,31 @@ import z from "zod";
 import { protectedProcedure } from "@/trpc/init";
 import { resolvePaymentType } from "@/modules/tryouts/server/services/payment.service";
 
+/**
+ * Resolve the actual PDF download URL from a populated media document.
+ * Tries multiple strategies in order of reliability:
+ * 1. Uploadthing CDN via _key
+ * 2. The url field directly (if it's an absolute URL)
+ * 3. null if nothing works
+ */
+function resolvePdfUrl(mediaDoc: Record<string, unknown> | null | undefined): string | null {
+  if (!mediaDoc) return null;
+
+  // Strategy 1: direct Uploadthing CDN URL from _key
+  const key = mediaDoc._key as string | undefined;
+  if (key) {
+    return `https://hivpn20u1z.ufs.sh/f/${key}`;
+  }
+
+  // Strategy 2: url field (might be absolute URL from Uploadthing)
+  const url = mediaDoc.url as string | undefined;
+  if (url && url.startsWith("http")) {
+    return url;
+  }
+
+  return null;
+}
+
 export const getExplanation = protectedProcedure
   .input(z.object({ tryoutId: z.string() }))
   .query(async ({ ctx, input }) => {
@@ -70,11 +95,13 @@ export const getExplanation = protectedProcedure
       return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? "pending" };
     }
 
+    // Fetch explanation with depth:1 so the 'pdf' upload field is populated
+    // with the full explanation-media document (including _key, url, filename)
     const explanationResult = await ctx.db.find({
       collection: "tryout-explanations",
       where: { tryout: { equals: input.tryoutId } },
       limit: 1,
-      depth: 0, // Don't populate — get the raw media ID
+      depth: 1,
     });
 
     const explanationDoc = (explanationResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
@@ -87,28 +114,24 @@ export const getExplanation = protectedProcedure
       };
     }
 
-    // Get the PDF media document ID (with depth: 0 it's just a string ID)
-    const pdfMediaId = explanationDoc.pdf as string | undefined;
+    // The 'pdf' field with depth:1 is the full media document object
+    const pdfMedia = explanationDoc.pdf as Record<string, unknown> | string | undefined;
+
     let pdfUrl: string | null = null;
 
-    if (pdfMediaId) {
+    if (typeof pdfMedia === "object" && pdfMedia !== null) {
+      pdfUrl = resolvePdfUrl(pdfMedia);
+    } else if (typeof pdfMedia === "string") {
+      // Not populated (just the ID) — fallback: lookup directly
       try {
-        // Query explanation-media directly to get the _key field
         const mediaDoc = await ctx.db.findByID({
           collection: "explanation-media",
-          id: pdfMediaId,
+          id: pdfMedia,
           depth: 0,
         }) as unknown as Record<string, unknown> | null;
-
-        if (mediaDoc?._key) {
-          // Direct Uploadthing CDN URL
-          pdfUrl = `https://hivpn20u1z.ufs.sh/f/${mediaDoc._key}`;
-        } else if (mediaDoc?.url) {
-          // Fallback
-          pdfUrl = mediaDoc.url as string;
-        }
-      } catch {
-        // fallback: if findByID fails, try to construct from the old url field
+        pdfUrl = resolvePdfUrl(mediaDoc);
+      } catch (err) {
+        console.error("[getExplanation] findByID failed:", err);
         pdfUrl = null;
       }
     }

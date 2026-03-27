@@ -195,7 +195,7 @@ export const TryoutList = () => {
 
     return (
     <motion.div key={tryout.id} variants={fadeCard}>
-      <Link href={`/tryout/${tryout.id}`} className="block group">
+      <Link href={badge === "finished" ? `/tryout/${tryout.id}/results` : `/tryout/${tryout.id}`} className="block group">
         <Card className="overflow-hidden border border-border/60 hover:border-gsb-orange/40 hover:shadow-2xl transition-all duration-300 rounded-2xl bg-card/70 hover:bg-card group-hover:-translate-y-0.5">
           {/* Banner — cover image from CMS, or fallback gradient */}
           <div className="relative h-36 md:h-44 overflow-hidden">

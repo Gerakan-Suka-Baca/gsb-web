@@ -28,6 +28,15 @@ const nextConfig: NextConfig = {
       ...config.infrastructureLogging,
       level: 'error',
     };
+
+    // react-pdf: prevent Node.js canvas module from being bundled client-side
+    config.resolve = {
+      ...config.resolve,
+      alias: {
+        ...config.resolve?.alias,
+        canvas: false,
+      },
+    };
     
     return config;
   },
