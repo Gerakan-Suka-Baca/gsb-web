@@ -48,7 +48,6 @@ export default async function UniversitasPage({ searchParams }: PageProps) {
 
   const db = await getPayloadCached();
 
-  // @ts-expect-error: payload-types might not be synced yet
   const settingsResponse = await db.findGlobal({ slug: "app-settings", depth: 0 }).catch(() => null);
   const settings = settingsResponse as { universityListPerPage?: number } | null;
   const PER_PAGE = settings?.universityListPerPage || 12;

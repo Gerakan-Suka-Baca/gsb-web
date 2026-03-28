@@ -18,7 +18,7 @@ export const AppSettings: GlobalConfig = {
       tabs: [
         {
           label: "Algoritma Peluang Lulus",
-          description: "Pengaturan untuk perhitungan probabilitas (calculateChance).",
+          description: "Pengaturan batas probabilitas kalkukasi (calculateChance).",
           fields: [
             {
               name: "chanceAlgorithmK",
@@ -26,10 +26,7 @@ export const AppSettings: GlobalConfig = {
               label: "K-Factor (Kecepatan kurva)",
               defaultValue: 0.05,
               required: true,
-              admin: {
-                step: 0.01,
-                description: "Nilai default: 0.05. Semakin besar, kurva probabilitas semakin curam terhadap selisih skor.",
-              },
+              admin: { step: 0.01 },
             },
             {
               name: "chanceMinPercentage",
@@ -39,9 +36,6 @@ export const AppSettings: GlobalConfig = {
               required: true,
               min: 0,
               max: 100,
-              admin: {
-                description: "Peluang terendah yang mungkin didapatkan (bottom clamp). Default: 5%.",
-              },
             },
             {
               name: "chanceMaxPercentage",
@@ -51,15 +45,12 @@ export const AppSettings: GlobalConfig = {
               required: true,
               min: 0,
               max: 100,
-              admin: {
-                description: "Peluang tertinggi yang mungkin didapatkan (top clamp). Default: 95%.",
-              },
             },
           ],
         },
         {
           label: "Rekomendasi Universitas",
-          description: "Pengaturan untuk halaman rekomendasi dan analisis target.",
+          description: "Pengaturan batas rekomendasi dan analisis target.",
           fields: [
             {
               name: "recommendationMaxResults",
@@ -69,9 +60,6 @@ export const AppSettings: GlobalConfig = {
               required: true,
               min: 1,
               max: 100,
-              admin: {
-                description: "Jumlah maksimum kampus yang ditampilkan di hasil rekomendasi.",
-              },
             },
             {
               name: "recommendationMinChance",
@@ -81,9 +69,6 @@ export const AppSettings: GlobalConfig = {
               required: true,
               min: 1,
               max: 100,
-              admin: {
-                description: "Batas bawah peluang agar sebuah kampus direkomendasikan.",
-              },
             },
             {
               name: "targetAnalysisSafeThreshold",
@@ -120,16 +105,22 @@ export const AppSettings: GlobalConfig = {
               required: true,
               min: 50,
               max: 1000,
-              admin: {
-                description: "Jumlah maksimum program studi yang di-scan oleh algoritma sebelum disaring.",
-              },
             },
           ],
         },
         {
-          label: "Tampilan (UI/UX)",
-          description: "Pengaturan batas dan pagination antarmuka pengguna.",
+          label: "Akses & Tampilan",
+          description: "Pengaturan akses fitur (Bypass) dan tampilan UI.",
           fields: [
+            {
+              name: "bypassExplanationAccess",
+              type: "checkbox",
+              label: "Bypass Akses Pembahasan",
+              defaultValue: false,
+              admin: {
+                description: "Jika TRUE, semua siswa bisa melihat Pembahasan tanpa perlu membayar akses VIP.",
+              },
+            },
             {
               name: "universityListPerPage",
               type: "number",
@@ -138,9 +129,6 @@ export const AppSettings: GlobalConfig = {
               required: true,
               min: 1,
               max: 50,
-              admin: {
-                description: "Jumlah universitas yang ditampilkan per halaman pada menu /universitas.",
-              },
             },
           ],
         },

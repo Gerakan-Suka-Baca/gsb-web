@@ -35,7 +35,7 @@ export const getExplanation = protectedProcedure
       return { allowed: false as const, pdfUrl: null, paymentType: "free" as const, paymentReviewStatus: null };
     }
 
-    const [attemptResult, scoreResult, paymentResult] = await Promise.all([
+    const [attemptResult, scoreResult, paymentResult, settingsResult] = await Promise.all([
       ctx.db.find({
         collection: "tryout-attempts",
         where: {
@@ -72,6 +72,10 @@ export const getExplanation = protectedProcedure
         sort: "-createdAt",
         depth: 0,
       }),
+      ctx.db.findGlobal({
+        slug: "app-settings",
+        depth: 0,
+      }).catch(() => null),
     ]);
 
     const attempt = (attemptResult.docs[0] ?? undefined) as unknown as Record<string, unknown> | undefined;
@@ -80,6 +84,10 @@ export const getExplanation = protectedProcedure
       status?: "pending" | "verified" | "rejected";
       paymentMethod?: "free" | "qris" | "voucher";
     } | undefined;
+    
+    const settings = (settingsResult || {}) as Record<string, unknown>;
+    const isBypassEnabled = settings.bypassExplanationAccess === true;
+
     const resultPlan = (attempt?.resultPlan as "none" | "free" | "paid" | undefined) ?? "none";
     const paymentType = resolvePaymentType(resultPlan, scoreDoc);
 
@@ -87,12 +95,15 @@ export const getExplanation = protectedProcedure
       return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? null };
     }
 
-    if (paymentType !== "paid") {
-      return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? null };
-    }
+    // Only enforce payment requirement if bypass is not enabled
+    if (!isBypassEnabled) {
+      if (paymentType !== "paid") {
+        return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? null };
+      }
 
-    if (paymentDoc?.status !== "verified") {
-      return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? "pending" };
+      if (paymentDoc?.status !== "verified") {
+        return { allowed: false as const, pdfUrl: null, paymentType, paymentReviewStatus: paymentDoc?.status ?? "pending" };
+      }
     }
 
     // Fetch explanation with depth:1 so the 'pdf' upload field is populated

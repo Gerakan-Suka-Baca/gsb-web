@@ -3,6 +3,7 @@ import { getExplanation } from "@/modules/tryouts/server/queries/getExplanation"
 import { getMany, getMetadata, getOne, getSubtest } from "@/modules/tryouts/server/queries/getTryoutContent";
 import { getMyPaymentHistory } from "@/modules/tryouts/server/queries/getMyPaymentHistory";
 import { getScoreResults } from "@/modules/tryouts/server/queries/getScoreResults";
+import { getLeaderboard } from "@/modules/tryouts/server/queries/getLeaderboard";
 
 /**
  * Tryout-specific tRPC router.
@@ -17,4 +18,5 @@ export const tryoutsRouter = createTRPCRouter({
   getScoreResults,
   getMyPaymentHistory,
   getExplanation,
+  getLeaderboard,
 });

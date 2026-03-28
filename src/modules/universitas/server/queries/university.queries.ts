@@ -141,7 +141,6 @@ export const getRecommendations = protectedProcedure
 
     // Fetch App Settings
     const settingsResponse = await ctx.db.findGlobal({
-      // @ts-expect-error: payload-types might not be synced yet
       slug: "app-settings",
       depth: 0,
     }).catch(() => null);
@@ -253,7 +252,6 @@ export const getTargetAnalysis = protectedProcedure
 
     // Fetch App Settings
     const settingsResponse = await ctx.db.findGlobal({
-      // @ts-expect-error: payload-types might not be synced yet
       slug: "app-settings",
       depth: 0,
     }).catch(() => null);

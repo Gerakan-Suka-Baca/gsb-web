@@ -89,6 +89,20 @@ export default buildConfig({
     },
   }),
   sharp,
+  globals: [
+    AppSettings,
+  ],
+  cors: [process.env.NEXT_PUBLIC_SERVER_URL || ''].filter(Boolean),
+  csrf: [process.env.NEXT_PUBLIC_SERVER_URL || ''].filter(Boolean),
+  endpoints: [
+    {
+      path: '/api/v1/health',
+      method: 'get',
+      handler: () => {
+        return Response.json({ status: 'ok', timestamp: new Date().toISOString() })
+      },
+    },
+  ],
   plugins: [
     payloadCloudPlugin({ storage: false }),
     uploadthingStorage({

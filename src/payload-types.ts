@@ -126,8 +126,12 @@ export interface Config {
     defaultIDType: string;
   };
   fallbackLocale: null;
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'app-settings': AppSetting;
+  };
+  globalsSelect: {
+    'app-settings': AppSettingsSelect<false> | AppSettingsSelect<true>;
+  };
   locale: null;
   user: Admin;
   jobs: {
@@ -1597,6 +1601,51 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Global configuration for algorithms, recommendations, and UI limits.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-settings".
+ */
+export interface AppSetting {
+  id: string;
+  chanceAlgorithmK: number;
+  chanceMinPercentage: number;
+  chanceMaxPercentage: number;
+  recommendationMaxResults: number;
+  recommendationMinChance: number;
+  targetAnalysisSafeThreshold: number;
+  targetAnalysisVerySafeThreshold: number;
+  targetAnalysisCompetitiveThreshold: number;
+  universitySearchLimit: number;
+  /**
+   * Jika TRUE, semua siswa bisa melihat Pembahasan tanpa perlu membayar akses VIP.
+   */
+  bypassExplanationAccess?: boolean | null;
+  universityListPerPage: number;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "app-settings_select".
+ */
+export interface AppSettingsSelect<T extends boolean = true> {
+  chanceAlgorithmK?: T;
+  chanceMinPercentage?: T;
+  chanceMaxPercentage?: T;
+  recommendationMaxResults?: T;
+  recommendationMinChance?: T;
+  targetAnalysisSafeThreshold?: T;
+  targetAnalysisVerySafeThreshold?: T;
+  targetAnalysisCompetitiveThreshold?: T;
+  universitySearchLimit?: T;
+  bypassExplanationAccess?: T;
+  universityListPerPage?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

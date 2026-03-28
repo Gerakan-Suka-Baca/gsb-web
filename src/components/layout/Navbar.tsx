@@ -86,6 +86,7 @@ const learningPathMenuItems: MenuItem[] = [
 
 const tryoutMenuItems: MenuItem[] = [
   { title: "Dashboard", url: "/tryout" },
+  { title: "Leaderboard TO", url: "/tryout/leaderboard" },
   { title: "Tryout SNBT", url: "/learning-path/tryout-snbt" },
   { title: "Universitas", url: "/universitas" },
   { title: "Hasil & Pembahasan", url: "/tryout?tab=registered" },
