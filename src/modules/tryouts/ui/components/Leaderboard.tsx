@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Medal, Award, Loader2, User } from "lucide-react";
+import { Trophy, Medal, Award, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -131,10 +131,10 @@ export const Leaderboard = () => {
               ) : (
                 <div className="flex flex-col">
                   {/* Table Header */}
-                  <div className="grid grid-cols-[60px_1fr_100px] md:grid-cols-[80px_1fr_120px] gap-4 p-4 md:px-8 border-b bg-muted/30 text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                    <div className="text-center">Rank</div>
+                  <div className="grid grid-cols-[auto_1fr_auto] gap-3 p-3 md:gap-4 md:px-8 border-b bg-muted/30 text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wider items-center">
+                    <div className="text-center w-12 md:w-16">Rank</div>
                     <div>Peserta</div>
-                    <div className="text-right">Skor Akhir</div>
+                    <div className="text-right w-16 md:w-24">Skor</div>
                   </div>
 
                   {/* Table Body */}
@@ -148,22 +148,22 @@ export const Leaderboard = () => {
                         <div
                           key={user.userId + "-" + index}
                           className={cn(
-                            "grid grid-cols-[60px_1fr_100px] md:grid-cols-[80px_1fr_120px] gap-4 p-4 md:px-8 items-center transition-colors",
+                            "grid grid-cols-[auto_1fr_auto] gap-3 p-3 md:gap-4 md:px-8 items-center transition-colors",
                             getRankStyle(user.rank)
                           )}
                         >
-                          <div className="flex justify-center items-center">
+                          <div className="flex justify-center items-center w-12 md:w-16">
                             {getRankBadge(user.rank)}
                           </div>
                           
-                          <div className="flex items-center gap-3 overflow-hidden">
+                          <div className="flex items-center gap-2 md:gap-3 min-w-0">
                             <Avatar className={cn(
-                              "h-10 w-10 border shadow-sm shrink-0", 
+                              "h-8 w-8 md:h-10 md:w-10 border shadow-sm shrink-0", 
                               user.rank <= 3 ? "border-gsb-orange/30" : "border-border"
                             )}>
                               <AvatarImage src={user.avatar || ""} />
                               <AvatarFallback className={cn(
-                                "font-bold text-xs",
+                                "font-bold text-[10px] md:text-xs",
                                 user.rank === 1 ? "bg-yellow-500/10 text-yellow-600" :
                                 user.rank === 2 ? "bg-slate-500/10 text-slate-600" :
                                 user.rank === 3 ? "bg-amber-700/10 text-amber-800" :
@@ -172,16 +172,14 @@ export const Leaderboard = () => {
                                 {initials}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="flex flex-col min-w-0">
-                              <span className="font-bold text-foreground truncate">{user.name}</span>
-                              <span className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                                <User className="w-3 h-3" />
-                                {user.school || "Sekolah Tidak Diketahui"}
+                            <div className="flex flex-col min-w-0 justify-center">
+                              <span className="font-bold text-foreground uppercase text-[11px] sm:text-sm md:text-base leading-tight break-words line-clamp-2">
+                                {user.name}
                               </span>
                             </div>
                           </div>
 
-                          <div className="text-right font-extrabold text-lg text-gsb-orange font-heading">
+                          <div className="text-right font-extrabold text-base md:text-lg text-gsb-orange font-heading w-16 md:w-24">
                             {Number(user.finalScore).toFixed(0)}
                           </div>
                         </div>
