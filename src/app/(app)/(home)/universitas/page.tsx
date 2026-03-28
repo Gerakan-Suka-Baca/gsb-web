@@ -10,7 +10,7 @@ export const metadata = {
     "Cari dan temukan universitas impianmu di seluruh Indonesia. Lihat data program studi, akreditasi, dan lokasi kampus.",
 };
 
-const PER_PAGE = 12;
+// Will fetch per-page dynamically
 
 interface PageProps {
   searchParams: Promise<{
@@ -47,6 +47,11 @@ export default async function UniversitasPage({ searchParams }: PageProps) {
   const searchQuery = (params.q || "").trim();
 
   const db = await getPayloadCached();
+
+  // @ts-expect-error: payload-types might not be synced yet
+  const settingsResponse = await db.findGlobal({ slug: "app-settings", depth: 0 }).catch(() => null);
+  const settings = settingsResponse as { universityListPerPage?: number } | null;
+  const PER_PAGE = settings?.universityListPerPage || 12;
 
   const where: Where = { and: [] };
   const conditions = where.and as Where[];

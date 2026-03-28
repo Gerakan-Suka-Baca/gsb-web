@@ -51,7 +51,7 @@ export const PdfViewerModal = ({ open, onOpenChange, pdfUrl, title, tryoutId }: 
 
   const handleFullScreen = () => {
     if (tryoutId) {
-      window.open(`/tryout/${tryoutId}/pembahasan`, "_blank");
+      window.open(`/tryout/${tryoutId}/explanation`, "_blank");
     }
   };
 

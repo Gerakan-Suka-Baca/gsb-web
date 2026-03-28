@@ -3,7 +3,7 @@ import { getQueryClient, trpc } from "@/trpc/server";
 import { redirect } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
 import { getPayloadCached } from "@/lib/payload";
-import { PembahasanViewer } from "@/modules/tryouts/ui/components/PembahasanViewer";
+import { ExplanationViewer } from "@/modules/tryouts/ui/components/ExplanationViewer";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ const PembahasanPage = async ({ params }: Props) => {
 
   const { userId } = await auth();
   if (!userId) {
-    redirect(`/sign-in?callbackUrl=${encodeURIComponent(`/tryout/${tryoutId}/pembahasan`)}`);
+    redirect(`/sign-in?callbackUrl=${encodeURIComponent(`/tryout/${tryoutId}/explanation`)}`);
   }
 
   const payload = await getPayloadCached();
@@ -72,7 +72,7 @@ const PembahasanPage = async ({ params }: Props) => {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <PembahasanViewer tryoutId={tryoutId} />
+      <ExplanationViewer tryoutId={tryoutId} />
     </HydrationBoundary>
   );
 };

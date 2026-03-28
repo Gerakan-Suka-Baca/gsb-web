@@ -22,7 +22,7 @@ interface Props {
   tryoutId: string;
 }
 
-export const PembahasanViewer = ({ tryoutId }: Props) => {
+export const ExplanationViewer = ({ tryoutId }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
   const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
@@ -98,7 +98,7 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
       setPdfData(buffer);
     } catch (err) {
       setPdfError("Gagal memuat PDF. Silakan coba lagi.");
-      console.error("[PembahasanViewer] fetch error:", err);
+      console.error("[ExplanationViewer] fetch error:", err);
     } finally {
       setPdfLoading(false);
     }
@@ -342,7 +342,7 @@ export const PembahasanViewer = ({ tryoutId }: Props) => {
             zoom={zoom}
             onLoadSuccess={(n) => setNumPages(n)}
             onLoadError={(err) => {
-              console.error("[PembahasanViewer] PDF load error:", err);
+              console.error("[ExplanationViewer] PDF load error:", err);
               setPdfError("Gagal memuat PDF.");
             }}
             onPageChange={setCurrentPage}

@@ -6,10 +6,19 @@
 /**
  * Calculate admission chance using a sigmoid function.
  */
-export const calculateChance = (finalScore: number, passingGrade: number): number => {
-  const k = 0.05;
-  const rawChance = 100 / (1 + Math.exp(-k * (finalScore - passingGrade)));
-  return Math.max(5, Math.min(95, Math.round(rawChance)));
+interface ChanceSettings {
+  k: number;
+  minPercent: number;
+  maxPercent: number;
+}
+
+export const calculateChance = (
+  finalScore: number,
+  passingGrade: number,
+  settings: ChanceSettings = { k: 0.05, minPercent: 5, maxPercent: 95 }
+): number => {
+  const rawChance = 100 / (1 + Math.exp(-settings.k * (finalScore - passingGrade)));
+  return Math.max(settings.minPercent, Math.min(settings.maxPercent, Math.round(rawChance)));
 };
 
 /**

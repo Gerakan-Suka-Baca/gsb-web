@@ -31,6 +31,9 @@ import { Articles } from './collections/blog/Articles'
 import { LegalPages } from './collections/blog/LegalPages'
 import { ArticleLabels } from './collections/blog/ArticleLabels'
 
+// Configuration & Settings
+import { AppSettings } from './collections/settings/AppSettings'
+
 export default buildConfig({
   admin: {
     user: Admins.slug,

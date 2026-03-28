@@ -139,6 +139,24 @@ export const getRecommendations = protectedProcedure
     const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
     const finalScore = (scoreDoc?.finalScore as number) ?? 0;
 
+    // Fetch App Settings
+    const settingsResponse = await ctx.db.findGlobal({
+      // @ts-expect-error: payload-types might not be synced yet
+      slug: "app-settings",
+      depth: 0,
+    }).catch(() => null);
+    const settings = (settingsResponse || {}) as Record<string, number>;
+
+    const chanceConfig = {
+      k: typeof settings.chanceAlgorithmK === 'number' ? settings.chanceAlgorithmK : 0.05,
+      minPercent: typeof settings.chanceMinPercentage === 'number' ? settings.chanceMinPercentage : 5,
+      maxPercent: typeof settings.chanceMaxPercentage === 'number' ? settings.chanceMaxPercentage : 95,
+    };
+
+    const maxResults = typeof settings.recommendationMaxResults === 'number' ? settings.recommendationMaxResults : 20;
+    const minChance = typeof settings.recommendationMinChance === 'number' ? settings.recommendationMinChance : 70;
+    const searchLimit = typeof settings.universitySearchLimit === 'number' ? settings.universitySearchLimit : 300;
+
     const userProfile = user as {
       targetMajor?: string;
       targetMajor2?: string;
@@ -168,7 +186,7 @@ export const getRecommendations = protectedProcedure
           },
         ],
       },
-      limit: 300,
+      limit: searchLimit,
       depth: 0,
     });
 
@@ -177,7 +195,11 @@ export const getRecommendations = protectedProcedure
     const recs = allMatches.map((prog) => {
       const latestMetric = (prog.metrics?.[0] ?? {}) as ProgramMetric;
       const passingGrade = parseFloat(latestMetric.admissionMetric || prog.admissionMetric || "0") || 0;
-      const chance = calculateChance(finalScore, passingGrade);
+      
+      // If no valid passing grade, we can't reliably recommend it.
+      if (passingGrade <= 0) return null;
+
+      const chance = calculateChance(finalScore, passingGrade, chanceConfig);
 
       return {
         id: extractId(prog.id),
@@ -189,11 +211,11 @@ export const getRecommendations = protectedProcedure
         avgUkt: latestMetric.avgUkt || prog.avgUkt,
         maxUkt: latestMetric.maxUkt || prog.maxUkt
       };
-    }).filter((r) => r.chance >= 70);
+    }).filter((r): r is NonNullable<typeof r> => r !== null && r.chance >= minChance);
 
     recs.sort((a, b) => b.chance - a.chance);
 
-    const payload = { finalScore, recommendations: recs.slice(0, 20) };
+    const payload = { finalScore, recommendations: recs.slice(0, maxResults) };
     await setCacheValue(recsCacheKey, payload, 5 * 60 * 1000);
     return payload;
   });
@@ -228,6 +250,24 @@ export const getTargetAnalysis = protectedProcedure
 
     const scoreDoc = (scoreResult.docs[0] ?? undefined) as TryoutScoreDoc | undefined;
     const finalScore = (scoreDoc?.finalScore as number) ?? 0;
+
+    // Fetch App Settings
+    const settingsResponse = await ctx.db.findGlobal({
+      // @ts-expect-error: payload-types might not be synced yet
+      slug: "app-settings",
+      depth: 0,
+    }).catch(() => null);
+    const settings = (settingsResponse || {}) as Record<string, number>;
+
+    const chanceConfig = {
+      k: typeof settings.chanceAlgorithmK === 'number' ? settings.chanceAlgorithmK : 0.05,
+      minPercent: typeof settings.chanceMinPercentage === 'number' ? settings.chanceMinPercentage : 5,
+      maxPercent: typeof settings.chanceMaxPercentage === 'number' ? settings.chanceMaxPercentage : 95,
+    };
+
+    const thresholdSafe = typeof settings.targetAnalysisSafeThreshold === 'number' ? settings.targetAnalysisSafeThreshold : 70;
+    const thresholdVerySafe = typeof settings.targetAnalysisVerySafeThreshold === 'number' ? settings.targetAnalysisVerySafeThreshold : 85;
+    const thresholdCompetitive = typeof settings.targetAnalysisCompetitiveThreshold === 'number' ? settings.targetAnalysisCompetitiveThreshold : 50;
     const userData = user as {
       targetPTN?: string;
       targetMajor?: string;
@@ -292,15 +332,15 @@ export const getTargetAnalysis = protectedProcedure
         };
       }
 
-      const chance = calculateChance(finalScore, passingGrade);
+      const chance = calculateChance(finalScore, passingGrade, chanceConfig);
 
       let level = "Sangat Sulit";
       let color = "red";
 
-      if (chance >= 85) { level = "Sangat Aman"; color = "green"; }
-      else if (chance >= 70) { level = "Aman"; color = "green"; }
-      else if (chance >= 50) { level = "Kompetitif"; color = "yellow"; }
-      else if (chance >= 30) { level = "Risiko"; color = "red"; }
+      if (chance >= thresholdVerySafe) { level = "Sangat Aman"; color = "green"; }
+      else if (chance >= thresholdSafe) { level = "Aman"; color = "green"; }
+      else if (chance >= thresholdCompetitive) { level = "Kompetitif"; color = "yellow"; }
+      else { level = "Risiko"; color = "red"; }
 
       return {
         found: true,
