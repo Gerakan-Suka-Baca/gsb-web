@@ -20,9 +20,10 @@ const DEFAULT_ZOOM_INDEX = 2;
 
 interface Props {
   tryoutId: string;
+  backUrl?: string;
 }
 
-export const ExplanationViewer = ({ tryoutId }: Props) => {
+export const ExplanationViewer = ({ tryoutId, backUrl }: Props) => {
   const trpc = useTRPC();
   const router = useRouter();
   const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
@@ -183,14 +184,14 @@ export const ExplanationViewer = ({ tryoutId }: Props) => {
         </p>
         <div className="flex gap-4">
           <Button
-            onClick={() => router.push(`/tryout/${tryoutId}`)}
+            onClick={() => router.push(backUrl || `/tryout/${tryoutId}`)}
             variant="outline"
             className="gap-2 rounded-full font-semibold border-gsb-orange text-gsb-orange hover:bg-gsb-orange/10"
           >
             Upgrade ke Premium
           </Button>
           <Button
-            onClick={() => router.push(`/tryout/${tryoutId}/results`)}
+            onClick={() => router.push(backUrl || `/tryout/${tryoutId}/results`)}
             variant="outline"
             className="gap-2 rounded-full font-semibold"
           >
@@ -219,7 +220,7 @@ export const ExplanationViewer = ({ tryoutId }: Props) => {
           File pembahasan sedang diproses. Silakan cek kembali nanti.
         </p>
         <Button
-          onClick={() => router.push(`/tryout/${tryoutId}/results`)}
+          onClick={() => router.push(backUrl || `/tryout/${tryoutId}/results`)}
           variant="outline"
           className="gap-2 rounded-full font-semibold"
         >
@@ -245,7 +246,7 @@ export const ExplanationViewer = ({ tryoutId }: Props) => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(`/tryout/${tryoutId}/results`)}
+              onClick={() => router.push(backUrl || `/tryout/${tryoutId}/results`)}
               className="gap-1.5 text-muted-foreground hover:text-foreground h-8 px-2"
             >
               <ArrowLeft className="w-4 h-4" />

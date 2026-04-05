@@ -29,6 +29,20 @@ export const TryoutScores: CollectionConfig = {
   },
   fields: [
     {
+      name: "attempt",
+      type: "relationship",
+      relationTo: "tryout-attempts",
+      required: true,
+      index: true,
+      admin: {
+        position: "sidebar",
+        condition: (data) => !data?.id,
+      },
+      filterOptions: {
+        status: { equals: "completed" },
+      },
+    },
+    {
       name: "user",
       type: "relationship",
       relationTo: "users",
@@ -36,6 +50,7 @@ export const TryoutScores: CollectionConfig = {
       index: true,
       admin: {
         position: "sidebar",
+        readOnly: true,
       },
     },
     {
@@ -46,6 +61,7 @@ export const TryoutScores: CollectionConfig = {
       index: true,
       admin: {
         position: "sidebar",
+        readOnly: true,
       },
     },
     {
@@ -106,8 +122,23 @@ export const TryoutScores: CollectionConfig = {
     beforeChange: [],
     beforeValidate: [
       async ({ data, req, operation }) => {
-        if (!data?.user || !data?.tryout || !req.payload) return data;
         if (operation !== "create") return data;
+
+        if (data?.attempt && req.payload) {
+          const attemptId = typeof data.attempt === "object" ? data.attempt.id : data.attempt;
+          const attemptData = await req.payload.findByID({
+            collection: "tryout-attempts",
+            id: attemptId,
+            depth: 0,
+          });
+
+          if (attemptData) {
+            data.user = typeof attemptData.user === "object" ? attemptData.user.id : attemptData.user;
+            data.tryout = typeof attemptData.tryout === "object" ? attemptData.tryout.id : attemptData.tryout;
+          }
+        }
+
+        if (!data?.user || !data?.tryout || !req.payload) return data;
 
         const userId = typeof data.user === "object" ? data.user.id : data.user;
         const tryoutId = typeof data.tryout === "object" ? data.tryout.id : data.tryout;

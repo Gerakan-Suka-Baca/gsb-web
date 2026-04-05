@@ -92,3 +92,30 @@ export const optionalUserProcedure = baseProcedure.use(async ({ ctx, next }) => 
     },
   });
 });
+
+/** Ensure user is Admin or Volunteer via Payload Auth (No Clerk required) */
+export const adminProcedure = baseProcedure.use(async ({ ctx, next }) => {
+  const { headers } = await import("next/headers");
+  const reqHeaders = await headers();
+  const { user } = await ctx.db.auth({ headers: reqHeaders });
+
+  if (!user || user.collection !== "admins") {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Akses ditolak. Harap login melalui halaman khusus Mentor.",
+    });
+  }
+
+  const role = (user as any).role;
+  if (!["super-admin", "admin", "volunteer"].includes(role)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Hak akses tidak mencukupi untuk dashboard mentor.",
+    });
+  }
+
+  // Inject the authenticated admin into context
+  return next({
+    ctx: { ...ctx, adminUser: user },
+  });
+});

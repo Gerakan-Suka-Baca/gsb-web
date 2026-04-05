@@ -27,60 +27,58 @@ export async function GET(req: Request) {
     return new Response("Missing tryoutId", { status: 400 });
   }
 
-  // 1. Auth check
+  const payload = await getPayloadCached();
+  
+  // 1. Auth check - try Clerk first, then Payload Admin
   const { userId: clerkUserId } = await auth();
-  if (!clerkUserId) {
+  const { user: payloadUser } = await payload.auth({ headers: req.headers as unknown as Headers });
+  
+  const isAdmin = payloadUser && payloadUser.collection === "admins" && ["super-admin", "admin", "volunteer"].includes((payloadUser as any).role || "");
+
+  if (!clerkUserId && !isAdmin) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const payload = await getPayloadCached();
+  // If not admin, require user attempt and verified payment
+  if (!isAdmin) {
+     const userResult = await payload.find({
+       collection: "users",
+       where: { clerkUserId: { equals: clerkUserId } },
+       limit: 1,
+       depth: 0,
+     });
+     const user = userResult.docs[0];
+     if (!user) return new Response("User not found", { status: 403 });
 
-  // Find internal user
-  const userResult = await payload.find({
-    collection: "users",
-    where: { clerkUserId: { equals: clerkUserId } },
-    limit: 1,
-    depth: 0,
-  });
-  const user = userResult.docs[0];
-  if (!user) {
-    return new Response("User not found", { status: 403 });
-  }
+     const [attemptResult, paymentResult] = await Promise.all([
+       payload.find({
+         collection: "tryout-attempts",
+         where: {
+           and: [
+             { user: { equals: user.id } },
+             { tryout: { equals: tryoutId } },
+             { status: { equals: "completed" } },
+           ],
+         },
+         limit: 1,
+         depth: 0,
+       }),
+       payload.find({
+         collection: "tryout-payments",
+         where: {
+           and: [
+             { user: { equals: user.id } },
+             { tryout: { equals: tryoutId } },
+             { status: { equals: "verified" } },
+           ],
+         },
+         limit: 1,
+         depth: 0,
+       }),
+     ]);
 
-  // 2. Check attempt + payment
-  const [attemptResult, paymentResult] = await Promise.all([
-    payload.find({
-      collection: "tryout-attempts",
-      where: {
-        and: [
-          { user: { equals: user.id } },
-          { tryout: { equals: tryoutId } },
-          { status: { equals: "completed" } },
-        ],
-      },
-      limit: 1,
-      depth: 0,
-    }),
-    payload.find({
-      collection: "tryout-payments",
-      where: {
-        and: [
-          { user: { equals: user.id } },
-          { tryout: { equals: tryoutId } },
-          { status: { equals: "verified" } },
-        ],
-      },
-      limit: 1,
-      depth: 0,
-    }),
-  ]);
-
-  if (!attemptResult.docs[0]) {
-    return new Response("No completed attempt found", { status: 403 });
-  }
-
-  if (!paymentResult.docs[0]) {
-    return new Response("Payment not verified", { status: 403 });
+     if (!attemptResult.docs[0]) return new Response("No completed attempt found", { status: 403 });
+     if (!paymentResult.docs[0]) return new Response("Payment not verified", { status: 403 });
   }
 
   // 3. Get explanation with populated pdf media doc

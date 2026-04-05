@@ -12,7 +12,7 @@ import type { Tryout } from "@/payload-types";
 
 export const Leaderboard = () => {
   const trpc = useTRPC();
-  
+
   // 1. Fetch available tryout batches
   const { data: tryoutsData } = useSuspenseQuery(trpc.tryouts.getMany.queryOptions({}));
   const tryouts = (tryoutsData?.docs || []) as Tryout[];

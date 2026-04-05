@@ -899,6 +899,7 @@ export interface ExplanationMedia {
  */
 export interface TryoutScore {
   id: string;
+  attempt?: (string | null) | TryoutAttempt;
   user: string | User;
   tryout: string | Tryout;
   paymentType: 'free' | 'paid';
@@ -1419,6 +1420,7 @@ export interface TryoutPaymentsSelect<T extends boolean = true> {
  * via the `definition` "tryout-scores_select".
  */
 export interface TryoutScoresSelect<T extends boolean = true> {
+  attempt?: T;
   user?: T;
   tryout?: T;
   paymentType?: T;
