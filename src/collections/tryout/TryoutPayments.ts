@@ -1,5 +1,6 @@
 import type { CollectionConfig, Where } from "payload";
 import { isAdminOrAbove } from "../accessHelpers";
+import { TryoutVouchers } from "../voucher/TryoutVouchers";
 
 const resolveAccountType = () =>
   (process.env.APP_ENV || "").toLowerCase() === "development"

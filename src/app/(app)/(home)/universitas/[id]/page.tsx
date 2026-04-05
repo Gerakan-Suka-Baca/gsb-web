@@ -2,21 +2,21 @@ import { getPayloadCached } from "@/lib/payload";
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Globe, GraduationCap, Building2, BookOpen, ShieldAlert } from "lucide-react";
+import { MapPin, Globe, GraduationCap, Building2, Users, Target, BookOpen, ShieldAlert } from "lucide-react";
 import { RichText } from "@/components/ui/RichText";
-import { UnivProgramListDropdown } from "@/modules/universitas/ui/components/UnivProgramListDropdown";
+import { ProgramListDropdown } from "@/modules/universitas/ui/components/ProgramListDropdown";
 import type { University } from "@/payload-types";
-import Image from "next/image";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export default async function UniversitasDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = await params;
   const db = await getPayloadCached();
   
+  // Try slug first, fallback to ID, then name-derived match
   let universityData = await db.find({
     collection: "universities",
-    where: { _id: { equals: unwrappedParams.id } },
+    where: { slugField: { equals: unwrappedParams.id } },
     limit: 1,
     depth: 1,
   });
@@ -24,12 +24,13 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
   if (universityData.docs.length === 0) {
     universityData = await db.find({
       collection: "universities",
-      where: { slugField: { equals: unwrappedParams.id } },
+      where: { _id: { equals: unwrappedParams.id } },
       limit: 1,
       depth: 1,
     });
   }
 
+  // Fallback: match against slug derived from name (for legacy data without slugField)
   if (universityData.docs.length === 0) {
     const nameHint = unwrappedParams.id.replace(/-/g, " ");
     const candidates = await db.find({
@@ -54,82 +55,24 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
     notFound();
   }
 
-  const logoUrl = typeof university.image === 'object' && university.image?.url
-    ? university.image.url
+  const anyUni = university as any;
+  const logoUrl = typeof anyUni.image === 'object' && anyUni.image?.url
+    ? anyUni.image.url
     : null;
-  const coverImageUrl = typeof university.coverImage === 'object' && university.coverImage?.url
-    ? university.coverImage.url
+  const coverImageUrl = typeof anyUni.coverImage === 'object' && anyUni.coverImage?.url
+    ? anyUni.coverImage.url
     : null;
 
-  type ProgramItemForList = {
-    id?: string;
-    name?: string;
-    level?: string;
-    faculty?: string;
-    category?: "snbt" | "snbp" | "mandiri";
-    accreditation?: string;
-    metrics?: Array<{
-      year?: string;
-      capacity?: number | null;
-      applicants?: number | null;
-      predictedApplicants?: number | null;
-      admissionMetric?: string | null;
-      passingPercentage?: string | null;
-      avgUkt?: string | null;
-      maxUkt?: string | null;
-    }>;
-  };
-  const groupedPrograms: Record<string, ProgramItemForList[]> = {};
-
-  const programsResult = await db.find({
-    collection: "university-programs",
-    where: { university: { equals: university.id } },
-    limit: 500,
-    depth: 0,
-    pagination: false,
-  });
-
-  const programList = programsResult.docs;
-  if (programList.length > 0) {
-    programList.forEach((prog) => {
-      const p = prog as unknown as {
-        id?: string; name?: string; level?: string; faculty?: string;
-        category?: "snbt" | "snbp" | "mandiri"; accreditation?: string;
-        metrics?: Array<{
-          year?: string;
-          capacity?: number | null;
-          applicants?: number | null;
-          predictedApplicants?: number | null;
-          admissionMetric?: string | null;
-          passingPercentage?: string | null;
-          avgUkt?: string | null;
-          maxUkt?: string | null;
-        }>;
-      };
-      const fac = p.faculty || "Fakultas Umum";
+  // Group programs by faculty
+  const groupedPrograms: Record<string, any[]> = {};
+  
+  if (university.programs && Array.isArray(university.programs)) {
+    university.programs.forEach(prog => {
+      const fac = prog.faculty || "Fakultas Umum";
       if (!groupedPrograms[fac]) {
         groupedPrograms[fac] = [];
       }
-      groupedPrograms[fac].push({
-        id: p.id ? String(p.id) : undefined,
-        name: p.name,
-        level: p.level ?? undefined,
-        faculty: p.faculty ?? undefined,
-        category: p.category ?? undefined,
-        accreditation: p.accreditation ?? undefined,
-        metrics: Array.isArray(p.metrics)
-          ? p.metrics.map((metric) => ({
-              year: metric?.year ?? undefined,
-              capacity: metric?.capacity ?? null,
-              applicants: metric?.applicants ?? null,
-              predictedApplicants: metric?.predictedApplicants ?? null,
-              admissionMetric: metric?.admissionMetric ?? null,
-              passingPercentage: metric?.passingPercentage ?? null,
-              avgUkt: metric?.avgUkt ?? null,
-              maxUkt: metric?.maxUkt ?? null,
-            }))
-          : undefined,
-      });
+      groupedPrograms[fac].push(prog);
     });
   }
 
@@ -144,16 +87,14 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
                            Object.keys(university.visionMission).length > 0;
 
   return (
-    <div className="bg-background min-h-[calc(100vh-4rem)] pb-12">
+    <div className="bg-slate-50 dark:bg-slate-950 min-h-[calc(100vh-4rem)] pb-12">
+      {/* Premium Hero Banner */}
       <div className="relative h-64 md:h-80 w-full bg-slate-200 dark:bg-slate-900 overflow-hidden shadow-inner">
         {coverImageUrl ? (
-            <Image
-              src={coverImageUrl}
-              alt={`${university.name} Banner`}
-              fill
-              sizes="100vw"
-              className="object-cover object-center"
-              unoptimized
+            <img 
+                src={coverImageUrl} 
+                alt={`${university.name} Banner`} 
+                className="w-full h-full object-cover object-center"
             />
         ) : (
             <div className="w-full h-full bg-gradient-to-r from-gsb-maroon via-responsive-maroon to-gsb-orange flex items-center justify-center opacity-90 transition-all duration-700">
@@ -166,21 +107,23 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent md:via-background/40" />
       </div>
 
+      {/* Main Content Container */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative -mt-24 z-10 w-full mb-12">
-        <div className="bg-card dark:bg-slate-900 rounded-2xl shadow-xl border border-border p-6 sm:p-8 flex flex-col md:flex-row gap-8 items-start mb-8 backdrop-blur-xl">
-            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white dark:bg-slate-800 rounded-2xl shadow-md border-4 border-slate-50 dark:border-slate-800 overflow-hidden shrink-0 flex items-center justify-center relative group">
+        
+        {/* Profile Card Header */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 p-6 sm:p-8 flex flex-col md:flex-row gap-8 items-start mb-8 backdrop-blur-xl bg-white/95 dark:bg-slate-900/95">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 bg-white dark:bg-slate-800 rounded-2xl shadow-md border-4 border-slate-50 dark:border-slate-800/50 overflow-hidden shrink-0 flex items-center justify-center relative group">
                 {logoUrl ? (
-                    <Image
-                      src={logoUrl}
-                      alt={`Logo ${university.name}`}
-                      fill
-                      sizes="160px"
-                      className="object-contain p-2 w-full h-full group-hover:scale-110 transition-transform duration-500"
-                      unoptimized
+                    // Use a regular img tag to bypass Next.js image optimization which errors on Payload's /api/media URLs
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img 
+                      src={logoUrl} 
+                      alt={`Logo ${university.name}`} 
+                      className="object-contain p-2 w-full h-full group-hover:scale-110 transition-transform duration-500" 
                     />
                 ) : (
-                    <div className="w-full h-full bg-muted/50 flex flex-col items-center justify-center text-muted-foreground/50">
-                        <Building2 className="w-16 h-16 mb-2 opacity-50" />
+                    <div className="w-full h-full bg-card flex flex-col items-center justify-center text-muted-foreground/50">
+                        <SchoolIcon className="w-16 h-16 mb-2" />
                         <span className="text-[10px] uppercase font-bold tracking-wider">No Image</span>
                     </div>
                 )}
@@ -231,7 +174,10 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
             </div>
         </div>
 
+        {/* Complex Content Split */}
         <div className="grid grid-cols-1 gap-8">
+            
+            {/* Top Row: Info & Description (Side by Side) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="shadow-sm border-border bg-card rounded-xl overflow-hidden hover:shadow-md transition-shadow duration-300">
                     <div className="h-1.5 w-full bg-gradient-to-r from-gsb-maroon to-gsb-orange" />
@@ -242,7 +188,7 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4">
-                        {hasDescription && _isEmptyRichText(university.description) === false ? (
+                        {hasDescription && _isEmptyRichText(university.description as any) === false ? (
                             <div className="prose prose-sm prose-slate dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
                                 <RichText content={university.description} />
                             </div>
@@ -267,7 +213,7 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-4">
-                        {hasVisionMission && _isEmptyRichText(university.visionMission) === false ? (
+                        {hasVisionMission && _isEmptyRichText(university.visionMission as any) === false ? (
                             <div className="prose prose-sm prose-slate dark:prose-invert max-w-none text-muted-foreground leading-relaxed">
                                 <RichText content={university.visionMission} />
                             </div>
@@ -283,6 +229,7 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
                 </Card>
             </div>
 
+            {/* Bottom Row: Complex Program Studies Data (Full Width) */}
             <div className="w-full">
                 <Card className="shadow-md bg-card border-border rounded-2xl overflow-hidden h-full">
                     <div className="h-1.5 w-full bg-gsb-orange" />
@@ -302,7 +249,7 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
                     </CardHeader>
 
                     <CardContent className="p-4 sm:p-6 bg-muted/10">
-                        <UnivProgramListDropdown faculties={faculties} groupedPrograms={groupedPrograms} />
+                        <ProgramListDropdown faculties={faculties} groupedPrograms={groupedPrograms} />
                     </CardContent>
                 </Card>
             </div>
@@ -310,6 +257,31 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
       </div>
     </div>
   );
+}
+
+// Helper icons
+function SchoolIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 22v-4a2 2 0 1 0-4 0v4" />
+      <path d="m18 10 4 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-8l4-2" />
+      <path d="M18 5v17" />
+      <path d="m4 6 8-4 8 4" />
+      <path d="M6 5v17" />
+      <circle cx="12" cy="9" r="2" />
+    </svg>
+  )
 }
 
 function LightbulbIcon(props: React.SVGProps<SVGSVGElement>) {
@@ -333,10 +305,20 @@ function LightbulbIcon(props: React.SVGProps<SVGSVGElement>) {
   )
 }
 
-function _isEmptyRichText(rt: unknown) {
-  if (!rt || typeof rt !== "object") return true;
-  const root = (rt as { root?: { children?: Array<{ children?: unknown[] }> } }).root;
-  if (root?.children?.length === 0) return true;
-  if (root?.children?.length === 1 && root.children[0].children?.length === 0) return true;
+function _isEmptyRichText(
+  rt:
+    | {
+        root?: {
+          children?: Array<{
+            children?: unknown[];
+          }>;
+        };
+      }
+    | null
+    | undefined
+) {
+  if (!rt) return true;
+  if (rt.root?.children?.length === 0) return true;
+  if (rt.root?.children?.length === 1 && rt.root.children[0].children?.length === 0) return true;
   return false;
 }

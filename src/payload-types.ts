@@ -71,15 +71,15 @@ export interface Config {
     users: User;
     media: Media;
     'article-media': ArticleMedia;
+    'explanation-media': ExplanationMedia;
     'university-media': UniversityMedia;
     tryouts: Tryout;
     questions: Question;
     'tryout-attempts': TryoutAttempt;
-    'explanation-media': ExplanationMedia;
+    'tryout-vouchers': TryoutVoucher;
     'tryout-payments': TryoutPayment;
     'tryout-scores': TryoutScore;
     'tryout-explanations': TryoutExplanation;
-    'tryout-vouchers': TryoutVoucher;
     universities: University;
     'university-programs': UniversityProgram;
     articles: Article;
@@ -103,15 +103,15 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'article-media': ArticleMediaSelect<false> | ArticleMediaSelect<true>;
+    'explanation-media': ExplanationMediaSelect<false> | ExplanationMediaSelect<true>;
     'university-media': UniversityMediaSelect<false> | UniversityMediaSelect<true>;
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
-    'explanation-media': ExplanationMediaSelect<false> | ExplanationMediaSelect<true>;
+    'tryout-vouchers': TryoutVouchersSelect<false> | TryoutVouchersSelect<true>;
     'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
     'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
     'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
-    'tryout-vouchers': TryoutVouchersSelect<false> | TryoutVouchersSelect<true>;
     universities: UniversitiesSelect<false> | UniversitiesSelect<true>;
     'university-programs': UniversityProgramsSelect<false> | UniversityProgramsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
@@ -1027,6 +1027,10 @@ export interface PayloadLockedDocument {
         value: string | ArticleMedia;
       } | null)
     | ({
+        relationTo: 'explanation-media';
+        value: string | ExplanationMedia;
+      } | null)
+    | ({
         relationTo: 'university-media';
         value: string | UniversityMedia;
       } | null)
@@ -1043,8 +1047,8 @@ export interface PayloadLockedDocument {
         value: string | TryoutAttempt;
       } | null)
     | ({
-        relationTo: 'explanation-media';
-        value: string | ExplanationMedia;
+        relationTo: 'tryout-vouchers';
+        value: string | TryoutVoucher;
       } | null)
     | ({
         relationTo: 'tryout-payments';
@@ -1057,10 +1061,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tryout-explanations';
         value: string | TryoutExplanation;
-      } | null)
-    | ({
-        relationTo: 'tryout-vouchers';
-        value: string | TryoutVoucher;
       } | null)
     | ({
         relationTo: 'universities';
@@ -1208,6 +1208,25 @@ export interface MediaSelect<T extends boolean = true> {
 export interface ArticleMediaSelect<T extends boolean = true> {
   alt?: T;
   relatedArticle?: T;
+  _key?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "explanation-media_select".
+ */
+export interface ExplanationMediaSelect<T extends boolean = true> {
+  alt?: T;
   _key?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1378,22 +1397,21 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "explanation-media_select".
+ * via the `definition` "tryout-vouchers_select".
  */
-export interface ExplanationMediaSelect<T extends boolean = true> {
-  alt?: T;
-  _key?: T;
+export interface TryoutVouchersSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  active?: T;
+  isPermanent?: T;
+  validFrom?: T;
+  validUntil?: T;
+  quota?: T;
+  usedCount?: T;
+  lastUsedAt?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1443,24 +1461,6 @@ export interface TryoutExplanationsSelect<T extends boolean = true> {
   title?: T;
   tryout?: T;
   pdf?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tryout-vouchers_select".
- */
-export interface TryoutVouchersSelect<T extends boolean = true> {
-  name?: T;
-  code?: T;
-  active?: T;
-  isPermanent?: T;
-  validFrom?: T;
-  validUntil?: T;
-  quota?: T;
-  usedCount?: T;
-  lastUsedAt?: T;
-  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

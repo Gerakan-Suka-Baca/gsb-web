@@ -1,7 +1,17 @@
 "use server";
 
 import { getPayloadCached } from "@/lib/payload";
-import type { Where } from "payload";
+
+type UniversityProgramResult = {
+  programs?: {
+    _id?: { toString: () => string } | string;
+    name?: string;
+  };
+};
+
+type UniversityCollection = {
+  aggregate: (pipeline: Record<string, unknown>[]) => Promise<UniversityProgramResult[]>;
+};
 
 export const searchMajors = async (query: string, universityName?: string) => {
   if (!query && !universityName) return [];
@@ -9,31 +19,34 @@ export const searchMajors = async (query: string, universityName?: string) => {
 
   try {
     const payload = await getPayloadCached();
-
-    const where: Where = {
-      category: { equals: "snbt" },
-    };
+    
+    const payloadDB = (payload.db as unknown as { collections?: Record<string, UniversityCollection> })
+      .collections?.["universities"];
+    if (!payloadDB) return [];
+    const pipeline: any[] = [];
 
     if (universityName) {
-      where["universityName"] = { contains: universityName };
+       pipeline.push({ $match: { name: { $regex: new RegExp(universityName, 'i') } } });
     }
 
+    pipeline.push({ $unwind: "$programs" });
+
+    const programMatch: Record<string, unknown> = { "programs.category": "snbt" };
     if (query && query.length >= 3) {
-      where["name"] = { contains: query };
+       programMatch["programs.name"] = { $regex: new RegExp(query, 'i') };
     }
+    
+    pipeline.push({ $match: programMatch });
+    pipeline.push({ $limit: 30 });
 
-    const results = await payload.find({
-      collection: "university-programs",
-      where,
-      limit: 30,
-      depth: 0,
-      pagination: false,
-    });
+    const results = await payloadDB.aggregate(pipeline);
 
-    return results.docs
+    return results
       .map((doc) => {
-        const id = String(doc.id);
-        const name = (doc as { name?: string }).name;
+        const program = doc.programs;
+        const idValue = program?._id;
+        const id = typeof idValue === "string" ? idValue : idValue?.toString();
+        const name = program?.name;
         if (!id || !name) return null;
         return { id, name };
       })

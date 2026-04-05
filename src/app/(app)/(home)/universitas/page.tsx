@@ -2,7 +2,7 @@ import { getPayloadCached } from "@/lib/payload";
 import { UniversitasList } from "@/modules/universitas/UniversitasList";
 import type { Where } from "payload";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Daftar Universitas — GemaSimpulBerdaya",
@@ -10,7 +10,14 @@ export const metadata = {
     "Cari dan temukan universitas impianmu di seluruh Indonesia. Lihat data program studi, akreditasi, dan lokasi kampus.",
 };
 
-// Will fetch per-page dynamically
+const PER_PAGE = 12;
+
+const toSlug = (val: string): string =>
+  val
+    .toLowerCase()
+    .replace(/[()]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 
 interface PageProps {
   searchParams: Promise<{
@@ -23,13 +30,14 @@ interface PageProps {
 
 type UniversityListDoc = {
   id: string;
+  slugField?: string;
   name?: string;
   abbreviation?: string;
   status?: string;
   accreditation?: string;
   city?: string;
   province?: string;
-  image?: string | null;
+  image?: { url?: string } | string | null;
   programCount?: number;
   completenessScore?: number;
 };
@@ -47,10 +55,6 @@ export default async function UniversitasPage({ searchParams }: PageProps) {
   const searchQuery = (params.q || "").trim();
 
   const db = await getPayloadCached();
-
-  const settingsResponse = await db.findGlobal({ slug: "app-settings", depth: 0 }).catch(() => null);
-  const settings = settingsResponse as { universityListPerPage?: number } | null;
-  const PER_PAGE = settings?.universityListPerPage || 12;
 
   const where: Where = { and: [] };
   const conditions = where.and as Where[];
@@ -81,11 +85,12 @@ export default async function UniversitasPage({ searchParams }: PageProps) {
     collection: "universities",
     page: currentPage,
     limit: PER_PAGE,
-    depth: 0,
+    depth: 1,
     where: conditions.length > 0 ? where : undefined,
     sort: ["-completenessScore", "-programCount", "name"],
     select: {
       name: true,
+      slugField: true,
       abbreviation: true,
       status: true,
       accreditation: true,
@@ -97,33 +102,14 @@ export default async function UniversitasPage({ searchParams }: PageProps) {
     },
   });
 
-  const imageIds = (result.docs as UniversityListDoc[])
-    .map((doc) => doc.image)
-    .filter((id): id is string => typeof id === "string");
-
-  const mediaMap = new Map<string, string>();
-  if (imageIds.length > 0) {
-    const mediaDocs = await db.find({
-      collection: "media",
-      where: { id: { in: imageIds } },
-      depth: 0,
-      pagination: false,
-    });
-    mediaDocs.docs.forEach((media) => {
-      const mediaId = (media as { id?: string }).id;
-      const mediaUrl = (media as { url?: string }).url;
-      if (mediaId && mediaUrl) {
-        mediaMap.set(mediaId, mediaUrl);
-      }
-    });
-  }
-
   const universities = (result.docs as UniversityListDoc[])
     .map((doc) => {
+      const slug = doc.slugField || toSlug(doc.name || doc.id);
       const completeness = typeof doc.completenessScore === "number" ? doc.completenessScore : 0;
 
       return {
         id: doc.id,
+        slug,
         name: doc.name || "",
         abbreviation: doc.abbreviation || "",
         status: doc.status || "",
@@ -131,7 +117,10 @@ export default async function UniversitasPage({ searchParams }: PageProps) {
         city: doc.city || "",
         province: doc.province || "",
         programCount: typeof doc.programCount === "number" ? doc.programCount : 0,
-        imageUrl: doc.image ? mediaMap.get(doc.image) ?? null : null,
+        imageUrl:
+          typeof doc.image === "object" && doc.image?.url
+            ? doc.image.url
+            : null,
         completeness,
       };
     })

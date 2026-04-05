@@ -11,7 +11,6 @@ export const mentorDashboardRouter = createTRPCRouter({
   getDashboardData: adminProcedure
     .input(z.object({ tryoutId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      
       const tryoutWhere: any = input.tryoutId ? { tryout: { equals: input.tryoutId } } : {};
       
       const [scoresResult, settingsResponse] = await Promise.all([
@@ -41,7 +40,7 @@ export const mentorDashboardRouter = createTRPCRouter({
       const thresholdCompetitive = typeof settings.targetAnalysisCompetitiveThreshold === 'number' ? settings.targetAnalysisCompetitiveThreshold : 50;
       const minChance = typeof settings.recommendationMinChance === 'number' ? settings.recommendationMinChance : 70;
 
-      // Cache university-programs to heavily reduce load time
+      // Cache university programs to speed up lookups
       const cachedPrograms = await getCacheValue("mentor_univ_programs");
       let allPrograms: UniversityProgramDoc[] = [];
       
@@ -55,8 +54,9 @@ export const mentorDashboardRouter = createTRPCRouter({
             depth: 0,
          });
          allPrograms = rawPrograms.docs as unknown as UniversityProgramDoc[];
-         await setCacheValue("mentor_univ_programs", allPrograms, 60 * 60 * 24); // 24 hours
+         await setCacheValue("mentor_univ_programs", allPrograms, 1000 * 60 * 60 * 24); // 24h cache
       }
+
       const findProgram = (univName: string, majorName: string) => {
          if (!univName || !majorName) return null;
          const lowerUniv = univName.toLowerCase();
@@ -120,7 +120,7 @@ export const mentorDashboardRouter = createTRPCRouter({
                universityName: prog.universityName,
                chance: calculateChance(score, passingGrade, chanceConfig),
             }
-         }).sort((a,b) => b.chance - a.chance).slice(0, 5); // TOP 5 Alternatif
+         }).sort((a,b) => b.chance - a.chance).slice(0, 5); // Top 5 alternatives
       }
 
       const results = scores.map(row => {
@@ -148,6 +148,7 @@ export const mentorDashboardRouter = createTRPCRouter({
                email: user.email || "",
                whatsapp: user.whatsapp || "",
                schoolOrigin: user.schoolOrigin || "",
+               targetPTN: user.targetPTN || "",
             },
             scoreDetails: {
                score_PU: s.score_PU || 0,
@@ -168,6 +169,197 @@ export const mentorDashboardRouter = createTRPCRouter({
          }
       });
 
+       return results;
+    }),
+
+  getDetailedSubtestStats: adminProcedure
+    .query(async ({ ctx }) => {
+      const CACHE_KEY = "mentor_dashboard_subtest_stats_v2";
+      const cachedData = await getCacheValue(CACHE_KEY);
+      if (cachedData) return cachedData;
+
+      const [attemptsResponse, questionsResponse] = await Promise.all([
+        ctx.db.find({
+          collection: "tryout-attempts",
+          where: { status: { equals: "completed" } },
+          limit: 5000,
+          depth: 1,
+          // DB Memory Protection: Select only required fields
+          select: { tryout: 1, questionResults: 1 },
+        }),
+        ctx.db.find({
+          collection: "questions",
+          limit: 5000,
+          depth: 0,
+          select: { subtest: 1 },
+        })
+      ]);
+
+      const questionSubtestMap = new Map<string, string>();
+      for (const q of questionsResponse.docs as any[]) {
+         if (q.id) questionSubtestMap.set(String(q.id), q.subtest || "Unknown");
+      }
+
+      const aggregated: Record<string, Record<string, { totalCorrect: number, totalWrong: number, totalEmpty: number, count: number }>> = {};
+
+      for (const doc of attemptsResponse.docs) {
+        const attempt = doc as any;
+        const tryoutTitle = attempt.tryout?.title || "Unknown Tryout";
+        
+        if (!aggregated[tryoutTitle]) {
+           aggregated[tryoutTitle] = {};
+        }
+
+        const qResults = Array.isArray(attempt.questionResults) ? attempt.questionResults : [];
+        if (qResults.length === 0) continue;
+
+        const stCounts: Record<string, { c: number, w: number, e: number }> = {};
+        
+        for (const qr of qResults) {
+           const rawId = qr.subtestId || "Unknown";
+           const stId = questionSubtestMap.get(String(rawId)) || "Unknown";
+           if (!stCounts[stId]) stCounts[stId] = { c: 0, w: 0, e: 0 };
+           
+           if (qr.isCorrect === true) {
+              stCounts[stId].c += 1;
+           } else {
+              const hasAnswer = (typeof qr.selectedLetter === 'string' && qr.selectedLetter.trim().length > 0);
+              if (hasAnswer) stCounts[stId].w += 1;
+              else stCounts[stId].e += 1;
+           }
+        }
+
+        for (const [stId, counts] of Object.entries(stCounts)) {
+           if (!aggregated[tryoutTitle][stId]) {
+              aggregated[tryoutTitle][stId] = { totalCorrect: 0, totalWrong: 0, totalEmpty: 0, count: 0 };
+           }
+           aggregated[tryoutTitle][stId].totalCorrect += counts.c;
+           aggregated[tryoutTitle][stId].totalWrong += counts.w;
+           aggregated[tryoutTitle][stId].totalEmpty += counts.e;
+           aggregated[tryoutTitle][stId].count += 1;
+        }
+      }
+
+      const finalAverages: Record<string, Record<string, { avgCorrect: number, avgWrong: number, avgEmpty: number, count: number }>> = {};
+      for (const [toTitle, stData] of Object.entries(aggregated)) {
+         finalAverages[toTitle] = {};
+         for (const [stId, totals] of Object.entries(stData)) {
+            const count = totals.count > 0 ? totals.count : 1;
+             finalAverages[toTitle][stId] = {
+                avgCorrect: Math.round((totals.totalCorrect / count) * 10) / 10,
+                avgWrong: Math.round((totals.totalWrong / count) * 10) / 10,
+                avgEmpty: Math.round((totals.totalEmpty / count) * 10) / 10,
+                count: totals.count
+             };
+         }
+      }
+
+      await setCacheValue(CACHE_KEY, finalAverages, 1000 * 60 * 60 * 12); // 12h cache
+      return finalAverages;
+    }),
+
+  getCompletionAnalytics: adminProcedure
+    .query(async ({ ctx }) => {
+      const CACHE_KEY = "mentor_dashboard_completion_analytics_v1";
+      const cached = await getCacheValue(CACHE_KEY);
+      if (cached) return cached;
+
+      const [attemptsReq, scoresReq] = await Promise.all([
+         ctx.db.find({ 
+            collection: "tryout-attempts", 
+            limit: 5000, 
+            depth: 1, 
+            sort: "-createdAt",
+            select: { user: 1, tryout: 1, status: 1, resultPlan: 1, paymentMethod: 1, createdAt: 1 }
+         }),
+         ctx.db.find({ 
+            collection: "tryout-scores", 
+            limit: 5000, 
+            depth: 0,
+            select: { attempt: 1, finalScore: 1 }
+         }),
+      ]);
+
+      const scoresDocs = scoresReq.docs as any[];
+      const publishedAttemptIds = new Set<string>();
+      const scoreMap = new Map<string, number>();
+
+      for (const sc of scoresDocs) {
+         const attId = typeof sc.attempt === 'object' ? sc.attempt.id : sc.attempt;
+         if (attId) {
+            publishedAttemptIds.add(String(attId));
+            scoreMap.set(String(attId), sc.finalScore || 0);
+         }
+      }
+
+      const rows = attemptsReq.docs.map(doc => {
+         const att = doc as any;
+         const user = att.user || {};
+         const to = att.tryout || {};
+         
+         const isPublished = publishedAttemptIds.has(String(att.id));
+         let finalScore = 0;
+         if (isPublished) finalScore = scoreMap.get(String(att.id)) || 0;
+
+         return {
+            id: att.id,
+            userName: user.fullName || user.username || "Unknown",
+            userEmail: user.email || "",
+            tryoutTitle: to.title || "Unknown Tryout",
+            status: att.status || "started",
+            completionStatus: att.status === "completed" ? "Selesai" : "Mengerjakan",
+            scoreStatus: isPublished ? "Sudah Rilis" : "Belum Rilis",
+            finalScore: isPublished ? finalScore : null,
+            resultPlan: att.resultPlan || "none",
+            paymentMethod: att.paymentMethod || "none",
+            createdAt: att.createdAt,
+            completedAt: att.completedAt || null,
+         };
+      });
+
+      await setCacheValue(CACHE_KEY, rows, 1000 * 60 * 60 * 6); // 6h cache
+      return rows;
+    }),
+
+  getTargetPtnAnalysis: adminProcedure
+    .query(async ({ ctx }) => {
+      const CACHE_KEY = "mentor_dashboard_ptn_analysis_v1";
+      const cached = await getCacheValue(CACHE_KEY);
+      if (cached) return cached;
+
+      const scoresReq = await ctx.db.find({
+        collection: "tryout-scores",
+        limit: 5000,
+        depth: 1,
+      });
+
+      const ptnStats: Record<string, { total: number; safe: number }> = {};
+
+      for (const doc of scoresReq.docs) {
+        const score = doc as any;
+        const user = score.user || {};
+        const ptn = user.targetPTN;
+        if (!ptn) continue;
+
+        if (!ptnStats[ptn]) ptnStats[ptn] = { total: 0, safe: 0 };
+        ptnStats[ptn].total += 1;
+        
+        // Use 500 as a simple "safe" threshold for global analysis if not specified
+        if ((score.finalScore || 0) >= 500) {
+          ptnStats[ptn].safe += 1;
+        }
+      }
+
+      const results = Object.entries(ptnStats)
+        .map(([name, stats]) => ({
+          name,
+          total: stats.total,
+          passRate: Math.round((stats.safe / stats.total) * 100),
+        }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5);
+
+      await setCacheValue(CACHE_KEY, results, 1000 * 60 * 60 * 12);
       return results;
     })
 });

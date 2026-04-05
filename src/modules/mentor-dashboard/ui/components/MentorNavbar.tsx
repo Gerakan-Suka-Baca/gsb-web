@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, LayoutDashboard, LogOut, Trophy } from "lucide-react";
+import { Users, LayoutDashboard, LogOut, Trophy, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ export const MentorNavbar = ({ adminName }: { adminName: string }) => {
   const navLinks = [
     { href: "/mentor-dashboard", label: "Data Siswa", icon: Users, exact: true },
     { href: "/mentor-dashboard/leaderboard", label: "Leaderboard", icon: Trophy },
+    { href: "/mentor-dashboard/analytics", label: "Status Pengerjaan", icon: Activity },
     { href: "/mentor-dashboard/pembahasan", label: "Daftar Pembahasan", icon: LayoutDashboard },
   ];
 

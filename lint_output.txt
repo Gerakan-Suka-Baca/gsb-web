@@ -1,0 +1,124 @@
+
+> gsb-web@0.1.0 lint
+> eslint
+
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\app\(app)\api\pdf-proxy\route.ts
+  36:136  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\app\(mentor)\mentor-dashboard\(protected)\layout.tsx
+  17:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\app\(mentor)\mentor-dashboard\(protected)\pembahasan\page.tsx
+  11:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\app\(mentor)\mentor-dashboard\(viewer)\layout.tsx
+  16:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\app\(mentor)\mentor-dashboard\not-found.tsx
+  3:24  warning  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\server\procedures.ts
+    2:10  warning  'TRPCError' is defined but never used     @typescript-eslint/no-unused-vars
+    6:10  warning  'extractId' is defined but never used     @typescript-eslint/no-unused-vars
+   15:26  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:49  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  201:32  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  271:44  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  284:29  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\components\MentorDashboardWidgets.tsx
+    2:69   warning  'Users' is defined but never used                                                                             @typescript-eslint/no-unused-vars
+    2:88   warning  'PieChartIcon' is defined but never used                                                                      @typescript-eslint/no-unused-vars
+    2:102  warning  'Target' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+    2:110  warning  'AlertTriangle' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+   16:21   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   17:19   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   20:42   warning  'totalScores' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   41:39   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   47:9    warning  'modalFailCount' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+   57:6    warning  React Hook useMemo has a missing dependency: 'subtestKeys'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   65:6    warning  React Hook useMemo has a missing dependency: 'subtestKeys'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   83:55   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   83:66   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   90:78   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   92:14   error    'sum' is never reassigned. Use 'const' instead                                                                prefer-const
+   92:53   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  104:36   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  127:6    warning  React Hook useMemo has a missing dependency: 'subtestKeys'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  132:49   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  132:60   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  139:66   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  263:59   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  264:64   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  264:78   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  336:62   error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\components\MentorNavbar.tsx
+  41:14  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\components\MentorStudentModal.tsx
+    2:74  warning  'ArrowRight' is defined but never used    @typescript-eslint/no-unused-vars
+   19:20  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  143:76  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  229:86  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\components\MentorStudentTable.tsx
+    6:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+    7:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:78  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\views\MentorAnalyticsView.tsx
+    7:56  warning  'XCircle' is defined but never used       @typescript-eslint/no-unused-vars
+   24:75  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   28:31  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   42:48  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   43:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:65  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:33  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  198:45  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\views\MentorDashboardView.tsx
+   20:58  error  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   63:9   error  'headers' is never reassigned. Use 'const' instead  prefer-const
+   71:9   error  'rows' is never reassigned. Use 'const' instead     prefer-const
+  142:42  error  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\views\MentorLeaderboardView.tsx
+  11:17  warning  'TableBody' is defined but never used                    @typescript-eslint/no-unused-vars
+  55:7   error    'filteredData' is never reassigned. Use 'const' instead  prefer-const
+  66:9   error    'headers' is never reassigned. Use 'const' instead       prefer-const
+  67:9   error    'rows' is never reassigned. Use 'const' instead          prefer-const
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\views\MentorLoginView.tsx
+  42:16  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\mentor-dashboard\ui\views\MentorPembahasanView.tsx
+  11:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\tryouts\server\queries\getExplanation.ts
+  38:138  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  97:43   error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\tryouts\server\queries\getLeaderboard.ts
+   4:15  warning  'TryoutScoreDoc' is defined but never used  @typescript-eslint/no-unused-vars
+  10:44  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  22:37  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\tryouts\ui\components\Leaderboard.tsx
+  10:10  warning  'Card' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\modules\tryouts\ui\components\PdfViewerModal.tsx
+  34:54  warning  'pdfUrl' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Dev_Drive\Coding Project Files\Web_Dev\GemaSimpulBerdaya\src\web\src\trpc\init.ts
+  109:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Γ£û 76 problems (56 errors, 20 warnings)
+  6 errors and 0 warnings potentially fixable with the `--fix` option.
+

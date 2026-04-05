@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 
 interface UniversityItem {
   id: string;
+  slug: string;
   name: string;
   abbreviation: string;
   status: string;
@@ -232,12 +233,12 @@ export function UniversitasList({
             {universities.map((uni) => (
               <Link
                 key={uni.id}
-                href={`/universitas/${uni.id}`}
+                href={`/universitas/${uni.slug || uni.id}`}
                 className="group block"
               >
-                <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-gsb-orange/40 transition-all duration-300 h-full flex flex-col">
+                <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:border-gsb-orange/40 transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
                   {/* Logo */}
-                  <div className="h-36 bg-white dark:bg-slate-900 relative overflow-hidden flex items-center justify-center border-b border-border/40">
+                  <div className="h-36 bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 relative overflow-hidden flex items-center justify-center">
                     {uni.imageUrl ? (
                       <Image
                         src={uni.imageUrl}
