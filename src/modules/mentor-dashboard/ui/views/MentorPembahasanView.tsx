@@ -18,35 +18,29 @@ export const MentorPembahasanView = ({ tryouts }: { tryouts: any[] }) => {
   );
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 fade-in">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-background p-6 rounded-2xl shadow-sm border border-border">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-             <div className="p-2.5 bg-primary/10 rounded-xl">
-               <BookOpen className="w-8 h-8 text-primary" />
-             </div>
-             <div>
-               <h1 className="text-3xl font-bold font-heading tracking-tight">Eksplorasi Pembahasan</h1>
-               <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                  Pusat arsip dan materi evaluasi (PDF) seluruh sesi Tryout.
-               </div>
-             </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-2xl shadow-sm border border-border">
+        <div className="flex items-center gap-4">
+           <div className="p-3 bg-accent rounded-lg border border-border">
+             <BookOpen className="w-6 h-6 text-foreground" />
+           </div>
+           <div>
+             <h1 className="text-2xl font-bold tracking-tight text-foreground">Daftar Pembahasan</h1>
+             <p className="text-sm text-muted-foreground mt-1">Akses arsip materi evaluasi sesi tryout.</p>
+           </div>
         </div>
       </div>
 
       <div className="relative w-full max-w-md">
          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
          <Input 
-            placeholder="Cari nama tryout..." 
+            placeholder="Cari tryout..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9 h-11 bg-white border-border shadow-sm rounded-xl"
+            className="pl-9 h-11 bg-card border-border shadow-sm rounded-lg"
          />
       </div>
 
-      {/* Grid List */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
          {filteredTryouts.length === 0 ? (
             <div className="col-span-full py-20 text-center text-muted-foreground">
@@ -54,15 +48,14 @@ export const MentorPembahasanView = ({ tryouts }: { tryouts: any[] }) => {
             </div>
          ) : (
             filteredTryouts.map((tryout) => (
-               <Card key={tryout.id} className="border border-border/60 hover:shadow-lg transition-all group overflow-hidden bg-white flex flex-col">
-                  <div className="h-2 w-full bg-slate-100 group-hover:bg-primary transition-colors"></div>
+               <Card key={tryout.id} className="border border-border bg-card flex flex-col rounded-xl overflow-hidden shadow-sm">
                   <CardHeader className="p-5 pb-3">
                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg font-bold leading-tight group-hover:text-primary transition-colors">
+                        <CardTitle className="text-base font-bold leading-tight">
                            {tryout.title}
                         </CardTitle>
                         {tryout.isPermanent && (
-                           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 shrink-0">
+                           <Badge variant="secondary" className="shrink-0">
                               Permanen
                            </Badge>
                         )}
@@ -75,7 +68,7 @@ export const MentorPembahasanView = ({ tryouts }: { tryouts: any[] }) => {
                      
                      <div className="mt-auto space-y-4">
                         {!tryout.isPermanent && tryout.dateOpen && tryout.dateClose && (
-                           <div className="flex flex-col gap-1.5 text-xs text-slate-500 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                           <div className="flex flex-col gap-1.5 text-xs text-muted-foreground bg-accent/50 p-3 rounded-lg border border-border">
                               <div className="flex items-center gap-2">
                                  <Calendar className="w-3.5 h-3.5" /> 
                                  Mulai: {new Date(tryout.dateOpen).toLocaleString("id-ID")}
@@ -88,9 +81,10 @@ export const MentorPembahasanView = ({ tryouts }: { tryouts: any[] }) => {
                         )}
                         <Button 
                            onClick={() => router.push(`/mentor-dashboard/pembahasan/${tryout.id}`)}
-                           className="w-full gap-2 rounded-xl bg-gsb-orange hover:bg-gsb-orange/90 text-white shadow-sm transition-all"
+                           variant="outline"
+                           className="w-full gap-2 rounded-lg"
                         >
-                           <FileText className="w-4 h-4" /> Buka Pembahasan
+                           <FileText className="w-4 h-4" /> Lihat Pembahasan
                         </Button>
                      </div>
                   </CardContent>

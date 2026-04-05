@@ -41,14 +41,22 @@ export const mentorDashboardRouter = createTRPCRouter({
       const thresholdCompetitive = typeof settings.targetAnalysisCompetitiveThreshold === 'number' ? settings.targetAnalysisCompetitiveThreshold : 50;
       const minChance = typeof settings.recommendationMinChance === 'number' ? settings.recommendationMinChance : 70;
 
-      const rawPrograms = await ctx.db.find({
-         collection: "university-programs",
-         where: { category: { equals: "snbt" } },
-         limit: 3000,
-         depth: 0,
-       });
-
-      const allPrograms = rawPrograms.docs as UniversityProgramDoc[];
+      // Cache university-programs to heavily reduce load time
+      const cachedPrograms = await getCacheValue("mentor_univ_programs");
+      let allPrograms: UniversityProgramDoc[] = [];
+      
+      if (cachedPrograms && Array.isArray(cachedPrograms) && cachedPrograms.length > 0) {
+         allPrograms = cachedPrograms as UniversityProgramDoc[];
+      } else {
+         const rawPrograms = await ctx.db.find({
+            collection: "university-programs",
+            where: { category: { equals: "snbt" } },
+            limit: 3000,
+            depth: 0,
+         });
+         allPrograms = rawPrograms.docs as unknown as UniversityProgramDoc[];
+         await setCacheValue("mentor_univ_programs", allPrograms, 60 * 60 * 24); // 24 hours
+      }
       const findProgram = (univName: string, majorName: string) => {
          if (!univName || !majorName) return null;
          const lowerUniv = univName.toLowerCase();
