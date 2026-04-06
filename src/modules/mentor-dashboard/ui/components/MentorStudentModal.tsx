@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { X, TrendingUp, BarChart4, UserCircle2, BookOpen, GraduationCap, ArrowRight, ShieldCheck } from "lucide-react";
+import { X, TrendingUp, BarChart4, UserCircle2, BookOpen, GraduationCap, ShieldCheck } from "lucide-react";
 import {
   Radar,
   RadarChart,

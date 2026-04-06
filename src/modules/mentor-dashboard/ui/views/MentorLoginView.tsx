@@ -39,15 +39,15 @@ export const MentorLoginView = () => {
          }
 
          window.location.href = "/mentor-dashboard";
-      } catch (err) {
+      } catch {
          setErrorMsg("Terjadi kesalahan jaringan.");
          setIsLoading(false);
       }
-   }
+   };
 
    return (
     <div className="grid grid-cols-1 lg:grid-cols-2 min-h-screen w-full">
-        {/* Brand panel */}
+        {/* Left branding panel */}
         <div className="hidden lg:flex flex-col justify-between bg-gradient-to-br from-gsb-maroon to-gsb-red p-12 text-white relative overflow-hidden">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
             <div className="relative z-10">
@@ -68,7 +68,7 @@ export const MentorLoginView = () => {
             </div>
         </div>
 
-        {/* Sign-in form */}
+        {/* Right login form panel */}
         <div className="flex flex-col justify-center items-center p-6 md:p-12 bg-background relative">
             <button
               type="button"

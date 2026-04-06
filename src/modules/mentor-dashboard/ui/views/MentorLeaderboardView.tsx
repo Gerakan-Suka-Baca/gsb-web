@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { motion } from "framer-motion";
 
 const SORT_OPTIONS = [
@@ -52,7 +52,7 @@ export const MentorLeaderboardView = () => {
 
   const availableTryouts = Array.from(new Set(data.map(d => d.tryout.title)));
 
-  let filteredData = data.filter(row => tryoutFilter === "ALL" || row.tryout.title === tryoutFilter);
+  const filteredData = data.filter(row => tryoutFilter === "ALL" || row.tryout.title === tryoutFilter);
   
   filteredData.sort((a, b) => {
      const scoreA = (a.scoreDetails[sortBy as keyof typeof a.scoreDetails] as number) || 0;
@@ -63,8 +63,8 @@ export const MentorLeaderboardView = () => {
   const displayedData = filteredData.slice(0, limit);
 
   const exportLeaderboard = () => {
-    let headers = ["Peringkat", "Nama Siswa", "Asal Sekolah", "Paket Tryout", "Skor Peringkat (" + SORT_OPTIONS.find(o => o.value === sortBy)?.label + ")"];
-    let rows = displayedData.map((row, idx) => {
+    const headers = ["Peringkat", "Nama Siswa", "Asal Sekolah", "Paket Tryout", "Skor Peringkat (" + SORT_OPTIONS.find(o => o.value === sortBy)?.label + ")"];
+    const rows = displayedData.map((row, idx) => {
       return [
         idx + 1,
         `"${row.user.fullName}"`,

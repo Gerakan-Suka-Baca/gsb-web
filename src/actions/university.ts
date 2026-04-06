@@ -28,7 +28,7 @@ export const searchUniversities = async (query: string): Promise<University[]> =
     return result.docs.map((doc) => ({
       id: doc.id,
       name: doc.name,
-      // Field lain opsional karena kita hanya butuh name untuk saat ini
+      // Other fields are optional since we only need `name` for now
       type: (doc.status as string) || "",
       group: doc.status === "negeri" ? "PTN" : "PTS",
       province_name: (doc.province as string) || "",

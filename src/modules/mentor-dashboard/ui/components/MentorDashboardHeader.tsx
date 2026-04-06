@@ -16,7 +16,7 @@ export const MentorDashboardHeader = ({ isRefetching, onRefetch, onExport }: Men
       transition={{ duration: 0.4 }}
       className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card p-6 rounded-3xl shadow-sm border border-gsb-orange/20 relative overflow-hidden"
     >
-      {/* Soft GSB Accent Background */}
+      {/* Decorative background glow — pointer-events disabled */}
       <div className="absolute -left-10 -top-10 w-40 h-40 bg-gsb-orange/5 rounded-full blur-3xl pointer-events-none" />
       
       <div className="flex items-center gap-4 mb-2 relative z-10">
@@ -49,7 +49,7 @@ export const MentorDashboardHeader = ({ isRefetching, onRefetch, onExport }: Men
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 md:flex-none">
           <Button onClick={onExport} className="w-full bg-gsb-orange hover:bg-gsb-orange/90 text-white rounded-xl h-12 px-6 shadow-md shadow-gsb-orange/20 font-bold">
             <Download className="w-4 h-4 mr-2" />
-            Export CSV Output
+            Ekspor CSV
           </Button>
         </motion.div>
       </div>

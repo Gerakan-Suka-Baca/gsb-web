@@ -25,7 +25,7 @@ export const searchMajors = async (query: string, universityName?: string) => {
     };
 
     if (universityName) {
-      // Prioritaskan pencarian berdasarkan nama universitas
+      // Prioritize search by university name
       whereClause.universityName = { contains: universityName };
     }
 

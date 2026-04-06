@@ -75,14 +75,14 @@ export const MentorQuestionAnalysisView = () => {
   const [expandedQuestions, setExpandedQuestions] = useState<Record<string, boolean>>({});
   const [expandedSubtests, setExpandedSubtests] = useState<Record<string, boolean>>({});
 
-  // 1. Fetch available tryouts for the filter
+  // 1. Fetch available tryouts for the filter selector
   const { data: tryoutsData } = useQuery(
     trpc.tryouts.getMany.queryOptions({ year: null })
   );
 
   const tryouts = tryoutsData?.docs || [];
 
-  // 2. Fetch question analysis for selected tryout
+  // 2. Fetch per-question analysis for the selected tryout
   const { data: analysisData, isLoading: isLoadingAnalysis } = useQuery({
     ...trpc.mentor.getQuestionAnalysis.queryOptions({ tryoutId: selectedTryoutId }),
     enabled: !!selectedTryoutId,
@@ -135,7 +135,7 @@ export const MentorQuestionAnalysisView = () => {
 
   return (
     <div className="space-y-8 pb-10">
-      {/* Header & Filter */}
+      {/* Header & tryout filter */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-responsive-maroon">Analisis Butir Soal</h1>
@@ -180,7 +180,7 @@ export const MentorQuestionAnalysisView = () => {
         </div>
       ) : (
         <>
-          {/* Summary Stats */}
+          {/* Summary statistics cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="rounded-2xl border-none shadow-sm bg-gsb-orange/5">
               <CardHeader className="pb-2">
@@ -267,7 +267,7 @@ export const MentorQuestionAnalysisView = () => {
             </div>
           </div>
 
-          {/* Detailed Analysis Per Subtest */}
+          {/* Detailed per-subtest question analysis table */}
           <div className="space-y-8">
             {Object.entries(analysisBySubtest).map(([subtestName, questions]) => (
               <Card key={subtestName} className="rounded-2xl border-none shadow-sm overflow-hidden">
@@ -394,7 +394,7 @@ export const MentorQuestionAnalysisView = () => {
                                 <TableRow className="bg-gsb-orange/[0.02] hover:bg-gsb-orange/[0.02] border-none">
                                   <TableCell colSpan={8} className="p-6">
                                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gsb-orange/10 space-y-6">
-                                      {/* Question Content */}
+                                      {/* Question content preview */}
                                       <div className="space-y-4">
                                         <h4 className="text-sm font-bold text-gsb-orange uppercase tracking-wider flex items-center gap-2">
                                           <div className="w-1.5 h-1.5 rounded-full bg-gsb-orange" /> Isi Soal
@@ -417,7 +417,7 @@ export const MentorQuestionAnalysisView = () => {
                                         )}
                                       </div>
 
-                                      {/* Options */}
+                                      {/* Answer option cards */}
                                       <div className="space-y-4">
                                         <h4 className="text-sm font-bold text-gsb-orange uppercase tracking-wider flex items-center gap-2">
                                           <div className="w-1.5 h-1.5 rounded-full bg-gsb-orange" /> Pilihan Jawaban

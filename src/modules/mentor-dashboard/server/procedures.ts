@@ -1,9 +1,7 @@
 import z from "zod";
-import { TRPCError } from "@trpc/server";
 import { createTRPCRouter } from "@/trpc/init";
 import { adminProcedure } from "@/trpc/init";
 import { getCacheValue, setCacheValue } from "@/modules/shared/server/services/cache.service";
-import { extractId } from "@/modules/shared/utils/data.utils";
 import { calculateChance, getMajorKeywords } from "@/modules/shared/utils/university.utils";
 import type { ProgramMetric, UniversityProgramDoc } from "@/modules/shared/types/university.types";
 
@@ -40,7 +38,7 @@ export const mentorDashboardRouter = createTRPCRouter({
       const thresholdCompetitive = typeof settings.targetAnalysisCompetitiveThreshold === 'number' ? settings.targetAnalysisCompetitiveThreshold : 50;
       const minChance = typeof settings.recommendationMinChance === 'number' ? settings.recommendationMinChance : 70;
 
-      // Cache university programs to speed up lookups
+      // Cache university programs to speed up target analysis lookups
       const cachedPrograms = await getCacheValue("mentor_univ_programs");
       let allPrograms: UniversityProgramDoc[] = [];
       
@@ -412,18 +410,18 @@ export const mentorDashboardRouter = createTRPCRouter({
   getQuestionAnalysis: adminProcedure
     .input(z.object({ tryoutId: z.string() }))
     .query(async ({ ctx, input }) => {
-      // 1. Ambil data Tryout dan Subtestnya (termasuk soal-soalnya)
+      // 1. Fetch tryout data and its subtests (including questions)
       const questionsResult = await ctx.db.find({
         collection: "questions",
         where: { tryout: { equals: input.tryoutId } },
         limit: 200,
         sort: "createdAt",
-        depth: 2, // Ambil detail tryoutQuestions dan tryoutAnswers
+        depth: 2, // Include tryoutQuestions and tryoutAnswers
       });
       const subtests = questionsResult.docs;
 
-      // Buat map soal dari database untuk akses cepat.
-      // Support data lama yang mungkin tidak menyimpan q.id konsisten.
+      // Build a question map from the database for fast access.
+      // Supports legacy data that may not store q.id consistently.
       const dbQuestionsMap = new Map<string, any>();
       const questionNumberToId = new Map<string, string>();
       for (const subtest of subtests as any[]) {
@@ -442,7 +440,7 @@ export const mentorDashboardRouter = createTRPCRouter({
         });
       }
 
-      // 2. Ambil semua attempt yang sudah selesai untuk Tryout ini
+      // 2. Fetch all completed attempts for this tryout
       const attemptsResult = await ctx.db.find({
         collection: "tryout-attempts",
         where: {
@@ -457,7 +455,7 @@ export const mentorDashboardRouter = createTRPCRouter({
       });
       const attempts = attemptsResult.docs;
 
-      // 3. Agregasi data statistik per soal
+      // 3. Aggregate per-question statistics
       const questionStats: Record<string, { correct: number; total: number; subtestId: string; questionNumber: number }> = {};
 
       for (const attempt of attempts as any[]) {
@@ -492,7 +490,7 @@ export const mentorDashboardRouter = createTRPCRouter({
         }
       }
 
-      // 4. Kelompokkan berdasarkan Subtest dan hitung persentase
+      // 4. Group by subtest and compute correctness percentages
       const analysisBySubtest: Record<string, any[]> = {};
       const hardestPerSubtest: any[] = [];
       const easiestPerSubtest: any[] = [];
@@ -502,7 +500,7 @@ export const mentorDashboardRouter = createTRPCRouter({
 
       for (const subtest of subtests as any[]) {
         const subtestId = String(subtest.id);
-        const subtestName = subtest.subtest || subtest.title || "Tanpa Nama";
+        const subtestName = subtest.subtest || subtest.title || "Unnamed";
         
         const questionEntries = (Array.isArray(subtest.tryoutQuestions) ? subtest.tryoutQuestions : [])
           .map((q: any, idx: number) => {
@@ -539,7 +537,7 @@ export const mentorDashboardRouter = createTRPCRouter({
         if (stats.length > 0) {
           analysisBySubtest[subtestName] = stats;
           
-          // Cari soal paling sulit dan termudah di subtest ini
+          // Find the hardest and easiest questions in this subtest
           const sorted = [...stats].sort((a, b) => a.correctness - b.correctness);
           hardestPerSubtest.push({
             subtest: subtestName,

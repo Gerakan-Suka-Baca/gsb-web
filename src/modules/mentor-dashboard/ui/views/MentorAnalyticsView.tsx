@@ -45,13 +45,13 @@ export const MentorAnalyticsView = () => {
   );
   const totalSelesai = filteredData.filter((d: any) => d.completionStatus === "Selesai").length;
   const totalRilis = releasedData.length;
-  // Calculate analytics
+  // Compute analytics from released-score subset
   const passCount = releasedData.filter((d: any) => (d.finalScore ?? 0) >= 500).length;
   const avgFilteredScore = totalRilis > 0
     ? releasedData.reduce((acc: number, d: any) => acc + (d.finalScore || 0), 0) / totalRilis
     : 0;
 
-  // Payment Breakdown
+  // Payment method breakdown
   const paymentMethodCount = filteredData.reduce((acc: any, curr) => {
     const method = curr.paymentMethod === 'none' ? curr.resultPlan : curr.paymentMethod;
     acc[method] = (acc[method] || 0) + 1;
@@ -113,7 +113,7 @@ export const MentorAnalyticsView = () => {
         <div className="p-8 bg-red-50 text-red-600 rounded-2xl border border-red-200 font-medium">Gagal memuat data dari server. Silakan muat ulang.</div>
       ) : (
         <>
-          {/* Top KPI Cards Complex */}
+          {/* KPI overview cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
              <div className="bg-white p-6 rounded-2xl border-l-[6px] border-l-blue-500 shadow-sm border border-slate-200 relative overflow-hidden group">
                 <div className="absolute top-5 right-5 opacity-10 group-hover:opacity-20 transition-opacity"><Users size={48} className="text-blue-500"/></div>

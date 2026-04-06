@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileQuestion, AlertCircle } from "lucide-react";
+import { FileQuestion } from "lucide-react";
 
 export default function MentorNotFound() {
   return (
@@ -14,7 +14,7 @@ export default function MentorNotFound() {
       </h1>
       
       <p className="text-lg text-slate-600 max-w-md mb-8">
-        Halaman atau rute yang Anda tuju dalam panel Mentor tidak tersedia di database atau telah dipindahkan.
+        Halaman atau rute yang Anda tuju pada panel mentor tidak tersedia atau telah dipindahkan.
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4">

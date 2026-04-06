@@ -1,5 +1,0 @@
-.next/types/validator.ts(314,39): error TS2307: Cannot find module '../../src/app/(app)/(home)/tryout/[tryoutId]/pembahasan/page.js' or its corresponding type declarations.
-src/app/(app)/(home)/universitas/page.tsx(51,3): error TS2578: Unused '@ts-expect-error' directive.
-src/modules/tryouts/ui/components/Leaderboard.tsx(19,50): error TS2339: Property '_status' does not exist on type 'Tryout'.
-src/modules/universitas/server/queries/university.queries.ts(144,7): error TS2578: Unused '@ts-expect-error' directive.
-src/modules/universitas/server/queries/university.queries.ts(256,7): error TS2578: Unused '@ts-expect-error' directive.

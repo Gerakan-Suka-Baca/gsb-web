@@ -1,22 +1,6 @@
 import z from "zod";
 import { TRPCError } from "@trpc/server";
 import { baseProcedure, createTRPCRouter, protectedProcedure } from "@/trpc/init";
-
-const extractId = (val: unknown): string | null => {
-  if (!val) return null;
-  if (typeof val === 'string') return val;
-  if (typeof val === 'object') {
-    const obj = val as Record<string, unknown>;
-    // MongoDB Compass export format: { $oid: "..." }
-    if (typeof obj.$oid === 'string') return obj.$oid;
-    // Mongoose ObjectId
-    if (typeof obj.toString === 'function') {
-      const s = obj.toString();
-      if (s !== '[object Object]') return s;
-    }
-  }
-  return String(val);
-};
 import { Question } from "@/payload-types";
 
 type ProgramMetric = {
@@ -496,7 +480,7 @@ export const tryoutsRouter = createTRPCRouter({
         return { finalScore, recommendations: [] };
       }
 
-      // Cari program yang sesuai dengan keyword dari user
+      // Find programs matching keywords derived from the user's target majors
       const results = await ctx.db.find({
         collection: "university-programs",
         where: {

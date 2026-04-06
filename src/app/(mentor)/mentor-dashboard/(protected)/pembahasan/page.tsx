@@ -11,14 +11,14 @@ export default async function MentorPembahasanPage() {
   let tryouts: any = { docs: [] };
   
   try {
-    // Fetch tryouts and their explanations
+    // Fetch tryout list for mentor explanation index.
     tryouts = await payload.find({
       collection: "tryouts",
       limit: 100,
       sort: "-createdAt",
     });
   } catch (err) {
-    console.error("Failed to connect to Mongo returning empty tryouts array:", err);
+    console.error("Failed to load tryouts. Returning an empty list.", err);
   }
 
   const tryoutData = tryouts.docs.map((doc: any) => ({

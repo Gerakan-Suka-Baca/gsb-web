@@ -3,11 +3,13 @@ import { headers } from "next/headers";
 import { getPayloadCached } from "@/lib/payload";
 import { MentorNavbar } from "@/modules/mentor-dashboard/ui/components/MentorNavbar";
 
+const ALLOWED_MENTOR_ROLES = ["super-admin", "admin", "volunteer"] as const;
+
 export default async function MentorDashboardLayout({ children }: { children: React.ReactNode }) {
   const reqHeaders = await headers();
   const payload = await getPayloadCached();
   
-  // Authenticate against Payload Admis collection
+  // Authenticate the request against the Payload admins collection.
   const { user } = await payload.auth({ headers: reqHeaders });
 
   if (!user || user.collection !== "admins") {
@@ -15,7 +17,7 @@ export default async function MentorDashboardLayout({ children }: { children: Re
   }
 
   const role = (user as any).role;
-  if (!["super-admin", "admin", "volunteer"].includes(role)) {
+  if (!ALLOWED_MENTOR_ROLES.includes(role)) {
     redirect("/mentor-dashboard/login?error=forbidden");
   }
 

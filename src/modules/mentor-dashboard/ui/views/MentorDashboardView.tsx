@@ -20,7 +20,7 @@ export const MentorDashboardView = () => {
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Close modal on ESC key
+  // Dismiss modal on Escape key press
   useEffect(() => {
     if (!isModalOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -34,7 +34,7 @@ export const MentorDashboardView = () => {
     };
   }, [isModalOpen]);
 
-  // Fetch all dashboard data
+  // Fetch dashboard data once; shared across all child sections.
   const queryOptions = trpc.mentor.getDashboardData.queryOptions({});
   const { data, isLoading, isError, refetch, isRefetching } = useQuery(queryOptions);
 
@@ -60,7 +60,7 @@ export const MentorDashboardView = () => {
   const exportToCSV = () => {
     if (!data) return;
 
-    let headers = [
+    const headers = [
       "Nama Siswa", "Email", "Telepon", "Sekolah", "Paket Tryout", 
       "Skor PU", "Skor PK", "Skor PM", "Skor LBE", "Skor LBI", "Skor PPU", "Skor KMBM", "Skor Global UTBK",
       "Pilihan 1 (Univ)", "Pilihan 1 (Jurusan)", "Passing Grade 1", "Peluang 1", "Rekomendasi 1",
@@ -68,7 +68,7 @@ export const MentorDashboardView = () => {
       "Opsi Cadangan 1", "Opsi Cadangan 2", "Opsi Cadangan 3", "Opsi Cadangan 4", "Opsi Cadangan 5"
     ];
 
-    let rows = data.map(row => {
+    const rows = data.map(row => {
       const a = row.analysis;
       return [
         `"${row.user.fullName}"`,
@@ -114,7 +114,7 @@ export const MentorDashboardView = () => {
     }
   };
 
-  // Get unique tryouts for filter
+  // Derive unique tryout titles for the filter dropdown.
   const availableTryouts = Array.from(new Set(data?.map(d => d.tryout.title) || []));
 
   const filteredData = data?.filter(row => {
@@ -146,7 +146,7 @@ export const MentorDashboardView = () => {
      setIsModalOpen(true);
   }
 
-  // Calculate Global Analytics
+  // Aggregate metrics consumed by overview cards / widgets.
   const totalScores = filteredData?.length || 0;
   const avgScore = totalScores > 0 ? filteredData!.reduce((acc, curr) => acc + curr.scoreDetails.finalScore, 0) / totalScores : 0;
   const passedStudents = filteredData?.filter(d => d.scoreDetails.finalScore > 500).length || 0;

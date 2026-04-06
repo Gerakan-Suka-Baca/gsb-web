@@ -18,7 +18,7 @@ export const createTRPCContext = cache(async () => {
 });
 
 type TRPCContext = Awaited<ReturnType<typeof createTRPCContext>>;
-// Avoid exporting the entire t-object
+// Avoid exporting the entire t-object since its name clashes with i18n conventions.
 // since it's not very descriptive.
 // For instance, the use of a t variable
 // is common in i18n libraries.
@@ -43,7 +43,7 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
     });
   }
 
-  // Look up user in DB by clerkUserId
+  // Look up user in Payload CMS by clerkUserId
   const existingUsers = await ctx.db.find({
     collection: "users",
     where: { clerkUserId: { equals: userId } },
@@ -70,7 +70,7 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   });
 });
 
-/** Like protectedProcedure but does not throw when user not in DB; ctx.session is null then. */
+/** Same as protectedProcedure but non-throwing when user is absent; ctx.session will be null. */
 export const optionalUserProcedure = baseProcedure.use(async ({ ctx, next }) => {
   const { userId } = await clerkAuth();
   if (!userId) {
@@ -93,7 +93,7 @@ export const optionalUserProcedure = baseProcedure.use(async ({ ctx, next }) => 
   });
 });
 
-/** Ensure user is Admin or Volunteer via Payload Auth (No Clerk required) */
+/** Ensure the caller has an Admin/Volunteer role via Payload Auth (Clerk not required). */
 export const adminProcedure = baseProcedure.use(async ({ ctx, next }) => {
   const { headers } = await import("next/headers");
   const reqHeaders = await headers();
@@ -114,7 +114,7 @@ export const adminProcedure = baseProcedure.use(async ({ ctx, next }) => {
     });
   }
 
-  // Inject the authenticated admin into context
+  // Inject the authenticated admin user into context
   return next({
     ctx: { ...ctx, adminUser: user },
   });

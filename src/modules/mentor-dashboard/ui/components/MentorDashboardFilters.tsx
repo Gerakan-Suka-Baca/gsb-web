@@ -32,6 +32,7 @@ export const MentorDashboardFilters = ({
              />
           </div>
           
+                     {/* Explicit filter controls for mentor triage and student support */}
           <div className="flex w-full lg:w-auto items-center gap-3 flex-wrap sm:flex-nowrap">
              <div className="flex items-center gap-2 w-full sm:w-auto text-sm font-medium">
                 <Filter className="w-4 h-4 text-muted-foreground" /> Tryout:
@@ -59,11 +60,11 @@ export const MentorDashboardFilters = ({
                    <SelectItem value="ALL" className="font-semibold text-gsb-orange">Semua Status</SelectItem>
                    <SelectItem value="SAFE" className="text-green-600 font-medium">Lolos Aman</SelectItem>
                    <SelectItem value="COMPETITIVE" className="text-amber-600 font-medium">Kompetitif</SelectItem>
-                   <SelectItem value="RISK" className="text-red-600 font-medium">Beresiko / Sulit</SelectItem>
+                   <SelectItem value="RISK" className="text-red-600 font-medium">Berisiko / Sulit</SelectItem>
                 </SelectContent>
              </Select>
           </div>
        </div>
     </Card>
   );
-}
+};

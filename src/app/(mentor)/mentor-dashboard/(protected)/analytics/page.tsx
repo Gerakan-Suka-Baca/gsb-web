@@ -3,6 +3,8 @@ import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { MentorAnalyticsView } from "@/modules/mentor-dashboard/ui/views/MentorAnalyticsView";
 
+const ALLOWED_MENTOR_ROLES = ["super-admin", "admin", "volunteer"] as const;
+
 export const metadata = {
   title: "Status Pengerjaan & Pembayaran | Dashboard Mentor",
   description: "Pantau status pengerjaan subtest dan rilis skor tryout siswa",
@@ -19,7 +21,7 @@ export default async function MentorAnalyticsPage() {
   }
 
   const role = (user as any).role;
-  if (!["super-admin", "admin", "volunteer"].includes(role)) {
+  if (!ALLOWED_MENTOR_ROLES.includes(role)) {
     notFound();
   }
 

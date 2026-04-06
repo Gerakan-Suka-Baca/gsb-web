@@ -6,9 +6,18 @@ import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip,
-  LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
-  PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis, ReferenceLine
+  LineChart, Line, ScatterChart, Scatter, ReferenceLine
 } from "recharts";
+
+const SUBTEST_KEYS = [
+  { label: "PU", name: "Penalaran Umum", key: "score_PU" },
+  { label: "PK", name: "Pengetahuan Kuantitatif", key: "score_PK" },
+  { label: "PM", name: "Penalaran Matematika", key: "score_PM" },
+  { label: "LBE", name: "Literasi B. Inggris", key: "score_LBE" },
+  { label: "LBI", name: "Literasi B. Indonesia", key: "score_LBI" },
+  { label: "PPU", name: "Pengetahuan Pemahaman", key: "score_PPU" },
+  { label: "KMBM", name: "Kemampuan Membaca", key: "score_KMBM" },
+] as const;
 
 interface MentorDashboardWidgetsProps {
   totalScores: number;
@@ -19,22 +28,12 @@ interface MentorDashboardWidgetsProps {
   unfilteredData: any[];
 }
 
-export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashboardWidgetsProps) => {
+export const MentorDashboardWidgets = ({ unfilteredData }: MentorDashboardWidgetsProps) => {
   const [isTryoutAnalysisModalOpen, setIsTryoutAnalysisModalOpen] = useState(false);
   const [isSubtestEvaluationModalOpen, setIsSubtestEvaluationModalOpen] = useState(false);
   
   const [selectedGlobalMetric, setSelectedGlobalMetric] = useState<string>("finalScore");
   const [modalTryoutFilter, setModalTryoutFilter] = useState<string>("all");
-
-  const subtestKeys = [
-     { label: "PU", name: "Penalaran Umum", key: "score_PU" },
-     { label: "PK", name: "Pengetahuan Kuantitatif", key: "score_PK" },
-     { label: "PM", name: "Penalaran Matematika", key: "score_PM" },
-     { label: "LBE", name: "Literasi B. Inggris", key: "score_LBE" },
-     { label: "LBI", name: "Literasi B. Indonesia", key: "score_LBI" },
-     { label: "PPU", name: "Pengetahuan Pemahaman", key: "score_PPU" },
-     { label: "KMBM", name: "Kemampuan Membaca", key: "score_KMBM" }
-  ];
 
   const availableTryouts = useMemo(() => Array.from(new Set(unfilteredData?.map(d => d.tryout?.title).filter(Boolean))), [unfilteredData]);
 
@@ -49,36 +48,6 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
   const modalPassCount = activeModalData.filter(d => (d.scoreDetails?.finalScore || 0) >= 500).length;
   const modalPassRate = modalTotal > 0 ? (modalPassCount / modalTotal) * 100 : 0;
   
-  const modalSubtestAvgs = useMemo(() => {
-     if (modalTotal === 0) return [];
-     return subtestKeys.map(sub => {
-        const avg = activeModalData.reduce((acc, curr) => acc + (curr.scoreDetails?.[sub.key] || 0), 0) / modalTotal;
-        return { name: sub.name, label: sub.label, avg: Math.round(avg), fullMark: 1000 };
-     }).sort((a, b) => a.avg - b.avg);
-  }, [activeModalData, modalTotal]);
-
-  const modalRadarData = useMemo(() => {
-     if (modalTotal === 0) return [];
-     return subtestKeys.map(sub => {
-        const avg = activeModalData.reduce((acc, curr) => acc + (curr.scoreDetails?.[sub.key] || 0), 0) / modalTotal;
-        return { subject: sub.label, name: sub.name, score: Math.round(avg) };
-     });
-  }, [activeModalData, modalTotal]);
-
-  const scoreDistribution = useMemo(() => {
-     const brackets: Record<string, number> = { "< 400": 0, "400 - 500": 0, "500 - 600": 0, "600 - 700": 0, "> 700": 0 };
-     activeModalData.forEach(d => {
-        const score = d.scoreDetails?.finalScore || 0;
-        if (score < 400) brackets["< 400"]++;
-        else if (score >= 400 && score < 500) brackets["400 - 500"]++;
-        else if (score >= 500 && score < 600) brackets["500 - 600"]++;
-        else if (score >= 600 && score < 700) brackets["600 - 700"]++;
-        else brackets["> 700"]++;
-     });
-     return Object.entries(brackets).map(([name, value]) => ({ name, value })).filter(d => d.value > 0);
-  }, [activeModalData]);
-  const pieColors = ['#e63946', '#e85d04', '#ffba08', '#00b4d8', '#2a9d8f']; 
-
   const globalTrendData = useMemo(() => {
      if (!unfilteredData || unfilteredData.length === 0) return [];
      const tryoutGroups = unfilteredData.reduce((acc: any, curr: any) => {
@@ -90,7 +59,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
 
      const res = Object.entries(tryoutGroups).map(([title, scores]: [string, any]) => {
          const totalValidScores = scores.length;
-         let sum = scores.reduce((total: number, s: any) => total + (selectedGlobalMetric === "finalScore" ? (s.scoreDetails?.finalScore || 0) : (s.scoreDetails?.[selectedGlobalMetric] || 0)), 0);
+        const sum = scores.reduce((total: number, s: any) => total + (selectedGlobalMetric === "finalScore" ? (s.scoreDetails?.finalScore || 0) : (s.scoreDetails?.[selectedGlobalMetric] || 0)), 0);
          return {
              name: title.replace(/Paket /gi, 'TO ').replace(/Tryout /gi, ''),
              fullTitle: title,
@@ -111,7 +80,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
 
   const perSubtestStats = useMemo(() => {
     if (modalTotal === 0) return [];
-    return subtestKeys.map(sub => {
+    return SUBTEST_KEYS.map(sub => {
       const scores = activeModalData.map(d => d.scoreDetails?.[sub.key] || 0).sort((a: number, b: number) => a - b);
       const sum = scores.reduce((a: number, b: number) => a + b, 0);
       const avg = Math.round(sum / scores.length);
@@ -144,7 +113,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
      })).sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
   }, [unfilteredData]);
 
-  // Use explicit TRPC hooks to resolve generic inference
+  // Use explicit TRPC hooks to keep query typings stable.
   const trpc = useTRPC();
   const { data: ptnAnalysisDataResponse } = useQuery(trpc.mentor.getTargetPtnAnalysis.queryOptions());
   const { data: subtestStatsDataResponse } = useQuery(trpc.mentor.getDetailedSubtestStats.queryOptions());
@@ -172,7 +141,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
-        {/* Card 1: Analisis Tryout (Charts) */}
+        {/* Card 1: Opens the tryout-level analytics modal */}
         <motion.div variants={cardVariants} initial="initial" animate="animate" whileHover="hover" className="h-full">
            <Card className="h-full rounded-2xl border-gsb-orange/30 shadow-sm transition-all cursor-pointer bg-card hover:border-gsb-orange hover:shadow-lg hover:shadow-gsb-orange/10" onClick={() => setIsTryoutAnalysisModalOpen(true)}>
              <CardContent className="p-6 flex items-center justify-between gap-5">
@@ -190,7 +159,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
            </Card>
         </motion.div>
 
-        {/* Card 2: Evaluasi Subtest (Details) */}
+        {/* Card 2: Opens the per-subtest evaluation modal */}
         <motion.div variants={cardVariants} initial="initial" animate="animate" whileHover="hover" className="h-full" transition={{ delay: 0.1 }}>
            <Card className="h-full rounded-2xl border-gsb-red/30 shadow-sm transition-all cursor-pointer bg-card hover:border-gsb-red hover:shadow-lg hover:shadow-gsb-red/10" onClick={() => setIsSubtestEvaluationModalOpen(true)}>
              <CardContent className="p-6 flex items-center justify-between gap-5">
@@ -209,7 +178,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
         </motion.div>
       </div>
 
-      {/* ==================== MODAL: ANALISIS TRYOUT (KIRI) ==================== */}
+      {/* Modal: global tryout analytics */}
       <AnimatePresence>
          {isTryoutAnalysisModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/40">
@@ -248,7 +217,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-slate-50/50">
-                     {/* Overview Cards */}
+                     {/* Overview KPI cards */}
                      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                         <motion.div whileHover={{ y: -2 }} className="bg-white rounded-2xl p-5 border border-border hover:border-gsb-orange/30 transition-colors shadow-sm">
                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rata-rata Skor Global</p>
@@ -272,7 +241,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                         </motion.div>
                      </div>
 
-                     {/* ROW 1: Riwayat Skor Tryout (LINE CHART) + Tingkat Aman Per Tryout (BAR CHART) */}
+                     {/* Row 1: Score trend line chart + Pass-rate bar chart per tryout */}
                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} className="bg-white border border-border rounded-2xl p-6 lg:p-8 flex flex-col shadow-sm">
                            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -284,7 +253,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                                     onChange={(e) => setSelectedGlobalMetric(e.target.value)}
                                  >
                                     <option value="finalScore">Skor Akhir (Global)</option>
-                                    {subtestKeys.map((k) => (
+                                    {SUBTEST_KEYS.map((k) => (
                                        <option key={k.key} value={k.key}>{k.label} — {k.name}</option>
                                     ))}
                                  </select>
@@ -333,7 +302,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                         </motion.div>
                      </div>
 
-                     {/* ROW 2: PTN DISTRIBUTION + KUADRAN */}
+                     {/* Row 2: PTN distribution bar chart + Logic-vs-Literacy scatter quadrant */}
                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} className="bg-white border border-border rounded-2xl p-6 flex flex-col shadow-sm">
                            <div className="mb-4">
@@ -387,7 +356,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
          )}
       </AnimatePresence>
 
-      {/* ==================== MODAL: EVALUASI SUBTEST (KANAN) ==================== */}
+      {/* Modal: per-subtest evaluation */}
       <AnimatePresence>
          {isSubtestEvaluationModalOpen && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 backdrop-blur-sm bg-black/40">
@@ -426,7 +395,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 bg-slate-50/50">
-                     {/* MATRIX SECTION: CORRECT/WRONG/EMPTY */}
+                     {/* Answer-performance matrix: correct / wrong / empty averages */}
                      {modalTryoutFilter !== "all" && subtestStatsForCurrentTO && (
                         <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm">
                            <div className="flex items-center gap-3 mb-6">
@@ -451,7 +420,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                                     </tr>
                                  </thead>
                                  <tbody className="divide-y divide-slate-100 bg-white">
-                                    {subtestKeys.map((sub) => {
+                                    {SUBTEST_KEYS.map((sub) => {
                                        const stats = subtestStatsForCurrentTO[sub.label] || { avgCorrect: 0, avgWrong: 0, avgEmpty: 0 };
                                        const total = Math.round(stats.avgCorrect + stats.avgWrong + stats.avgEmpty);
                                        return (
@@ -497,7 +466,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                         </div>
                      )}
 
-                     {/* STATISTIC CARDS PER SUBTEST */}
+                     {/* Subtest stats cards: median, min/max, and pass rate */}
                      <motion.div initial={{opacity: 0, y: 10}} animate={{opacity: 1, y: 0}} className="bg-white border border-slate-200 rounded-2xl p-6 lg:p-8 shadow-sm">
                         <div className="flex items-center gap-3 mb-6">
                            <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center border border-teal-100">
@@ -533,7 +502,7 @@ export const MentorDashboardWidgets = ({ passRate, unfilteredData }: MentorDashb
                                        </span>
                                     </div>
                                  </div>
-                                 {/* Mini progress bar */}
+                                 {/* Compact bar visualizing average score level */}
                                  <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
                                     <div className={`h-full rounded-full transition-all ${sub.avg >= 600 ? 'bg-emerald-500' : sub.avg >= 500 ? 'bg-amber-400' : 'bg-rose-500'}`} style={{width: `${Math.min((sub.avg / 1000) * 100, 100)}%`}}></div>
                                  </div>
