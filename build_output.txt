@@ -1,0 +1,79 @@
+$ next build
+Γû▓ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 21.1s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/37) ...
+  Generating static pages using 11 workers (9/37) 
+  Generating static pages using 11 workers (18/37) 
+  Generating static pages using 11 workers (27/37) 
+Γ£ô Generating static pages using 11 workers (37/37) in 1842.5ms
+  Finalizing page optimization ...
+
+Route (app)
+Γöî ╞Æ /
+Γö£ Γùï /_not-found
+Γö£ ╞Æ /about
+Γö£ ╞Æ /about/portfolio
+Γö£ ╞Æ /about/suba-evolution
+Γö£ ╞Æ /about/suba-story
+Γö£ ╞Æ /about/team
+Γö£ ╞Æ /admin/[[...segments]]
+Γö£ ╞Æ /api/[...slug]
+Γö£ ╞Æ /api/clerk/webhook
+Γö£ ╞Æ /api/graphql
+Γö£ ╞Æ /api/graphql-playground
+Γö£ ╞Æ /api/media/file/[...filename]
+Γö£ ╞Æ /api/pdf-proxy
+Γö£ ╞Æ /api/trpc/[[...trpc]]
+Γö£ ╞Æ /blog/[slug]
+Γö£ ╞Æ /complete-profile
+Γö£ ╞Æ /learning-path
+Γö£ ╞Æ /learning-path/data-science
+Γö£ ╞Æ /learning-path/frontend-class
+Γö£ ╞Æ /learning-path/self-development
+Γö£ ╞Æ /learning-path/tryout-snbt
+Γö£ ╞Æ /legal/[slug]
+Γö£ ╞Æ /mentor-dashboard
+Γö£ ╞Æ /mentor-dashboard/analytics
+Γö£ ╞Æ /mentor-dashboard/leaderboard
+Γö£ Γùï /mentor-dashboard/login
+Γö£ ╞Æ /mentor-dashboard/pembahasan
+Γö£ ╞Æ /mentor-dashboard/pembahasan/[tryoutId]
+Γö£ ╞Æ /profile
+Γö£ ╞Æ /profile/payments
+Γö£ ╞Æ /program-studi/[id]
+Γö£ ╞Æ /programs
+Γö£ ╞Æ /programs/beasiswa
+Γö£ ╞Æ /programs/careducation
+Γö£ ╞Æ /programs/lapak-baca
+Γö£ ╞Æ /programs/minggu-cerdas
+Γö£ ╞Æ /programs/modul
+Γö£ ╞Æ /programs/ngobrolin-buku
+Γö£ ╞Æ /programs/podcast
+Γö£ ╞Æ /programs/wisata-edukasi
+Γö£ ╞Æ /sign-in/[[...sign-in]]
+Γö£ ╞Æ /sign-up/[[...sign-up]]
+Γö£ ╞Æ /tryout
+Γö£ ╞Æ /tryout/[tryoutId]
+Γö£ ╞Æ /tryout/[tryoutId]/explanation
+Γö£ ╞Æ /tryout/[tryoutId]/recommendations
+Γö£ ╞Æ /tryout/[tryoutId]/results
+Γö£ ╞Æ /tryout/leaderboard
+Γö£ ╞Æ /universitas
+Γö£ ╞Æ /universitas/[id]
+Γö£ ╞Æ /volunteer
+Γö£ ╞Æ /volunteer/donasi
+Γö£ ╞Æ /volunteer/kakak-donatur
+Γö£ ╞Æ /volunteer/kolaborasi
+Γöö ╞Æ /volunteer/merch
+
+
+╞Æ Proxy (Middleware)
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+

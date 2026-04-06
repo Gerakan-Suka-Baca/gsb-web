@@ -185,13 +185,13 @@ export const mentorDashboardRouter = createTRPCRouter({
           limit: 5000,
           depth: 1,
           // DB Memory Protection: Select only required fields
-          select: { tryout: 1, questionResults: 1 },
+          select: { tryout: true, questionResults: true },
         }),
         ctx.db.find({
           collection: "questions",
           limit: 5000,
           depth: 0,
-          select: { subtest: 1 },
+          select: { subtest: true },
         })
       ]);
 
@@ -270,13 +270,13 @@ export const mentorDashboardRouter = createTRPCRouter({
             limit: 5000, 
             depth: 1, 
             sort: "-createdAt",
-            select: { user: 1, tryout: 1, status: 1, resultPlan: 1, paymentMethod: 1, createdAt: 1 }
+            select: { user: true, tryout: true, status: true, resultPlan: true, paymentMethod: true, createdAt: true }
          }),
          ctx.db.find({ 
             collection: "tryout-scores", 
             limit: 5000, 
             depth: 0,
-            select: { attempt: 1, finalScore: 1 }
+            select: { attempt: true, finalScore: true }
          }),
       ]);
 

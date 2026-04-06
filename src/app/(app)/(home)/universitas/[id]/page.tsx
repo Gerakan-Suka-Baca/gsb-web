@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Globe, GraduationCap, Building2, Users, Target, BookOpen, ShieldAlert } from "lucide-react";
 import { RichText } from "@/components/ui/RichText";
-import { ProgramListDropdown } from "@/modules/universitas/ui/components/ProgramListDropdown";
+import { UnivProgramListDropdown as ProgramListDropdown } from "@/modules/universitas/ui/components/UnivProgramListDropdown";
 import type { University } from "@/payload-types";
 
 export const dynamic = "force-dynamic";
@@ -66,8 +66,8 @@ export default async function UniversitasDetailPage({ params }: { params: Promis
   // Group programs by faculty
   const groupedPrograms: Record<string, any[]> = {};
   
-  if (university.programs && Array.isArray(university.programs)) {
-    university.programs.forEach(prog => {
+  if (anyUni.programs && Array.isArray(anyUni.programs)) {
+    anyUni.programs.forEach((prog: any) => {
       const fac = prog.faculty || "Fakultas Umum";
       if (!groupedPrograms[fac]) {
         groupedPrograms[fac] = [];

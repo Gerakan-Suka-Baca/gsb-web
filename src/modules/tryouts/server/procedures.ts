@@ -97,7 +97,14 @@ const stripAnswerKeyFromSubtest = (subtest: Question): Question => {
   } as unknown as Question;
 };
 
+import { getMyPaymentHistory } from "./queries/getMyPaymentHistory";
+import { getExplanation } from "./queries/getExplanation";
+import { getLeaderboard } from "./queries/getLeaderboard";
+
 export const tryoutsRouter = createTRPCRouter({
+  getMyPaymentHistory: getMyPaymentHistory,
+  getExplanation: getExplanation,
+  getLeaderboard: getLeaderboard,
   getOne: protectedProcedure
     .input(
       z.object({
