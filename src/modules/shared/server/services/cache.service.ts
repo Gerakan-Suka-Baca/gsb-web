@@ -6,7 +6,7 @@
  * (tryout-specific clearTryoutCache stays in tryouts module)
  */
 
-import { redisGetJson, redisSetJson } from "@/lib/redis";
+import { redisGetJson, redisScanDel, redisSetJson } from "@/lib/redis";
 
 type CacheEntry<T> = {
   expires: number;
@@ -44,4 +44,13 @@ export const clearCacheByPrefix = (prefix: string) => {
       cacheStore.delete(key);
     }
   }
+};
+
+/**
+ * Invalidate in-memory and Redis cache entries by prefix.
+ * Use this for data that must be refreshed immediately across instances.
+ */
+export const clearCacheByPrefixAsync = async (prefix: string) => {
+  clearCacheByPrefix(prefix);
+  await redisScanDel(`${CACHE_PREFIX}${prefix}*`);
 };

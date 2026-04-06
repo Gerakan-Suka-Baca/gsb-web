@@ -260,7 +260,7 @@ export const mentorDashboardRouter = createTRPCRouter({
 
   getCompletionAnalytics: adminProcedure
     .query(async ({ ctx }) => {
-      const CACHE_KEY = "mentor_dashboard_completion_analytics_v1";
+      const CACHE_KEY = "mentor_dashboard_completion_analytics_v2";
       const cached = await getCacheValue(CACHE_KEY);
       if (cached) return cached;
 
@@ -276,30 +276,76 @@ export const mentorDashboardRouter = createTRPCRouter({
             collection: "tryout-scores", 
             limit: 5000, 
             depth: 0,
-            select: { attempt: true, finalScore: true }
+            select: { attempt: true, user: true, tryout: true, finalScore: true }
          }),
       ]);
 
       const scoresDocs = scoresReq.docs as any[];
       const publishedAttemptIds = new Set<string>();
       const scoreMap = new Map<string, number>();
+      const scoreByUserTryout = new Map<string, number>();
+
+      const getId = (value: unknown): string | null => {
+        if (typeof value === "string" || typeof value === "number") return String(value);
+        if (value && typeof value === "object" && "id" in value) {
+          const id = (value as { id?: unknown }).id;
+          if (typeof id === "string" || typeof id === "number") return String(id);
+        }
+        return null;
+      };
 
       for (const sc of scoresDocs) {
-         const attId = typeof sc.attempt === 'object' ? sc.attempt.id : sc.attempt;
+         const attId = getId(sc.attempt);
+         const userId = getId(sc.user);
+         const tryoutId = getId(sc.tryout);
          if (attId) {
-            publishedAttemptIds.add(String(attId));
-            scoreMap.set(String(attId), sc.finalScore || 0);
+            publishedAttemptIds.add(attId);
+            scoreMap.set(attId, sc.finalScore || 0);
+         }
+         if (userId && tryoutId) {
+            scoreByUserTryout.set(`${userId}::${tryoutId}`, sc.finalScore || 0);
          }
       }
 
-      const rows = attemptsReq.docs.map(doc => {
+      // Keep one representative attempt per user+tryout:
+      // prefer latest completed attempt, otherwise latest attempt.
+      const attemptsByUserTryout = new Map<string, any>();
+      for (const doc of attemptsReq.docs as any[]) {
          const att = doc as any;
+         const userId = getId(att.user);
+         const tryoutId = getId(att.tryout);
+         if (!userId || !tryoutId) continue;
+         const key = `${userId}::${tryoutId}`;
+         const existing = attemptsByUserTryout.get(key);
+         if (!existing) {
+            attemptsByUserTryout.set(key, att);
+            continue;
+         }
+         const existingCompleted = existing.status === "completed";
+         const currentCompleted = att.status === "completed";
+         if (!existingCompleted && currentCompleted) {
+            attemptsByUserTryout.set(key, att);
+         }
+      }
+
+      const rows = Array.from(attemptsByUserTryout.values()).map((att) => {
          const user = att.user || {};
          const to = att.tryout || {};
-         
-         const isPublished = publishedAttemptIds.has(String(att.id));
+
+         const attemptId = getId(att.id) || "";
+         const userId = getId(att.user);
+         const tryoutId = getId(att.tryout);
+         const scoreKey = userId && tryoutId ? `${userId}::${tryoutId}` : null;
+
+         const hasScoreByAttempt = publishedAttemptIds.has(attemptId);
+         const hasScoreByUserTryout = scoreKey ? scoreByUserTryout.has(scoreKey) : false;
+         const isPublished = hasScoreByAttempt || hasScoreByUserTryout;
          let finalScore = 0;
-         if (isPublished) finalScore = scoreMap.get(String(att.id)) || 0;
+         if (hasScoreByAttempt) {
+           finalScore = scoreMap.get(attemptId) || 0;
+         } else if (scoreKey) {
+           finalScore = scoreByUserTryout.get(scoreKey) || 0;
+         }
 
          return {
             id: att.id,
@@ -317,7 +363,7 @@ export const mentorDashboardRouter = createTRPCRouter({
          };
       });
 
-      await setCacheValue(CACHE_KEY, rows, 1000 * 60 * 60 * 6); // 6h cache
+      await setCacheValue(CACHE_KEY, rows, 1000 * 60 * 10); // 10m cache
       return rows;
     }),
 
@@ -376,13 +422,24 @@ export const mentorDashboardRouter = createTRPCRouter({
       });
       const subtests = questionsResult.docs;
 
-      // Buat map soal dari database untuk akses cepat
-      const dbQuestionsMap = new Map();
+      // Buat map soal dari database untuk akses cepat.
+      // Support data lama yang mungkin tidak menyimpan q.id konsisten.
+      const dbQuestionsMap = new Map<string, any>();
+      const questionNumberToId = new Map<string, string>();
       for (const subtest of subtests as any[]) {
-        const questions = subtest.tryoutQuestions || [];
-        for (const q of questions) {
-          dbQuestionsMap.set(String(q.id), q);
-        }
+        const subtestId = String(subtest.id);
+        const questions = Array.isArray(subtest.tryoutQuestions)
+          ? subtest.tryoutQuestions
+          : [];
+        questions.forEach((q: any, idx: number) => {
+          const qNum = idx + 1;
+          const resolvedId = q?.id ? String(q.id) : `${subtestId}::${qNum}`;
+          dbQuestionsMap.set(resolvedId, q);
+          if (q?.id) {
+            dbQuestionsMap.set(String(q.id), q);
+          }
+          questionNumberToId.set(`${subtestId}:${qNum}`, resolvedId);
+        });
       }
 
       // 2. Ambil semua attempt yang sudah selesai untuk Tryout ini
@@ -406,13 +463,26 @@ export const mentorDashboardRouter = createTRPCRouter({
       for (const attempt of attempts as any[]) {
         const results = attempt.questionResults || [];
         for (const res of results) {
-          const qId = String(res.questionId);
+          const rawQId = res?.questionId ? String(res.questionId) : "";
+          const subtestId = res?.subtestId ? String(res.subtestId) : "";
+          const qNumber =
+            typeof res?.questionNumber === "number" && Number.isFinite(res.questionNumber)
+              ? Math.max(1, Math.floor(res.questionNumber))
+              : null;
+          const fallbackId =
+            subtestId && qNumber !== null
+              ? questionNumberToId.get(`${subtestId}:${qNumber}`)
+              : undefined;
+          const qId = dbQuestionsMap.has(rawQId)
+            ? rawQId
+            : fallbackId ?? rawQId;
+          if (!qId) continue;
           if (!questionStats[qId]) {
-            questionStats[qId] = { 
+            questionStats[qId] = {
               correct: 0, 
               total: 0, 
-              subtestId: String(res.subtestId), 
-              questionNumber: res.questionNumber 
+              subtestId,
+              questionNumber: qNumber ?? 0,
             };
           }
           questionStats[qId].total++;
@@ -434,29 +504,33 @@ export const mentorDashboardRouter = createTRPCRouter({
         const subtestId = String(subtest.id);
         const subtestName = subtest.subtest || subtest.title || "Tanpa Nama";
         
-        // Ambil ID soal yang ada di subtest ini dari DB
-        const subtestQuestionIds = (subtest.tryoutQuestions || []).map((q: any) => String(q.id));
-        
-        const stats = subtestQuestionIds.map((qId: string) => {
-          const data = questionStats[qId] || { correct: 0, total: 0, questionNumber: 0 };
-          const dbQuestion = dbQuestionsMap.get(qId);
+        const questionEntries = (Array.isArray(subtest.tryoutQuestions) ? subtest.tryoutQuestions : [])
+          .map((q: any, idx: number) => {
+            const qNum = idx + 1;
+            const resolvedId = q?.id ? String(q.id) : `${subtestId}::${qNum}`;
+            return { q, qNum, resolvedId };
+          });
+
+        const stats = questionEntries.map(({ q, qNum, resolvedId }: any) => {
+          const data = questionStats[resolvedId] || { correct: 0, total: 0, questionNumber: 0 };
+          const dbQuestion = dbQuestionsMap.get(resolvedId) ?? q;
           
           const correctness = data.total > 0 ? (data.correct / data.total) * 100 : 0;
           totalCorrectnessSum += correctness;
           totalQuestionsCount++;
 
           return {
-            questionId: qId,
-            questionNumber: data.questionNumber || (subtest.tryoutQuestions || []).findIndex((q: any) => String(q.id) === qId) + 1,
+            questionId: resolvedId,
+            questionNumber: data.questionNumber || qNum,
             correct: data.correct,
             wrong: data.total - data.correct,
             total: data.total,
             correctness: Math.round(correctness * 10) / 10,
-            content: dbQuestion?.question || dbQuestion?.questionContent || null,
-            image: dbQuestion?.questionImage || null,
+            content: dbQuestion?.question ?? dbQuestion?.questionContent ?? null,
+            image: dbQuestion?.questionImage ?? null,
             options: (dbQuestion?.tryoutAnswers || []).map((opt: any) => ({
               id: opt.id,
-              content: opt.answer || opt.answerContent,
+              content: opt.answer ?? opt.answerContent ?? null,
               isCorrect: opt.isCorrect
             }))
           };

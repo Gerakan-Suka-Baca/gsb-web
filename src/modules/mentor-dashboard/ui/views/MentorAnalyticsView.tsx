@@ -3,7 +3,6 @@
 import React, { useState, useMemo } from "react";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
 import { Search, Loader2, Download, Filter, RefreshCw, XCircle, CheckCircle, Ticket, CreditCard, AlertCircle, TrendingUp, Users, PieChart as PieChartIcon } from "lucide-react";
 
 export const MentorAnalyticsView = () => {
@@ -40,12 +39,16 @@ export const MentorAnalyticsView = () => {
     });
   }, [data, searchTerm, tryoutFilter, paymentFilter, scoreFilter]);
 
+  const releasedData = useMemo(
+    () => filteredData.filter((d: any) => d.scoreStatus === "Sudah Rilis" && d.finalScore !== null && d.finalScore !== undefined),
+    [filteredData]
+  );
   const totalSelesai = filteredData.filter((d: any) => d.completionStatus === "Selesai").length;
-  const totalRilis = filteredData.filter((d: any) => d.scoreStatus === "Sudah Rilis").length;
+  const totalRilis = releasedData.length;
   // Calculate analytics
-  const passCount = filteredData.filter((d: any) => (d.finalScore ?? 0) >= 500).length;
-  const avgFilteredScore = totalRilis > 0 
-    ? filteredData.reduce((acc: number, d: any) => acc + (d.finalScore || 0), 0) / totalRilis 
+  const passCount = releasedData.filter((d: any) => (d.finalScore ?? 0) >= 500).length;
+  const avgFilteredScore = totalRilis > 0
+    ? releasedData.reduce((acc: number, d: any) => acc + (d.finalScore || 0), 0) / totalRilis
     : 0;
 
   // Payment Breakdown
@@ -71,7 +74,7 @@ export const MentorAnalyticsView = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 fade-in pb-20">
+    <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-200 fade-in pb-20">
       <div className="flex flex-col gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="text-3xl font-black font-heading text-slate-800 tracking-tight flex items-center gap-2">
@@ -94,7 +97,7 @@ export const MentorAnalyticsView = () => {
           <button
             onClick={handleExport}
             disabled={filteredData.length === 0}
-            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-bold rounded-xl transition-all shadow-sm shadow-emerald-200 text-sm"
+            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl transition-colors shadow-sm shadow-emerald-200 text-sm"
           >
             <Download size={16} />
             Export CSV ({filteredData.length})
@@ -231,13 +234,9 @@ export const MentorAnalyticsView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  <AnimatePresence>
                     {filteredData.map((row: any) => (
-                      <motion.tr
+                      <tr
                         key={row.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0 }}
                         className="hover:bg-orange-50/50 transition-colors group"
                       >
                         <td className="px-6 py-4">
@@ -279,9 +278,8 @@ export const MentorAnalyticsView = () => {
                               <span className="font-semibold text-slate-400 text-xs italic text-center block bg-slate-50 border border-slate-100 rounded p-1 whitespace-nowrap blur-[1px]">---</span>
                            )}
                         </td>
-                      </motion.tr>
+                      </tr>
                     ))}
-                  </AnimatePresence>
                   
                   {filteredData.length === 0 && (
                      <tr>

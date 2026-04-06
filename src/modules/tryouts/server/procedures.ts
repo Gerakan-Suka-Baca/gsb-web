@@ -225,6 +225,7 @@ export const tryoutsRouter = createTRPCRouter({
         depth: 0,
         pagination: false,
         limit: 100,
+        sort: "-dateOpen",
       });
 
       return {

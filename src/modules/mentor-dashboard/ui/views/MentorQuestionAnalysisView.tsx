@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -44,6 +44,31 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { RichText } from "@/components/ui/RichText";
 
+type AnalysisOption = {
+  id?: string;
+  content?: unknown;
+  isCorrect?: boolean;
+};
+
+type AnalysisQuestion = {
+  questionId: string;
+  questionNumber: number;
+  correct: number;
+  wrong: number;
+  total: number;
+  correctness: number;
+  content?: unknown;
+  image?: { url?: string } | null;
+  options?: AnalysisOption[];
+};
+
+type AnalysisSummary = {
+  totalAttempts?: number;
+  overallAverageCorrectness?: number;
+  hardestPerSubtest?: Array<{ subtest?: string; questionNumber?: number; correctness?: number }>;
+  easiestPerSubtest?: Array<{ subtest?: string; questionNumber?: number; correctness?: number }>;
+};
+
 export const MentorQuestionAnalysisView = () => {
   const trpc = useTRPC();
   const [selectedTryoutId, setSelectedTryoutId] = useState<string>("");
@@ -51,7 +76,7 @@ export const MentorQuestionAnalysisView = () => {
   const [expandedSubtests, setExpandedSubtests] = useState<Record<string, boolean>>({});
 
   // 1. Fetch available tryouts for the filter
-  const { data: tryoutsData, isLoading: isLoadingTryouts } = useQuery(
+  const { data: tryoutsData } = useQuery(
     trpc.tryouts.getMany.queryOptions({ year: null })
   );
 
@@ -64,8 +89,11 @@ export const MentorQuestionAnalysisView = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const summary = analysisData?.summary;
-  const analysisBySubtest = analysisData?.analysisBySubtest || {};
+  const summary = (analysisData?.summary || {}) as AnalysisSummary;
+  const analysisBySubtest = (analysisData?.analysisBySubtest || {}) as Record<
+    string,
+    AnalysisQuestion[]
+  >;
 
   const toggleQuestion = (qId: string) => {
     setExpandedQuestions(prev => ({ ...prev, [qId]: !prev[qId] }));
@@ -75,7 +103,7 @@ export const MentorQuestionAnalysisView = () => {
     setExpandedSubtests(prev => ({ ...prev, [subtestName]: !prev[subtestName] }));
   };
 
-  const expandAllSubtest = (subtestName: string, questions: any[]) => {
+  const expandAllSubtest = (_subtestName: string, questions: AnalysisQuestion[]) => {
     const newExpands = { ...expandedQuestions };
     questions.forEach(q => {
       newExpands[q.questionId] = true;
@@ -83,7 +111,7 @@ export const MentorQuestionAnalysisView = () => {
     setExpandedQuestions(newExpands);
   };
 
-  const collapseAllSubtest = (subtestName: string, questions: any[]) => {
+  const collapseAllSubtest = (_subtestName: string, questions: AnalysisQuestion[]) => {
     const newExpands = { ...expandedQuestions };
     questions.forEach(q => {
       newExpands[q.questionId] = false;
@@ -93,8 +121,8 @@ export const MentorQuestionAnalysisView = () => {
 
   const expandAllGeneral = () => {
     const newExpands: Record<string, boolean> = {};
-    Object.values(analysisBySubtest).forEach((questions: any) => {
-      questions.forEach((q: any) => {
+    Object.values(analysisBySubtest).forEach((questions) => {
+      questions.forEach((q) => {
         newExpands[q.questionId] = true;
       });
     });
@@ -217,31 +245,29 @@ export const MentorQuestionAnalysisView = () => {
             </Card>
           </div>
 
-          {/* Detailed Analysis Per Subtest */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-2">
-             <div className="mb-4 sm:mb-0">
-               <h2 className="text-2xl font-bold tracking-tight text-responsive-maroon">Detail Per Subtest</h2>
-               <p className="text-sm text-muted-foreground mt-1">Lihat statistik ketepatan per nomor soal di setiap subtest.</p>
-             </div>
-             <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={expandAllGeneral}
-                  className="rounded-full border-gsb-orange text-gsb-orange hover:bg-gsb-orange/10"
-                >
-                  <Maximize2 className="w-3.5 h-3.5 mr-1.5" /> Expand Semua
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={collapseAllGeneral}
-                  className="rounded-full border-muted-foreground/30 text-muted-foreground hover:bg-muted"
-                >
-                  <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> Collapse Semua
-                </Button>
-             </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 shadow-sm">
+            <p className="text-xs font-medium text-muted-foreground">Kontrol tampilan semua subtest</p>
+            <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={expandAllGeneral}
+              className="rounded-full border-gsb-orange text-gsb-orange hover:bg-gsb-orange/10"
+            >
+              <Maximize2 className="w-3.5 h-3.5 mr-1.5" /> Expand Semua
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={collapseAllGeneral}
+              className="rounded-full border-muted-foreground/30 text-muted-foreground hover:bg-muted"
+            >
+              <Minimize2 className="w-3.5 h-3.5 mr-1.5" /> Collapse Semua
+            </Button>
+            </div>
           </div>
+
+          {/* Detailed Analysis Per Subtest */}
           <div className="space-y-8">
             {Object.entries(analysisBySubtest).map(([subtestName, questions]) => (
               <Card key={subtestName} className="rounded-2xl border-none shadow-sm overflow-hidden">
@@ -286,8 +312,8 @@ export const MentorQuestionAnalysisView = () => {
                           Collapse All
                         </Button>
                       </div>
-                      <Badge variant="outline" className="bg-white px-3 py-1">
-                        Avg: {Math.round((questions.reduce((acc: any, curr: any) => acc + curr.correctness, 0) / questions.length) * 10) / 10}%
+                        <Badge variant="outline" className="bg-white px-3 py-1">
+                        Avg: {Math.round((questions.reduce((acc, curr) => acc + curr.correctness, 0) / questions.length) * 10) / 10}%
                       </Badge>
                     </div>
                   </div>
@@ -315,7 +341,7 @@ export const MentorQuestionAnalysisView = () => {
                           const isExpanded = expandedQuestions[q.questionId];
                           
                           return (
-                            <>
+                            <Fragment key={q.questionId}>
                               <TableRow 
                                 key={q.questionId} 
                                 className={cn(
@@ -398,11 +424,11 @@ export const MentorQuestionAnalysisView = () => {
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                           {q.options && q.options.length > 0 ? (
-                                            q.options.map((opt: any, idx: number) => (
+                                            q.options.map((opt, idx: number) => (
                                               <div 
                                                 key={opt.id}
                                                 className={cn(
-                                                  "flex items-start gap-3 p-4 rounded-xl border transition-all",
+                                                  "flex items-start gap-3 p-4 rounded-xl border transition-colors",
                                                   opt.isCorrect 
                                                     ? "bg-green-50 border-green-200 ring-1 ring-green-200" 
                                                     : "bg-muted/30 border-border"
@@ -430,7 +456,7 @@ export const MentorQuestionAnalysisView = () => {
                                   </TableCell>
                                 </TableRow>
                               )}
-                            </>
+                            </Fragment>
                           );
                         })}
                       </TableBody>

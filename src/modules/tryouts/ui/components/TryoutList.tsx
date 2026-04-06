@@ -34,15 +34,25 @@ const resolveTab = (value: string | null): TabKey =>
 
 type TryoutAvailability = "not-opened" | "open" | "closed";
 
+const toDateMs = (value: string | Date | null | undefined): number | null => {
+  if (!value) return null;
+  const parsed = new Date(value).getTime();
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
 const isOpenNow = (
   openDate: string | Date | null | undefined,
   closeDate: string | Date | null | undefined,
   isPermanent?: boolean | null
 ): boolean => {
   if (isPermanent) return true;
-  if (!openDate || !closeDate) return false;
-  const now = new Date();
-  return now >= new Date(openDate) && now <= new Date(closeDate);
+  const nowMs = Date.now();
+  const openMs = toDateMs(openDate);
+  const closeMs = toDateMs(closeDate);
+  if (openMs === null) return false;
+  if (nowMs < openMs) return false;
+  if (closeMs === null) return true;
+  return nowMs <= closeMs;
 };
 
 const getTryoutAvailability = (
@@ -51,12 +61,12 @@ const getTryoutAvailability = (
   isPermanent?: boolean | null
 ): TryoutAvailability => {
   if (isPermanent) return "open";
-  if (!openDate || !closeDate) return "closed";
-  const now = new Date().getTime();
-  const openMs = new Date(openDate).getTime();
-  const closeMs = new Date(closeDate).getTime();
+  const now = Date.now();
+  const openMs = toDateMs(openDate);
+  const closeMs = toDateMs(closeDate);
+  if (openMs === null) return "closed";
   if (now < openMs) return "not-opened";
-  if (now > closeMs) return "closed";
+  if (closeMs !== null && now > closeMs) return "closed";
   return "open";
 };
 
@@ -129,7 +139,11 @@ export const TryoutList = () => {
   const attemptMap = new Map<string, TryoutAttempt>();
   for (const a of attempts) {
     const tryoutId = typeof a.tryout === "object" ? a.tryout.id : a.tryout;
-    attemptMap.set(tryoutId, a);
+    if (!tryoutId) continue;
+    // Keep the newest attempt per tryout (query is sorted by -createdAt)
+    if (!attemptMap.has(tryoutId)) {
+      attemptMap.set(tryoutId, a);
+    }
   }
 
   const currentTryouts: { tryout: Tryout; attempt: TryoutAttempt }[] = [];
@@ -146,7 +160,14 @@ export const TryoutList = () => {
       availableTryouts.push(tryout);
     }
   }
-  const discoverableTryouts = allTryouts;
+  const discoverableTryouts = [...allTryouts].sort((a, b) => {
+    const aOpen = toDateMs(a.dateOpen);
+    const bOpen = toDateMs(b.dateOpen);
+    if (aOpen !== null && bOpen !== null) return bOpen - aOpen;
+    if (aOpen !== null) return -1;
+    if (bOpen !== null) return 1;
+    return String(b.title ?? "").localeCompare(String(a.title ?? ""));
+  });
 
   useEffect(() => {
     if (queryTab && TAB_KEYS.has(queryTab as TabKey)) {
@@ -269,7 +290,7 @@ export const TryoutList = () => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="max-w-[1700px] mx-auto px-4 md:px-6 py-8 md:py-12">
 
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-3xl md:text-4xl font-heading font-bold text-responsive-maroon mb-2">
@@ -335,7 +356,7 @@ export const TryoutList = () => {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
           >
             {activeTab === "current" && (
               attemptsLoading

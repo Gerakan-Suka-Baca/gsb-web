@@ -43,12 +43,6 @@ import type { RedisAttemptState } from "@/modules/tryouts/server/services/tryout
 export const saveProgress = protectedProcedure
   .input(saveProgressInputSchema)
   .mutation(async ({ ctx, input }) => {
-    if (!redisEnabled) {
-      throw new TRPCError({
-        code: "PRECONDITION_FAILED",
-        message: "Redis wajib aktif untuk menyimpan progres ujian.",
-      });
-    }
     const { db: payload, session } = ctx;
     const now = new Date();
     const nowIso = now.toISOString();
@@ -72,7 +66,9 @@ export const saveProgress = protectedProcedure
     if (attempt.status !== "started" && !retakeActive) {
       assertTryoutWindowOpen(tryoutWindow, "menyimpan progres", now);
     }
-    const cached = await loadAttemptProgress(attempt.id, retakeActive);
+    const cached = redisEnabled
+      ? await loadAttemptProgress(attempt.id, retakeActive)
+      : null;
     const baseAnswers =
       cached?.answers ?? (retakeActive ? attempt.retakeAnswers : attempt.answers) ?? {};
     const baseFlags =
@@ -263,7 +259,9 @@ export const saveProgress = protectedProcedure
       secondsRemaining: timerWindow.secondsRemaining,
       heartbeatAt: nowIso,
     };
-    await saveAttemptProgress(attempt.id, retakeActive, nextState);
+    if (redisEnabled) {
+      await saveAttemptProgress(attempt.id, retakeActive, nextState);
+    }
 
     if (shouldPersist) {
       await payload.update({

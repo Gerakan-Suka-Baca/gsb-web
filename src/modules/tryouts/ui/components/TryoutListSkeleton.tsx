@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 
 export const TryoutListSkeleton = () => {
   return (
-    <div className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+    <div className="max-w-[1700px] mx-auto px-4 md:px-6 py-8 md:py-12">
 
       <div className="mb-8 space-y-2">
         <Skeleton className="h-10 w-64 md:w-96" />
@@ -22,7 +22,7 @@ export const TryoutListSkeleton = () => {
       </div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="p-6 border-2 border-border/50 rounded-2xl bg-card/50">
             <div className="flex flex-col gap-3">

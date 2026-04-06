@@ -47,10 +47,10 @@ export const assertTryoutWindowOpen = (
   if (tryout.isPermanent === true) return;
   const openMs = parseDateMs(tryout.dateOpen);
   const closeMs = parseDateMs(tryout.dateClose);
-  if (openMs === null || closeMs === null) {
+  if (openMs === null) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Tryout schedule is invalid",
+      message: "Tanggal mulai tryout belum valid",
     });
   }
 
@@ -61,7 +61,7 @@ export const assertTryoutWindowOpen = (
       message: `Tryout belum dibuka. Tidak bisa ${action}.`,
     });
   }
-  if (nowMs > closeMs + CLOSE_GRACE_MS) {
+  if (closeMs !== null && nowMs > closeMs + CLOSE_GRACE_MS) {
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: `Tryout sudah ditutup. Tidak bisa ${action}.`,

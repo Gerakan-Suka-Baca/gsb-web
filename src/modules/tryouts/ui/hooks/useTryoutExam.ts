@@ -315,7 +315,7 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
         subtest_duration_minutes: currentSubtest?.duration 
       });
 
-      await queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: [["tryoutAttempts", "getAttempt"], { input: { tryoutId: tryout.id }, type: "query" }],
       });
     },
@@ -374,7 +374,24 @@ export function useTryoutExam({ tryout, initialAttempt, onFinish }: TryoutExamPr
     }, [dispatch, setTimeLeft]),
   });
 
-  const handleStart = () => startAttemptMutation.mutate({ tryoutId: tryout.id });
+  const handleStart = useCallback(async () => {
+    if (startAttemptMutation.isPending) return;
+    dispatch({ type: "SET_STATUS", status: "loading" });
+    const timeoutMs = 15000;
+    try {
+      await Promise.race([
+        startAttemptMutation.mutateAsync({ tryoutId: tryout.id }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Request timeout")), timeoutMs)
+        ),
+      ]);
+    } catch (error) {
+      dispatch({ type: "SET_STATUS", status: "ready" });
+      if (error instanceof Error && error.message === "Request timeout") {
+        toast.error("Memulai subtes terlalu lama. Coba klik lagi.");
+      }
+    }
+  }, [dispatch, startAttemptMutation, tryout.id]);
 
   const handleSubtestFinish = useCallback(async (submitMode: "manual" | "timeout" = "manual") => {
     if (submitAttemptMutation.isPending || isFinishingSubtest) return;

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from "payload";
 import { isVolunteerOrAbove, isAdminOrAbove } from "../accessHelpers";
 import { SUBTEST_OPTIONS } from "../subtestOptions";
+import { clearMentorDashboardCache } from "@/modules/mentor-dashboard/server/services/mentor-dashboard-cache.service";
 
 const subtestFields = SUBTEST_OPTIONS.map((opt) => ({
   name: `score_${opt.value}`,
@@ -159,6 +160,16 @@ export const TryoutScores: CollectionConfig = {
         }
 
         return data;
+      },
+    ],
+    afterChange: [
+      async () => {
+        await clearMentorDashboardCache();
+      },
+    ],
+    afterDelete: [
+      async () => {
+        await clearMentorDashboardCache();
       },
     ],
   },
