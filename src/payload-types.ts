@@ -76,10 +76,10 @@ export interface Config {
     tryouts: Tryout;
     questions: Question;
     'tryout-attempts': TryoutAttempt;
-    'tryout-vouchers': TryoutVoucher;
     'tryout-payments': TryoutPayment;
     'tryout-scores': TryoutScore;
     'tryout-explanations': TryoutExplanation;
+    'tryout-vouchers': TryoutVoucher;
     universities: University;
     'university-programs': UniversityProgram;
     articles: Article;
@@ -108,10 +108,10 @@ export interface Config {
     tryouts: TryoutsSelect<false> | TryoutsSelect<true>;
     questions: QuestionsSelect<false> | QuestionsSelect<true>;
     'tryout-attempts': TryoutAttemptsSelect<false> | TryoutAttemptsSelect<true>;
-    'tryout-vouchers': TryoutVouchersSelect<false> | TryoutVouchersSelect<true>;
     'tryout-payments': TryoutPaymentsSelect<false> | TryoutPaymentsSelect<true>;
     'tryout-scores': TryoutScoresSelect<false> | TryoutScoresSelect<true>;
     'tryout-explanations': TryoutExplanationsSelect<false> | TryoutExplanationsSelect<true>;
+    'tryout-vouchers': TryoutVouchersSelect<false> | TryoutVouchersSelect<true>;
     universities: UniversitiesSelect<false> | UniversitiesSelect<true>;
     'university-programs': UniversityProgramsSelect<false> | UniversityProgramsSelect<true>;
     articles: ArticlesSelect<false> | ArticlesSelect<true>;
@@ -1047,10 +1047,6 @@ export interface PayloadLockedDocument {
         value: string | TryoutAttempt;
       } | null)
     | ({
-        relationTo: 'tryout-vouchers';
-        value: string | TryoutVoucher;
-      } | null)
-    | ({
         relationTo: 'tryout-payments';
         value: string | TryoutPayment;
       } | null)
@@ -1061,6 +1057,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'tryout-explanations';
         value: string | TryoutExplanation;
+      } | null)
+    | ({
+        relationTo: 'tryout-vouchers';
+        value: string | TryoutVoucher;
       } | null)
     | ({
         relationTo: 'universities';
@@ -1397,24 +1397,6 @@ export interface TryoutAttemptsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tryout-vouchers_select".
- */
-export interface TryoutVouchersSelect<T extends boolean = true> {
-  name?: T;
-  code?: T;
-  active?: T;
-  isPermanent?: T;
-  validFrom?: T;
-  validUntil?: T;
-  quota?: T;
-  usedCount?: T;
-  lastUsedAt?: T;
-  notes?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tryout-payments_select".
  */
 export interface TryoutPaymentsSelect<T extends boolean = true> {
@@ -1461,6 +1443,24 @@ export interface TryoutExplanationsSelect<T extends boolean = true> {
   title?: T;
   tryout?: T;
   pdf?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tryout-vouchers_select".
+ */
+export interface TryoutVouchersSelect<T extends boolean = true> {
+  name?: T;
+  code?: T;
+  active?: T;
+  isPermanent?: T;
+  validFrom?: T;
+  validUntil?: T;
+  quota?: T;
+  usedCount?: T;
+  lastUsedAt?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

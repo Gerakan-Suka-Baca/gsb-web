@@ -47,10 +47,10 @@ export default buildConfig({
     Tryouts, 
     Questions, 
     TryoutAttempts, 
-    TryoutVouchers,
     TryoutPayments, 
     TryoutScores, 
     TryoutExplanations, 
+    TryoutVouchers,
     Universities,
     UniversityPrograms,
     Articles,
@@ -70,7 +70,7 @@ export default buildConfig({
     outputFile: path.resolve(dirname, "payload-types.ts"),
   },
   db: mongooseAdapter({
-    url: process.env.DATABASE_URI || process.env.DATABASE_URL || "",
+    url: process.env.DATABASE_URI || "",
     connectOptions: {
       // Force IPv4 if local network has IPv6 issues
       family: 4,

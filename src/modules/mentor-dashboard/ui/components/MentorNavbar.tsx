@@ -25,6 +25,7 @@ export const MentorNavbar = ({ adminName }: { adminName: string }) => {
     { href: "/mentor-dashboard", label: "Data Siswa", icon: Users, exact: true },
     { href: "/mentor-dashboard/leaderboard", label: "Leaderboard", icon: Trophy },
     { href: "/mentor-dashboard/analytics", label: "Status Pengerjaan", icon: Activity },
+    { href: "/mentor-dashboard/question-analysis", label: "Analisis Soal", icon: LayoutDashboard },
     { href: "/mentor-dashboard/pembahasan", label: "Daftar Pembahasan", icon: LayoutDashboard },
   ];
 

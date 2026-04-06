@@ -20,37 +20,30 @@ export const searchMajors = async (query: string, universityName?: string) => {
   try {
     const payload = await getPayloadCached();
     
-    const payloadDB = (payload.db as unknown as { collections?: Record<string, UniversityCollection> })
-      .collections?.["universities"];
-    if (!payloadDB) return [];
-    const pipeline: any[] = [];
+    const whereClause: any = {
+      category: { equals: "snbt" },
+    };
 
     if (universityName) {
-       pipeline.push({ $match: { name: { $regex: new RegExp(universityName, 'i') } } });
+      // Prioritaskan pencarian berdasarkan nama universitas
+      whereClause.universityName = { contains: universityName };
     }
 
-    pipeline.push({ $unwind: "$programs" });
-
-    const programMatch: Record<string, unknown> = { "programs.category": "snbt" };
     if (query && query.length >= 3) {
-       programMatch["programs.name"] = { $regex: new RegExp(query, 'i') };
+      whereClause.name = { contains: query };
     }
-    
-    pipeline.push({ $match: programMatch });
-    pipeline.push({ $limit: 30 });
 
-    const results = await payloadDB.aggregate(pipeline);
+    const result = await payload.find({
+      collection: "university-programs",
+      where: whereClause,
+      limit: 30,
+      depth: 0,
+    });
 
-    return results
-      .map((doc) => {
-        const program = doc.programs;
-        const idValue = program?._id;
-        const id = typeof idValue === "string" ? idValue : idValue?.toString();
-        const name = program?.name;
-        if (!id || !name) return null;
-        return { id, name };
-      })
-      .filter((item): item is { id: string; name: string } => Boolean(item));
+    return result.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.name,
+    }));
   } catch (error) {
     console.error("Error searching majors:", error);
     return [];

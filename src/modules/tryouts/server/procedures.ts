@@ -375,14 +375,13 @@ export const tryoutsRouter = createTRPCRouter({
         const searchProgram = async (univName: string, majorName: string) => {
           if (!univName || !majorName) return null;
           
-          // Use MongoDB Aggregation directly via Mongoose model
           const results = await ctx.db.find({
-            collection: "universities",
+            collection: "university-programs",
             where: {
               and: [
-                { name: { equals: univName } },
-                { "programs.name": { equals: majorName } },
-                { "programs.category": { equals: "snbt" } }
+                { universityName: { contains: univName } },
+                { name: { contains: majorName } },
+                { category: { equals: "snbt" } }
               ]
             },
             limit: 1,
@@ -390,20 +389,11 @@ export const tryoutsRouter = createTRPCRouter({
           });
   
           if (results.docs.length === 0) return null;
-          const matchDoc = results.docs[0] as UniversityDoc;
-          const programs = Array.isArray(matchDoc.programs) ? matchDoc.programs : [];
-          const match = programs.find(
-            (p) =>
-              typeof p.name === "string" &&
-              p.name.toLowerCase().includes(majorName.toLowerCase()) &&
-              p.category === "snbt"
-          );
-          
-          if (!match) return null;
+          const match = results.docs[0] as any;
 
         const latestMetric = (match.metrics?.[0] ?? {}) as ProgramMetric;
         const passingGrade = parseFloat(latestMetric.admissionMetric || match.admissionMetric || "0") || 0;
-        if (!passingGrade) return { found: true, passingGrade: 0, targetPTN: univName, targetMajor: majorName, name: match.name, universityName: matchDoc.name };
+        if (!passingGrade) return { found: true, passingGrade: 0, targetPTN: univName, targetMajor: majorName, name: match.name, universityName: match.universityName };
 
         // Statistical Logistic Function for Chance Calculation
         // Formula: P(x) = 1 / (1 + e^(-k(x - x0)))
@@ -426,7 +416,7 @@ export const tryoutsRouter = createTRPCRouter({
           found: true,
           targetPTN: univName,
           targetMajor: majorName,
-          dbUnivName: matchDoc.name,
+          dbUnivName: match.universityName,
           dbMajorName: match.name,
           level,
           color,
@@ -505,32 +495,24 @@ export const tryoutsRouter = createTRPCRouter({
         return { finalScore, recommendations: [] };
       }
 
-      // Use native memory filtering instead of slow nested array regex search in DB
-      const rawProms = await ctx.db.find({
-        collection: "universities",
+      // Cari program yang sesuai dengan keyword dari user
+      const results = await ctx.db.find({
+        collection: "university-programs",
         where: {
-          "programs.category": { equals: "snbt" }
+          and: [
+            { category: { equals: "snbt" } },
+            {
+              or: allKws.map(kw => ({
+                name: { contains: kw }
+              }))
+            }
+          ]
         },
         pagination: false,
         depth: 0,
       });
 
-      const allMatches: Array<{ prog: UniversityProgram; doc: UniversityDoc }> = [];
-      (rawProms.docs as UniversityDoc[]).forEach((doc) => {
-        const progs = Array.isArray(doc.programs) ? doc.programs : [];
-        progs.forEach((prog) => {
-          const progName = prog.name;
-          if (
-            prog.category === "snbt" &&
-            typeof progName === "string" &&
-            allKws.some((kw) => progName.toLowerCase().includes(kw.toLowerCase()))
-          ) {
-            allMatches.push({ prog, doc });
-          }
-        });
-      });
-
-      const recs = allMatches.map(({ prog, doc }) => {
+      const recs = results.docs.map((prog: any) => {
         const latestMetric = (prog.metrics?.[0] ?? {}) as ProgramMetric;
         const passingGrade = parseFloat(latestMetric.admissionMetric || prog.admissionMetric || "0") || 0;
         
@@ -541,15 +523,14 @@ export const tryoutsRouter = createTRPCRouter({
         return {
           id: prog.id,
           name: prog.name,
-          universityName: doc.name || "Unknown",
+          universityName: prog.universityName || "Unknown",
           passingGrade,
           chance, 
           capacity: latestMetric.capacity || prog.capacity || 0,
           avgUkt: latestMetric.avgUkt || prog.avgUkt,
           maxUkt: latestMetric.maxUkt || prog.maxUkt
         };
-      }).filter((r) => r.chance >= 70) 
-      // strict filter: only recommend universities where statistical chance >= 70%
+      }).filter((r) => r.chance >= 70);
       
       // Sort by chance descending
       recs.sort((a, b) => b.chance - a.chance);
@@ -561,46 +542,18 @@ export const tryoutsRouter = createTRPCRouter({
   getProgramStudyDetail: protectedProcedure
     .input(z.object({ programId: z.string(), tryoutId: z.string().optional() }))
     .query(async ({ ctx, input }) => {
-      const results = await ctx.db.find({
-        collection: "universities",
-        where: { "programs.id": { equals: input.programId } },
-        limit: 1,
-        depth: 0,
-      });
+      const prog = await ctx.db.findByID({
+        collection: "university-programs",
+        id: input.programId,
+        depth: 1, // Get university details
+      }) as any;
 
-      let parentDoc = results.docs[0] as UniversityDoc | undefined;
-
-      if (!parentDoc) {
-        // Fallback: If imported via Compass, array items have _id (ObjectId) instead of string id.
-        // Payload's query builder fails on this. Fetch all universities and memory filter.
-        const allUnivs = await ctx.db.find({
-          collection: "universities",
-          limit: 2000,
-          depth: 0,
-          pagination: false,
-        });
-        
-        parentDoc = (allUnivs.docs as UniversityDoc[]).find((doc) =>
-          (doc.programs ?? []).some((p) => {
-            const pId = extractId(p.id) || extractId(p._id);
-            return pId === input.programId;
-          })
-        );
-      }
-
-      if (!parentDoc) {
+      if (!prog) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Program Studi tidak ditemukan" });
       }
-      
-      const prog = (parentDoc.programs ?? []).find((p) => {
-        const pId = extractId(p.id) || extractId(p._id);
-        return pId === input.programId;
-      });
-      
-      if (!prog) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Program Studi dalam Universitas tidak cocok" });
-      }
 
+      const university = prog.university as UniversityDoc | undefined;
+      
       let finalScore = 0;
       if (input.tryoutId && ctx.session?.user?.id) {
         const [scoreResult] = await ctx.db.find({
@@ -638,11 +591,11 @@ export const tryoutsRouter = createTRPCRouter({
         passingGrade: parseFloat(latestMetric.admissionMetric || prog.admissionMetric || "0") || 0,
         finalScore,
         university: {
-          name: parentDoc.name,
-          abbreviation: parentDoc.abbreviation,
-          status: parentDoc.status,
-          accreditation: parentDoc.accreditation,
-          website: parentDoc.website,
+          name: university?.name || prog.universityName,
+          abbreviation: university?.abbreviation,
+          status: university?.status,
+          accreditation: university?.accreditation,
+          website: university?.website,
           image: null,
         }
       };

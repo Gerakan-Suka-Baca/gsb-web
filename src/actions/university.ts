@@ -1,54 +1,38 @@
 "use server";
 
-interface University {
-  id: number;
-  name: string;
-  type: string;
-  group: "PTN" | "PTS";
-  province_name: string;
-}
+import { getPayloadCached } from "@/lib/payload";
 
-interface ApiResponse {
-  is_success: boolean;
-  data: University[];
-  message: string;
+interface University {
+  id: string | number;
+  name: string;
+  type?: string;
+  group?: "PTN" | "PTS";
+  province_name?: string;
 }
 
 export const searchUniversities = async (query: string): Promise<University[]> => {
   if (!query || query.length < 3) return [];
 
   try {
-    const apiKey = process.env.API_KAMPUS;
-    if (!apiKey) {
-      console.error("API_KAMPUS is not defined");
-      return [];
-    }
+    const payload = await getPayloadCached();
+    
+    const result = await payload.find({
+      collection: "universities",
+      where: {
+        name: { contains: query },
+      },
+      limit: 20,
+      depth: 0,
+    });
 
-    const response = await fetch(
-      `https://use.api.co.id/regional/indonesia/universities?name=${encodeURIComponent(
-        query
-      )}&group=PTN&size=20`,
-      {
-        headers: {
-          "x-api-co-id": apiKey,
-        },
-        next: { revalidate: 3600 }, 
-      }
-    );
-
-    if (!response.ok) {
-      console.error("Failed to fetch universities", response.statusText);
-      return [];
-    }
-
-    const data = (await response.json()) as ApiResponse;
-
-    if (!data.is_success) {
-      console.error("API returned error", data.message);
-      return [];
-    }
-
-    return data.data;
+    return result.docs.map((doc) => ({
+      id: doc.id,
+      name: doc.name,
+      // Field lain opsional karena kita hanya butuh name untuk saat ini
+      type: (doc.status as string) || "",
+      group: doc.status === "negeri" ? "PTN" : "PTS",
+      province_name: (doc.province as string) || "",
+    }));
   } catch (error) {
     console.error("Error fetching universities:", error);
     return [];

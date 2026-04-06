@@ -361,5 +361,133 @@ export const mentorDashboardRouter = createTRPCRouter({
 
       await setCacheValue(CACHE_KEY, results, 1000 * 60 * 60 * 12);
       return results;
+    }),
+
+  getQuestionAnalysis: adminProcedure
+    .input(z.object({ tryoutId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      // 1. Ambil data Tryout dan Subtestnya (termasuk soal-soalnya)
+      const questionsResult = await ctx.db.find({
+        collection: "questions",
+        where: { tryout: { equals: input.tryoutId } },
+        limit: 200,
+        sort: "createdAt",
+        depth: 2, // Ambil detail tryoutQuestions dan tryoutAnswers
+      });
+      const subtests = questionsResult.docs;
+
+      // Buat map soal dari database untuk akses cepat
+      const dbQuestionsMap = new Map();
+      for (const subtest of subtests as any[]) {
+        const questions = subtest.tryoutQuestions || [];
+        for (const q of questions) {
+          dbQuestionsMap.set(String(q.id), q);
+        }
+      }
+
+      // 2. Ambil semua attempt yang sudah selesai untuk Tryout ini
+      const attemptsResult = await ctx.db.find({
+        collection: "tryout-attempts",
+        where: {
+          and: [
+            { tryout: { equals: input.tryoutId } },
+            { status: { equals: "completed" } },
+          ],
+        },
+        limit: 5000,
+        depth: 0,
+        select: { questionResults: true },
+      });
+      const attempts = attemptsResult.docs;
+
+      // 3. Agregasi data statistik per soal
+      const questionStats: Record<string, { correct: number; total: number; subtestId: string; questionNumber: number }> = {};
+
+      for (const attempt of attempts as any[]) {
+        const results = attempt.questionResults || [];
+        for (const res of results) {
+          const qId = String(res.questionId);
+          if (!questionStats[qId]) {
+            questionStats[qId] = { 
+              correct: 0, 
+              total: 0, 
+              subtestId: String(res.subtestId), 
+              questionNumber: res.questionNumber 
+            };
+          }
+          questionStats[qId].total++;
+          if (res.isCorrect) {
+            questionStats[qId].correct++;
+          }
+        }
+      }
+
+      // 4. Kelompokkan berdasarkan Subtest dan hitung persentase
+      const analysisBySubtest: Record<string, any[]> = {};
+      const hardestPerSubtest: any[] = [];
+      const easiestPerSubtest: any[] = [];
+
+      let totalCorrectnessSum = 0;
+      let totalQuestionsCount = 0;
+
+      for (const subtest of subtests as any[]) {
+        const subtestId = String(subtest.id);
+        const subtestName = subtest.subtest || subtest.title || "Tanpa Nama";
+        
+        // Ambil ID soal yang ada di subtest ini dari DB
+        const subtestQuestionIds = (subtest.tryoutQuestions || []).map((q: any) => String(q.id));
+        
+        const stats = subtestQuestionIds.map((qId: string) => {
+          const data = questionStats[qId] || { correct: 0, total: 0, questionNumber: 0 };
+          const dbQuestion = dbQuestionsMap.get(qId);
+          
+          const correctness = data.total > 0 ? (data.correct / data.total) * 100 : 0;
+          totalCorrectnessSum += correctness;
+          totalQuestionsCount++;
+
+          return {
+            questionId: qId,
+            questionNumber: data.questionNumber || (subtest.tryoutQuestions || []).findIndex((q: any) => String(q.id) === qId) + 1,
+            correct: data.correct,
+            wrong: data.total - data.correct,
+            total: data.total,
+            correctness: Math.round(correctness * 10) / 10,
+            content: dbQuestion?.question || dbQuestion?.questionContent || null,
+            image: dbQuestion?.questionImage || null,
+            options: (dbQuestion?.tryoutAnswers || []).map((opt: any) => ({
+              id: opt.id,
+              content: opt.answer || opt.answerContent,
+              isCorrect: opt.isCorrect
+            }))
+          };
+        }).sort((a: any, b: any) => a.questionNumber - b.questionNumber);
+
+        if (stats.length > 0) {
+          analysisBySubtest[subtestName] = stats;
+          
+          // Cari soal paling sulit dan termudah di subtest ini
+          const sorted = [...stats].sort((a, b) => a.correctness - b.correctness);
+          hardestPerSubtest.push({
+            subtest: subtestName,
+            ...sorted[0]
+          });
+          easiestPerSubtest.push({
+            subtest: subtestName,
+            ...sorted[sorted.length - 1]
+          });
+        }
+      }
+
+      return {
+        summary: {
+          totalAttempts: attempts.length,
+          overallAverageCorrectness: totalQuestionsCount > 0 
+            ? Math.round((totalCorrectnessSum / totalQuestionsCount) * 10) / 10 
+            : 0,
+          hardestPerSubtest,
+          easiestPerSubtest,
+        },
+        analysisBySubtest,
+      };
     })
 });
