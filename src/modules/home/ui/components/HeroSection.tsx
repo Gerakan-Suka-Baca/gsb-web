@@ -94,7 +94,8 @@ export function HeroSection() {
             </FadeIn>
           </div>
 
-          <FadeIn direction="left" delay={0.2} className="relative w-full">
+          {/* Carousel renders without FadeIn animation to prevent LCP delay */}
+          <div className="relative w-full">
             <div className="relative rounded-4xl overflow-hidden shadow-2xl border-4 border-gsb-yellow/20">
               <Carousel
                 setApi={setApi}
@@ -167,7 +168,7 @@ export function HeroSection() {
             {/* Decorative Elements */}
             <div className="absolute -z-10 top-10 -right-10 w-64 h-64 bg-gsb-yellow/10 rounded-full blur-3xl" />
             <div className="absolute -z-10 -bottom-10 -left-10 w-64 h-64 bg-gsb-red/10 rounded-full blur-3xl" />
-          </FadeIn>
+          </div>
         </div>
       </div>
     </section>

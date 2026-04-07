@@ -8,6 +8,11 @@ import { CTASection } from '@/modules/home/ui/components/CTASection';
 export default function HomePage() {
   return (
     <>
+      {/* Preconnect to critical third-party origins for faster resource loading */}
+      <link rel="preconnect" href="https://clerk.komunitasgsb.id" />
+      <link rel="dns-prefetch" href="https://clerk.komunitasgsb.id" />
+      <link rel="preconnect" href="https://us-assets.i.posthog.com" />
+      <link rel="dns-prefetch" href="https://us-assets.i.posthog.com" />
       <link rel="preconnect" href="https://i.scdn.co" crossOrigin="anonymous" />
       <link
         rel="preload"
